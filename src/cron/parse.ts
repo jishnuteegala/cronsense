@@ -247,3 +247,7 @@ export function parseCron(input: string): ParseResult {
 export function isRestricted(field: FieldAst): boolean {
   return !field.terms.some((term) => term.kind === 'wildcard' && !term.explicitStep)
 }
+
+export function hasWildcardOrigin(field: FieldAst): boolean {
+  return field.terms.some((term) => term.kind === 'wildcard')
+}

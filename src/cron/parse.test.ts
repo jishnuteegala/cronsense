@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isRestricted, parseCron } from './parse'
+import { hasWildcardOrigin, isRestricted, parseCron } from './parse'
 
 function expectOk(input: string) {
   const result = parseCron(input)
@@ -276,5 +276,16 @@ describe('isRestricted', () => {
     const ast = expectOk('0 0 1 * MON-FRI')
     expect(isRestricted(ast.dayOfMonth)).toBe(true)
     expect(isRestricted(ast.dayOfWeek)).toBe(true)
+  })
+})
+
+describe('hasWildcardOrigin', () => {
+  it('is true for bare * and */N, false for values and ranges', () => {
+    const ast = expectOk('0 0 */2 * MON')
+    expect(hasWildcardOrigin(ast.dayOfMonth)).toBe(true)
+    expect(hasWildcardOrigin(ast.dayOfWeek)).toBe(false)
+    const ast2 = expectOk('0 0 1-15 * *')
+    expect(hasWildcardOrigin(ast2.dayOfMonth)).toBe(false)
+    expect(hasWildcardOrigin(ast2.dayOfWeek)).toBe(true)
   })
 })

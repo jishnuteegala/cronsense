@@ -62,6 +62,13 @@ describe('nextFirings basics', () => {
     expect(iso(firings)).toEqual(['2026-01-16T12:00Z'])
   })
 
+  it.each([0, -1, 2.5, Number.NaN, Number.POSITIVE_INFINITY])(
+    'returns nothing for invalid count %s',
+    (count) => {
+      expect(nextFirings(ast('* * * * *'), T0, count)).toEqual([])
+    },
+  )
+
   it('fires at a fixed date-time each year', () => {
     const firings = nextFirings(ast('30 6 25 12 *'), T0, 2)
     expect(iso(firings)).toEqual(['2026-12-25T06:30Z', '2027-12-25T06:30Z'])
@@ -195,24 +202,33 @@ describe('DOM/DOW OR semantics (provisional, awaiting empirical verification)', 
     expect(iso(firings)).toEqual(['2026-01-18T00:00Z', '2026-01-25T00:00Z'])
   })
 
-  it('treats */1 in DOM as restricted so it fires every day under OR', () => {
+  it('keeps wildcard-origin */1 DOM as intersection so only Mondays fire', () => {
     const firings = nextFirings(ast('0 0 */1 * MON'), new Date(Date.UTC(2026, 0, 1, 0, 0)), 4)
+    expect(iso(firings)).toEqual([
+      '2026-01-05T00:00Z',
+      '2026-01-12T00:00Z',
+      '2026-01-19T00:00Z',
+      '2026-01-26T00:00Z',
+    ])
+  })
+
+  it('keeps wildcard-origin */N DOM as intersection with DOW', () => {
+    const firings = nextFirings(ast('0 0 */10 * WED'), new Date(Date.UTC(2026, 0, 1, 0, 0)), 5)
+    expect(iso(firings)).toEqual([
+      '2026-01-21T00:00Z',
+      '2026-02-11T00:00Z',
+      '2026-03-11T00:00Z',
+      '2026-04-01T00:00Z',
+      '2026-07-01T00:00Z',
+    ])
+  })
+
+  it('uses the OR union only when neither day field originates from a wildcard', () => {
+    const firings = nextFirings(ast('0 0 1-31 * MON'), new Date(Date.UTC(2026, 0, 1, 0, 0)), 3)
     expect(iso(firings)).toEqual([
       '2026-01-02T00:00Z',
       '2026-01-03T00:00Z',
       '2026-01-04T00:00Z',
-      '2026-01-05T00:00Z',
-    ])
-  })
-
-  it('treats */N in DOM as restricted for OR purposes', () => {
-    const firings = nextFirings(ast('0 0 */10 * WED'), new Date(Date.UTC(2026, 0, 1, 0, 0)), 5)
-    expect(iso(firings)).toEqual([
-      '2026-01-07T00:00Z',
-      '2026-01-11T00:00Z',
-      '2026-01-14T00:00Z',
-      '2026-01-21T00:00Z',
-      '2026-01-28T00:00Z',
     ])
   })
 })

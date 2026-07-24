@@ -1,5 +1,5 @@
 import type { CronAst, FieldAst, FieldTerm } from './parse'
-import { isRestricted } from './parse'
+import { hasWildcardOrigin, isRestricted } from './parse'
 
 export const TIMEZONE_KEY_NOTE =
   'If this workflow uses the `timezone` key on its schedule, GitHub Actions evaluates the schedule in that timezone and these UTC-based firing times do not apply.'
@@ -112,12 +112,16 @@ function timePhrase(ast: CronAst): string {
 function dayPhrase(ast: CronAst): string {
   const domRestricted = isRestricted(ast.dayOfMonth)
   const dowRestricted = isRestricted(ast.dayOfWeek)
+  const union = !hasWildcardOrigin(ast.dayOfMonth) && !hasWildcardOrigin(ast.dayOfWeek)
   const domPart = describeField(ast.dayOfMonth, (t) => describeNumericTerm(t, 'day-of-month', 1))
   const dowPart = describeField(ast.dayOfWeek, (t) =>
     describeLabeledTerm(t, dowLabel, 'every day of the week', 'weekday', 0),
   )
   if (domRestricted && dowRestricted) {
-    return `on ${domPart}, or on ${dowPart} (either matching day fires; awaiting empirical verification of GHA's combined day-of-month/day-of-week behaviour)`
+    if (union) {
+      return `on ${domPart}, or on ${dowPart} (either matching day fires; awaiting empirical verification of GHA's combined day-of-month/day-of-week behaviour)`
+    }
+    return `on ${domPart} that is also ${dowPart}`
   }
   if (domRestricted) {
     return `on ${domPart}`

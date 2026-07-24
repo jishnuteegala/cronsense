@@ -1,5 +1,5 @@
 import type { CronAst, FieldAst, FieldName } from './parse'
-import { FIELD_RANGES, isRestricted } from './parse'
+import { FIELD_RANGES, hasWildcardOrigin, isRestricted } from './parse'
 
 export function expandField(field: FieldAst): Set<number> {
   const { min, max } = FIELD_RANGES[field.field]
@@ -28,6 +28,8 @@ export interface ExpandedCron {
   daysOfWeek: Set<number>
   domRestricted: boolean
   dowRestricted: boolean
+  domWildcardOrigin: boolean
+  dowWildcardOrigin: boolean
 }
 
 export function expandCron(ast: CronAst): ExpandedCron {
@@ -39,7 +41,13 @@ export function expandCron(ast: CronAst): ExpandedCron {
     daysOfWeek: expandField(ast.dayOfWeek),
     domRestricted: isRestricted(ast.dayOfMonth),
     dowRestricted: isRestricted(ast.dayOfWeek),
+    domWildcardOrigin: hasWildcardOrigin(ast.dayOfMonth),
+    dowWildcardOrigin: hasWildcardOrigin(ast.dayOfWeek),
   }
+}
+
+export function usesDayUnion(ast: CronAst): boolean {
+  return !hasWildcardOrigin(ast.dayOfMonth) && !hasWildcardOrigin(ast.dayOfWeek)
 }
 
 function dayMatches(expanded: ExpandedCron, date: Date): boolean {
@@ -47,16 +55,10 @@ function dayMatches(expanded: ExpandedCron, date: Date): boolean {
   const dow = date.getUTCDay()
   const domMatch = expanded.daysOfMonth.has(dom)
   const dowMatch = expanded.daysOfWeek.has(dow)
-  if (expanded.domRestricted && expanded.dowRestricted) {
+  if (!expanded.domWildcardOrigin && !expanded.dowWildcardOrigin) {
     return domMatch || dowMatch
   }
-  if (expanded.domRestricted) {
-    return domMatch
-  }
-  if (expanded.dowRestricted) {
-    return dowMatch
-  }
-  return true
+  return domMatch && dowMatch
 }
 
 const MAX_YEARS_PER_FIRING = 9
@@ -77,6 +79,28 @@ function utcTime(year: number, monthIndex: number, day: number): number {
   return utcDate(year, monthIndex, day).getTime()
 }
 
+const MONTH_MAX_DAYS = new Map<number, number>([
+  [1, 31],
+  [2, 29],
+  [3, 31],
+  [4, 30],
+  [5, 31],
+  [6, 30],
+  [7, 31],
+  [8, 31],
+  [9, 30],
+  [10, 31],
+  [11, 30],
+  [12, 31],
+])
+
+function domFitsSomeMonth(expanded: ExpandedCron): boolean {
+  return [...expanded.months].some((month) => {
+    const maxDays = MONTH_MAX_DAYS.get(month) ?? 31
+    return [...expanded.daysOfMonth].some((day) => day <= maxDays)
+  })
+}
+
 export function canEverFire(ast: CronAst): boolean {
   const expanded = expandCron(ast)
   if (
@@ -86,45 +110,21 @@ export function canEverFire(ast: CronAst): boolean {
   ) {
     return false
   }
-  if (expanded.domRestricted && !expanded.dowRestricted) {
-    if (expanded.daysOfMonth.size === 0) return false
+  if (usesDayUnion(ast)) {
+    return (
+      (expanded.daysOfMonth.size > 0 && domFitsSomeMonth(expanded)) ||
+      expanded.daysOfWeek.size > 0
+    )
   }
-  if (expanded.dowRestricted && !expanded.domRestricted) {
-    if (expanded.daysOfWeek.size === 0) return false
-  }
-  if (expanded.domRestricted && expanded.dowRestricted) {
-    if (expanded.daysOfMonth.size === 0 && expanded.daysOfWeek.size === 0) return false
-  }
-  if (!expanded.dowRestricted || expanded.domRestricted) {
-    const monthMaxDays = new Map<number, number>([
-      [1, 31],
-      [2, 29],
-      [3, 31],
-      [4, 30],
-      [5, 31],
-      [6, 30],
-      [7, 31],
-      [8, 31],
-      [9, 30],
-      [10, 31],
-      [11, 30],
-      [12, 31],
-    ])
-    if (expanded.domRestricted && !expanded.dowRestricted) {
-      const anyDayFits = [...expanded.months].some((month) => {
-        const maxDays = monthMaxDays.get(month) ?? 31
-        return [...expanded.daysOfMonth].some((day) => day <= maxDays)
-      })
-      if (!anyDayFits) return false
-    }
-  }
-  return true
+  if (expanded.daysOfWeek.size === 0) return false
+  if (expanded.daysOfMonth.size === 0) return false
+  return domFitsSomeMonth(expanded)
 }
 
 export function neverFiresReason(ast: CronAst): string | null {
   if (canEverFire(ast)) return null
   const expanded = expandCron(ast)
-  if (expanded.domRestricted && !expanded.dowRestricted) {
+  if (expanded.daysOfMonth.size > 0 && !domFitsSomeMonth(expanded)) {
     const months = [...expanded.months].sort((a, b) => a - b)
     const days = [...expanded.daysOfMonth].sort((a, b) => a - b)
     return `this expression will never fire: day-of-month ${days.join(', ')} never occurs in month ${months.join(', ')}`
@@ -135,6 +135,7 @@ export function neverFiresReason(ast: CronAst): string | null {
 export function nextFirings(ast: CronAst, from: Date, count: number): Date[] {
   const expanded = expandCron(ast)
   const results: Date[] = []
+  if (!Number.isSafeInteger(count) || count <= 0) return results
   if (!canEverFire(ast)) return results
   const sortedMinutes = [...expanded.minutes].sort((a, b) => a - b)
   const sortedHours = [...expanded.hours].sort((a, b) => a - b)
@@ -233,7 +234,11 @@ export const DOM_DOW_PROVISIONAL_NOTE =
   'This expression restricts both day-of-month and day-of-week. GitHub does not document how these combine; the firing times below assume the POSIX OR interpretation (a day matching either field fires) and are provisional until empirically verified against GitHub Actions.'
 
 export function domDowProvisionalNote(ast: CronAst): string | null {
-  if (isRestricted(ast.dayOfMonth) && isRestricted(ast.dayOfWeek)) {
+  if (
+    usesDayUnion(ast) &&
+    isRestricted(ast.dayOfMonth) &&
+    isRestricted(ast.dayOfWeek)
+  ) {
     return DOM_DOW_PROVISIONAL_NOTE
   }
   return null
