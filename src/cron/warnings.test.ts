@@ -1,70 +1,194 @@
 import { describe, expect, it } from "vitest";
 import { parseCron } from "./parse";
-import { WARNINGS, evaluateWarnings } from "./warnings";
+import { evaluateWarnings, matchesWarningPredicate } from "./warning-engine";
+import { WARNINGS } from "./warnings";
 
 function ast(input: string) {
   const result = parseCron(input);
-  if (!result.ok) {
-    throw new Error(`failed to parse "${input}": ${result.error}`);
-  }
+  if (!result.ok) throw new Error(`failed to parse "${input}": ${result.error}`);
   return result.ast;
 }
 
+function warningIds(input: string): string[] {
+  return evaluateWarnings(ast(input)).map((warning) => warning.id);
+}
+
 describe("warning definitions", () => {
-  it("every warning carries a verification date, primary-source URL, and docs-repo path", () => {
+  it("holds all six sourced caveats as typed declarative data", () => {
+    expect(WARNINGS).toHaveLength(6);
     for (const warning of WARNINGS) {
-      expect(warning.id).not.toBe("");
-      expect(warning.verifiedOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(warning.verifiedOn).toBe("2026-07-24");
       expect(warning.sourceUrl).toMatch(/^https:\/\/docs\.github\.com\//);
-      expect(warning.sourcePath).toMatch(/\.md$/);
-      expect(typeof warning.predicate).toBe("function");
+      expect(warning.sourcePaths.every((path) => path.endsWith(".md"))).toBe(true);
+      expect(typeof warning.predicate.kind).toBe("string");
+      expect(warning.message).not.toBe("");
     }
   });
 
-  it("warning ids are unique", () => {
-    const ids = WARNINGS.map((w) => w.id);
-    expect(new Set(ids).size).toBe(ids.length);
+  it("locks the sourced quotes and docs watch paths", () => {
+    expect(WARNINGS.map((warning) => [warning.id, warning.sourceUrl, warning.sourcePaths])).toEqual(
+      [
+        [
+          "dom-dow-or-semantics",
+          "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule",
+          ["content/actions/reference/workflows-and-actions/events-that-trigger-workflows.md"],
+        ],
+        [
+          "uneven-step-reset",
+          "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule",
+          ["data/reusables/repositories/actions-scheduled-workflow-example.md"],
+        ],
+        [
+          "never-fires",
+          "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule",
+          ["data/reusables/repositories/cron.md"],
+        ],
+        [
+          "sub-minimum-interval",
+          "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule",
+          ["data/reusables/repositories/actions-scheduled-workflow-example.md"],
+        ],
+        [
+          "high-load-delay-drop",
+          "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule",
+          ["data/reusables/actions/schedule-delay.md"],
+        ],
+        [
+          "inactivity-pause",
+          "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule",
+          [
+            "content/actions/reference/workflows-and-actions/events-that-trigger-workflows.md",
+            "data/reusables/actions/scheduled-workflows-disabled.md",
+          ],
+        ],
+      ],
+    );
+    expect(WARNINGS.find((warning) => warning.id === "sub-minimum-interval")?.message).toBe(
+      'GitHub docs: "The shortest interval you can run scheduled workflows is once every 5 minutes." This expression fires more often; the docs do not say what happens to such an expression.',
+    );
+    expect(WARNINGS.find((warning) => warning.id === "high-load-delay-drop")?.message).toBe(
+      'GitHub docs: "The `schedule` event can be delayed during periods of high loads of GitHub Actions workflow runs. High load times include the start of every hour." "If the load is sufficiently high enough, some queued jobs may be dropped. To decrease the chance of delay, schedule your workflow to run at a different time of the hour."',
+    );
+    expect(WARNINGS.find((warning) => warning.id === "inactivity-pause")?.message).toBe(
+      'GitHub docs: "In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days." This applies to public repositories; GitHub does not document an equivalent 60-day pause for private repositories.',
+    );
+  });
+
+  it("suppresses the empirically gated DOM/DOW warning", () => {
+    expect(warningIds("0 0 1 * MON")).not.toContain("dom-dow-or-semantics");
+    expect(
+      WARNINGS.find((warning) => warning.id === "dom-dow-or-semantics")?.empiricalGate,
+    ).toEqual({
+      sourceTicket: 9,
+      closesOn: "2026-07-31",
+    });
+  });
+
+  it("only considers both non-wildcard-origin day fields for DOM/DOW semantics", () => {
+    const predicate = { kind: "both-restricted", fields: ["dayOfMonth", "dayOfWeek"] } as const;
+    expect(matchesWarningPredicate(predicate, ast("0 0 1 * MON"))).toBe(true);
+    expect(matchesWarningPredicate(predicate, ast("0 0 */2 * 1"))).toBe(false);
+    expect(matchesWarningPredicate(predicate, ast("0 0 1 * */2"))).toBe(false);
+  });
+
+  it("returns exact applicable warnings for a normal schedule", () => {
+    expect(warningIds("17 4 * * *")).toEqual(["high-load-delay-drop"]);
   });
 });
 
-describe("sub-minimum-interval warning", () => {
-  function subMinimum(input: string) {
-    return evaluateWarnings(ast(input)).find((w) => w.id === "sub-minimum-interval");
-  }
+describe("expression-specific warnings", () => {
+  it("explains the actual uneven step field", () => {
+    const warning = evaluateWarnings(ast("*/7 * * * *")).find(
+      (item) => item.id === "uneven-step-reset",
+    );
+    expect(warning?.message).toContain(
+      "The minute schedule selects 0, 7, 14, 21, 28, 35, 42, 49, 56",
+    );
+    expect(warning?.message).toContain(
+      "its consecutive gaps are 7, 7, 7, 7, 7, 7, 7, 7, 4 minute values",
+    );
+  });
 
-  it("fires for every-minute schedules quoting the docs exactly", () => {
-    const warning = subMinimum("* * * * *");
-    expect(warning).toBeDefined();
+  it("derives stepped range and list gaps from the complete selected field values", () => {
+    expect(warningIds("5-55/10 * * * *")).not.toContain("uneven-step-reset");
+    expect(warningIds("0-20/10,30-50/10 * * * *")).not.toContain("uneven-step-reset");
+    expect(warningIds("0-50/10,55 * * * *")).toContain("uneven-step-reset");
+    expect(warningIds("0-20/10 * * * *")).toEqual(["uneven-step-reset", "high-load-delay-drop"]);
+    expect(warningIds("0-20/7,21-59/7 * * * *")).toEqual([
+      "uneven-step-reset",
+      "sub-minimum-interval",
+      "high-load-delay-drop",
+    ]);
+    const rangeWarning = evaluateWarnings(ast("0-20/10 * * * *")).find(
+      (item) => item.id === "uneven-step-reset",
+    );
+    expect(rangeWarning?.message).toContain(
+      "selects 0, 10, 20; its consecutive gaps are 10, 10, 40 minute values",
+    );
+    const listWarning = evaluateWarnings(ast("0-20/7,21-59/7 * * * *")).find(
+      (item) => item.id === "uneven-step-reset",
+    );
+    expect(listWarning?.message).toContain(
+      "selects 0, 7, 14, 21, 28, 35, 42, 49, 56; its consecutive gaps are 7, 7, 7, 7, 7, 7, 7, 7, 4 minute values",
+    );
+  });
+
+  it("uses documented labels for non-minute uneven steps", () => {
+    const warning = evaluateWarnings(ast("0 0 */7 * *")).find(
+      (item) => item.id === "uneven-step-reset",
+    );
+    expect(warning?.message).toContain("The day of the month schedule");
+  });
+
+  it("identifies never-firing conflicting fields", () => {
+    const warning = evaluateWarnings(ast("0 0 30 2 *")).find((item) => item.id === "never-fires");
+    expect(warning?.message).toBe(
+      "this expression will never fire: day-of-month 30 never occurs in month 2",
+    );
+  });
+
+  it("quotes the minimum interval docs without inventing an outcome", () => {
+    const warning = evaluateWarnings(ast("* * * * *")).find(
+      (item) => item.id === "sub-minimum-interval",
+    );
     expect(warning?.message).toContain(
       "The shortest interval you can run scheduled workflows is once every 5 minutes.",
     );
-    expect(warning?.message).toContain("undocumented");
+    expect(warningIds("* * * * *")).toEqual(["sub-minimum-interval", "high-load-delay-drop"]);
+    expect(warningIds("*/4 * * * *")).toEqual(["sub-minimum-interval", "high-load-delay-drop"]);
+    expect(warningIds("0 0 30 2 *")).toEqual(["never-fires", "high-load-delay-drop"]);
+    expect(warningIds("0 * * * *")).toEqual(["high-load-delay-drop"]);
+    expect(warning?.message).not.toContain("rejected");
   });
+});
 
-  it("carries source metadata", () => {
-    const warning = subMinimum("* * * * *");
-    expect(warning?.verifiedOn).toBe("2026-07-24");
-    expect(warning?.sourceUrl).toBe(
-      "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule",
+describe("contextual caveats", () => {
+  it("emphasises high load risk at the start of an hour", () => {
+    const warning = evaluateWarnings(ast("0 * * * *")).find(
+      (item) => item.id === "high-load-delay-drop",
     );
-    expect(warning?.sourcePath).toBe(
-      "data/reusables/repositories/actions-scheduled-workflow-example.md",
+    expect(warning?.emphasised).toBe(true);
+    expect(warning?.message).toContain(
+      "The `schedule` event can be delayed during periods of high loads of GitHub Actions workflow runs. High load times include the start of every hour.",
     );
   });
 
-  it("fires for */7 because of the 4-minute boundary gap", () => {
-    expect(subMinimum("*/7 * * * *")).toBeDefined();
+  it("keeps the public-repository inactivity note contextual", () => {
+    const warning = WARNINGS.find((item) => item.id === "inactivity-pause");
+    expect(warning?.rank).toBe("contextual");
+    expect(warning?.message).toContain(
+      "In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days.",
+    );
   });
 
-  it("does not fire for */5", () => {
-    expect(subMinimum("*/5 * * * *")).toBeUndefined();
+  it("excludes contextual notes from expression-specific warnings", () => {
+    expect(warningIds("17 4 * * *")).not.toContain("inactivity-pause");
   });
 
-  it("does not fire for hourly schedules", () => {
-    expect(subMinimum("0 * * * *")).toBeUndefined();
-  });
-
-  it("does not fire for never-firing expressions", () => {
-    expect(subMinimum("0 0 30 2 *")).toBeUndefined();
+  it("records both sourced inactivity-note paths", () => {
+    expect(WARNINGS.find((warning) => warning.id === "inactivity-pause")?.sourcePaths).toEqual([
+      "content/actions/reference/workflows-and-actions/events-that-trigger-workflows.md",
+      "data/reusables/actions/scheduled-workflows-disabled.md",
+    ]);
   });
 });

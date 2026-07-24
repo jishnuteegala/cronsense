@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { domDowProvisionalNote, neverFiresReason, nextFirings } from "./cron/firings";
+import { neverFiresReason, nextFirings } from "./cron/firings";
 import { parseCron } from "./cron/parse";
 import { translate } from "./cron/translate";
-import { evaluateWarnings } from "./cron/warnings";
+import { CONTEXTUAL_NOTES, evaluateWarnings } from "./cron/warning-engine";
 
 export const DST_NOTE =
   "scheduled times are computed in UTC; local times shift when your timezone changes for DST";
@@ -60,16 +60,13 @@ export function App({
   const output = useMemo(() => {
     if (!result.ok) return null;
     const never = neverFiresReason(result.ast);
-    const domDowNote = domDowProvisionalNote(result.ast);
-    const warnings = never ? [] : evaluateWarnings(result.ast);
+    const warnings = evaluateWarnings(result.ast);
     return {
       translation: translate(result.ast),
       firings: never ? [] : nextFirings(result.ast, new Date(nowMinute * 60000), 10),
       never,
       warnings,
-      provisionalNotes: domDowNote
-        ? [...result.provisionalNotes, domDowNote]
-        : result.provisionalNotes,
+      provisionalNotes: result.provisionalNotes,
     };
   }, [result, nowMinute]);
 
@@ -96,6 +93,14 @@ export function App({
           {result.error}
         </p>
       )}
+      {CONTEXTUAL_NOTES.map((note) => (
+        <p key={note.id} style={{ color: "#555" }}>
+          {note.message}{" "}
+          <span style={{ fontSize: "0.85rem" }}>
+            (verified against <a href={note.sourceUrl}>GitHub docs</a> on {note.verifiedOn})
+          </span>
+        </p>
+      ))}
       {result.ok && output && (
         <>
           <p>{output.translation.sentence}</p>
@@ -106,7 +111,11 @@ export function App({
             </p>
           ))}
           {output.warnings.map((warning) => (
-            <p key={warning.id} role="alert" style={{ color: "#8a5a00" }}>
+            <p
+              key={warning.id}
+              role={warning.rank === "diagnostic" ? "alert" : undefined}
+              style={{ color: "#8a5a00", fontWeight: warning.emphasised ? "bold" : "normal" }}
+            >
               {warning.message}{" "}
               <span style={{ fontSize: "0.85rem", color: "#555" }}>
                 (verified against{" "}
@@ -117,11 +126,6 @@ export function App({
               </span>
             </p>
           ))}
-          {output.never && (
-            <p role="alert" style={{ color: "#b00020" }}>
-              {output.never}
-            </p>
-          )}
           {!output.never && (
             <>
               <h2>

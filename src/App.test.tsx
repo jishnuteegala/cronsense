@@ -34,11 +34,14 @@ describe("App", () => {
     expect(screen.getByRole("alert").textContent).toContain("GitHub Actions does not support");
     expect(screen.queryByRole("table")).toBeNull();
     expect(screen.getAllByText(new RegExp(DST_NOTE)).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/scheduled workflows are automatically disabled/)).toBeTruthy();
   });
 
-  it("shows the never-fires message without a table and keeps the DST note", () => {
+  it("shows all caveats for a never-firing expression without a table", () => {
     render(<App initialExpression="0 0 30 2 *" />);
     expect(screen.getByRole("alert").textContent).toContain("never fire");
+    expect(screen.getByText(/some queued jobs may be dropped/)).toBeTruthy();
+    expect(screen.getByText(/scheduled workflows are automatically disabled/)).toBeTruthy();
     expect(screen.queryByRole("table")).toBeNull();
     expect(screen.getAllByText(new RegExp(DST_NOTE)).length).toBeGreaterThanOrEqual(1);
   });
@@ -68,11 +71,17 @@ describe("App", () => {
     expect(screen.getByText(/once every 5 minutes/)).toBeTruthy();
   });
 
+  it("visibly emphasises the high-load caveat at minute zero", () => {
+    render(<App initialExpression="0 * * * *" />);
+    expect(screen.getByText(/some queued jobs may be dropped/).style.fontWeight).toBe("bold");
+  });
+
   it("renders warning source metadata with a docs link and verification date", () => {
     render(<App initialExpression="* * * * *" />);
-    const link = screen.getByRole("link", { name: "GitHub docs" });
+    const [link] = screen.getAllByRole("link", { name: "GitHub docs" });
+    if (!link) throw new Error("expected a GitHub docs link");
     expect(link.getAttribute("href")).toContain("https://docs.github.com/");
-    expect(screen.getByText(/verified against/).textContent).toMatch(/on \d{4}-\d{2}-\d{2}/);
+    expect(screen.getAllByText(/verified against/)[0]?.textContent).toMatch(/on \d{4}-\d{2}-\d{2}/);
   });
 
   it("shows the sub-minimum-interval warning for */7 boundary gaps", () => {
@@ -90,14 +99,14 @@ describe("App", () => {
     expect(screen.getByText(/awaits GHA-validator arbitration/)).toBeTruthy();
   });
 
-  it("flags DOM/DOW OR semantics as provisional when both fields are restricted", () => {
+  it("suppresses the empirically gated DOM/DOW warning", () => {
     render(<App initialExpression="0 0 15 * 1" />);
-    expect(screen.getByText(/POSIX\/Vixie OR union/)).toBeTruthy();
+    expect(screen.queryByText(/POSIX\/Vixie OR union/)).toBeNull();
   });
 
-  it("flags wildcard-origin DOM/DOW intersection as provisional", () => {
+  it("does not expose provisional DOM/DOW caveat text", () => {
     render(<App initialExpression="0 0 */2 * 1" />);
-    expect(screen.getByText(/Vixie cron source precedent/)).toBeTruthy();
+    expect(screen.queryByText(/Vixie cron source precedent/)).toBeNull();
   });
 
   it("discloses a truncated firing list near the maximum representable date", () => {
