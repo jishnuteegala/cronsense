@@ -3,6 +3,7 @@ import { neverFiresReason, nextFirings } from "./cron/firings";
 import { parseCron } from "./cron/parse";
 import { translate } from "./cron/translate";
 import { CONTEXTUAL_NOTES, evaluateWarnings } from "./cron/warning-engine";
+import { expressionHash, parseHash } from "./hash";
 
 export const DST_NOTE =
   "scheduled times are computed in UTC; local times shift when your timezone changes for DST";
@@ -26,7 +27,7 @@ export function formatLocal(date: Date, timeZone?: string, locale?: string): str
 }
 
 export function App({
-  initialExpression = "*/15 9-17 * * MON-FRI",
+  initialExpression,
   timeZone,
   locale,
 }: {
@@ -34,7 +35,10 @@ export function App({
   timeZone?: string;
   locale?: string;
 }) {
-  const [input, setInput] = useState(initialExpression);
+  const initialHash = typeof window === "undefined" ? null : parseHash(window.location.hash);
+  const [input, setInput] = useState(
+    initialHash?.expression ?? initialExpression ?? "*/15 9-17 * * MON-FRI",
+  );
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -55,6 +59,16 @@ export function App({
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, []);
+  useEffect(() => {
+    const onHashChange = () => {
+      const state = parseHash(window.location.hash);
+      if (!state) return;
+      setInput(state.expression);
+      if (state.warningId) document.getElementById(state.warningId)?.scrollIntoView();
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
   const result = useMemo(() => parseCron(input), [input]);
   const nowMinute = Math.floor(now.getTime() / 60000);
   const output = useMemo(() => {
@@ -70,6 +84,16 @@ export function App({
     };
   }, [result, nowMinute]);
 
+  useEffect(() => {
+    const warningId = parseHash(window.location.hash)?.warningId;
+    if (warningId) document.getElementById(warningId)?.scrollIntoView();
+  }, [output]);
+
+  const updateInput = (value: string) => {
+    setInput(value);
+    window.history.replaceState(null, "", expressionHash(value));
+  };
+
   return (
     <main
       style={{
@@ -79,12 +103,14 @@ export function App({
         padding: "0 1rem",
       }}
     >
+      <a href="#results">Skip to results</a>
       <h1>Cronsense</h1>
       <p>Paste a GitHub Actions cron expression.</p>
+      <label htmlFor="cron-expression">Cron expression</label>
       <input
+        id="cron-expression"
         value={input}
-        onChange={(e) => setInput(e.target.value)}
-        aria-label="Cron expression"
+        onChange={(e) => updateInput(e.target.value)}
         spellCheck={false}
         style={{ width: "100%", padding: "0.5rem", fontFamily: "monospace", fontSize: "1rem" }}
       />
@@ -93,6 +119,7 @@ export function App({
           {result.error}
         </p>
       )}
+      <aside aria-label="Contextual note" style={{ borderLeft: "3px solid #666", paddingLeft: "0.75rem" }}>
       {CONTEXTUAL_NOTES.map((note) => (
         <p key={note.id} style={{ color: "#555" }}>
           {note.message}{" "}
@@ -101,8 +128,9 @@ export function App({
           </span>
         </p>
       ))}
+      </aside>
       {result.ok && output && (
-        <>
+        <section id="results">
           <p>{output.translation.sentence}</p>
           <p style={{ fontSize: "0.9rem", color: "#555" }}>{output.translation.timezoneNote}</p>
           {output.provisionalNotes.map((note) => (
@@ -111,10 +139,17 @@ export function App({
             </p>
           ))}
           {output.warnings.map((warning) => (
-            <p
+            <article
+              id={warning.id}
               key={warning.id}
               role={warning.rank === "diagnostic" ? "alert" : undefined}
-              style={{ color: "#8a5a00", fontWeight: warning.emphasised ? "bold" : "normal" }}
+              style={{
+                borderLeft: `3px solid ${warning.rank === "diagnostic" ? "#b00020" : "#8a5a00"}`,
+                color: warning.rank === "diagnostic" ? "#8a0018" : "#664400",
+                fontWeight: warning.emphasised ? "bold" : "normal",
+                margin: "1rem 0",
+                paddingLeft: "0.75rem",
+              }}
             >
               {warning.message}{" "}
               <span style={{ fontSize: "0.85rem", color: "#555" }}>
@@ -124,7 +159,7 @@ export function App({
                 </a>{" "}
                 on {warning.verifiedOn})
               </span>
-            </p>
+            </article>
           ))}
           {!output.never && (
             <>
@@ -187,7 +222,7 @@ export function App({
               </table>
             </>
           )}
-        </>
+        </section>
       )}
       {(!result.ok || !output || output.never !== null) && (
         <p style={{ fontSize: "0.85rem", color: "#555", marginTop: "1rem" }}>Note: {DST_NOTE}.</p>
