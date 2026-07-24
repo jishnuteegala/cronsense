@@ -103,7 +103,15 @@ export function App({
         padding: "0 1rem",
       }}
     >
-      <a href="#results">Skip to results</a>
+      <a
+        href="#results"
+        onClick={(event) => {
+          event.preventDefault();
+          document.getElementById("results")?.focus();
+        }}
+      >
+        Skip to results
+      </a>
       <h1>Cronsense</h1>
       <p>Paste a GitHub Actions cron expression.</p>
       <label htmlFor="cron-expression">Cron expression</label>
