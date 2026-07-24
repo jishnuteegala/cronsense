@@ -105,6 +105,34 @@ describe('leap years', () => {
     expect(iso(firings)).toEqual(['2028-02-29T00:00Z', '2032-02-29T00:00Z'])
   })
 
+  it('returns a full 10 leap-day firings across decades', () => {
+    const firings = nextFirings(ast('0 0 29 2 *'), T0, 10)
+    expect(iso(firings)).toEqual([
+      '2028-02-29T00:00Z',
+      '2032-02-29T00:00Z',
+      '2036-02-29T00:00Z',
+      '2040-02-29T00:00Z',
+      '2044-02-29T00:00Z',
+      '2048-02-29T00:00Z',
+      '2052-02-29T00:00Z',
+      '2056-02-29T00:00Z',
+      '2060-02-29T00:00Z',
+      '2064-02-29T00:00Z',
+    ])
+  })
+
+  it('returns a full 10 annual firings', () => {
+    const firings = nextFirings(ast('0 0 1 1 *'), T0, 10)
+    expect(firings).toHaveLength(10)
+    expect(iso(firings)[0]).toBe('2027-01-01T00:00Z')
+    expect(iso(firings)[9]).toBe('2036-01-01T00:00Z')
+  })
+
+  it('skips the non-leap century year 2100', () => {
+    const firings = nextFirings(ast('0 0 29 2 *'), new Date(Date.UTC(2097, 0, 1)), 2)
+    expect(iso(firings)).toEqual(['2104-02-29T00:00Z', '2108-02-29T00:00Z'])
+  })
+
   it('Feb 28 fires every year', () => {
     const firings = nextFirings(ast('0 0 28 2 *'), T0, 2)
     expect(iso(firings)).toEqual(['2026-02-28T00:00Z', '2027-02-28T00:00Z'])

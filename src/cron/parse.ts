@@ -19,7 +19,7 @@ export interface CronAst {
 }
 
 export type ParseResult =
-  | { ok: true; ast: CronAst }
+  | { ok: true; ast: CronAst; provisionalNotes: string[] }
   | { ok: false; error: string }
 
 interface FieldSpec {
@@ -72,17 +72,20 @@ export const FIELD_RANGES: Record<FieldName, { min: number; max: number }> = {
   dayOfWeek: { min: 0, max: 6 },
 }
 
-function parseValue(token: string, spec: FieldSpec): number | string {
+function parseValue(
+  token: string,
+  spec: FieldSpec,
+): { value: number; named: boolean } | string {
   if (/^\d+$/.test(token)) {
     const value = Number(token)
     if (value < spec.min || value > spec.max) {
       return `${spec.field} value ${value} is out of range (${spec.min}-${spec.max})`
     }
-    return value
+    return { value, named: false }
   }
   const named = spec.names?.[token.toUpperCase()]
   if (named !== undefined) {
-    return named
+    return { value: named, named: true }
   }
   if (/^(L|W|\d+L|\d+W|LW)$/i.test(token)) {
     return `"${token}" in ${spec.field} uses L/W tokens that are not part of GitHub Actions cron syntax (presumed rejected; pending GHA-validator confirmation)`
@@ -104,7 +107,15 @@ function parseStep(token: string, spec: FieldSpec): number | string {
   return step
 }
 
-function parseTerm(token: string, spec: FieldSpec): FieldTerm | string {
+function nameOperatorNote(token: string, spec: FieldSpec): string {
+  return `"${token}" uses a name token in a range or step in ${spec.field}; GitHub documents name tokens only as plain field values, so this interpretation is provisional and awaits GHA-validator arbitration`
+}
+
+function parseTerm(
+  token: string,
+  spec: FieldSpec,
+  notes: string[],
+): FieldTerm | string {
   if (token === '') {
     return `empty entry in ${spec.field} field`
   }
@@ -132,27 +143,33 @@ function parseTerm(token: string, spec: FieldSpec): FieldTerm | string {
     if (typeof from === 'string') return from
     const to = parseValue(rangeParts[1] ?? '', spec)
     if (typeof to === 'string') return to
-    if (from > to) {
-      return `range ${base} in ${spec.field} is reversed (${from} > ${to})`
+    if (from.named || to.named) {
+      notes.push(nameOperatorNote(token, spec))
     }
-    return { kind: 'range', from, to, step }
+    if (from.value > to.value) {
+      return `range ${base} in ${spec.field} is reversed (${from.value} > ${to.value})`
+    }
+    return { kind: 'range', from: from.value, to: to.value, step }
   }
   const value = parseValue(base, spec)
   if (typeof value === 'string') return value
   if (stepToken !== undefined) {
-    return { kind: 'range', from: value, to: spec.max, step }
+    if (value.named) {
+      notes.push(nameOperatorNote(token, spec))
+    }
+    return { kind: 'range', from: value.value, to: spec.max, step }
   }
-  return { kind: 'value', value }
+  return { kind: 'value', value: value.value }
 }
 
-function parseField(raw: string, spec: FieldSpec): FieldAst | string {
+function parseField(raw: string, spec: FieldSpec, notes: string[]): FieldAst | string {
   const unsupportedToken = raw.match(/[#?]/)
   if (unsupportedToken) {
     return `"${unsupportedToken[0]}" in ${spec.field} is not part of GitHub Actions cron syntax (presumed rejected; pending GHA-validator confirmation)`
   }
   const terms: FieldTerm[] = []
   for (const token of raw.split(',')) {
-    const term = parseTerm(token, spec)
+    const term = parseTerm(token, spec, notes)
     if (typeof term === 'string') return term
     terms.push(term)
   }
@@ -193,8 +210,9 @@ export function parseCron(input: string): ParseResult {
     }
   }
   const parsed: FieldAst[] = []
+  const provisionalNotes: string[] = []
   for (const spec of FIELD_SPECS) {
-    const result = parseField(fields[parsed.length] ?? '', spec)
+    const result = parseField(fields[parsed.length] ?? '', spec, provisionalNotes)
     if (typeof result === 'string') {
       return { ok: false, error: result }
     }
@@ -207,6 +225,7 @@ export function parseCron(input: string): ParseResult {
   return {
     ok: true,
     ast: { minute, hour, dayOfMonth, month, dayOfWeek },
+    provisionalNotes,
   }
 }
 

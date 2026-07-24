@@ -59,7 +59,7 @@ function dayMatches(expanded: ExpandedCron, date: Date): boolean {
   return true
 }
 
-const MAX_YEARS_AHEAD = 8
+const MAX_YEARS_PER_FIRING = 9
 
 export function canEverFire(ast: CronAst): boolean {
   const expanded = expandCron(ast)
@@ -131,7 +131,7 @@ export function nextFirings(ast: CronAst, from: Date, count: number): Date[] {
       from.getUTCMinutes() + 1,
     ),
   )
-  const limit = Date.UTC(start.getUTCFullYear() + MAX_YEARS_AHEAD, 0, 1)
+  let limit = Date.UTC(start.getUTCFullYear() + MAX_YEARS_PER_FIRING, 0, 1)
   const day = new Date(
     Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()),
   )
@@ -162,6 +162,7 @@ export function nextFirings(ast: CronAst, from: Date, count: number): Date[] {
             ),
           )
           if (results.length >= count) return results
+          limit = Date.UTC(day.getUTCFullYear() + MAX_YEARS_PER_FIRING, 0, 1)
         }
       }
     }
@@ -183,6 +184,16 @@ export function minimumIntervalMinutes(ast: CronAst): number | null {
     if (gap < min) min = gap
   }
   return min === Infinity ? null : min
+}
+
+export const DOM_DOW_PROVISIONAL_NOTE =
+  'This expression restricts both day-of-month and day-of-week. GitHub does not document how these combine; the firing times below assume the POSIX OR interpretation (a day matching either field fires) and are provisional until empirically verified against GitHub Actions.'
+
+export function domDowProvisionalNote(ast: CronAst): string | null {
+  if (isRestricted(ast.dayOfMonth) && isRestricted(ast.dayOfWeek)) {
+    return DOM_DOW_PROVISIONAL_NOTE
+  }
+  return null
 }
 
 export function restrictedFields(ast: CronAst): FieldName[] {

@@ -196,6 +196,28 @@ describe('parseCron rejection', () => {
   })
 })
 
+describe('provisional notes', () => {
+  it('flags name tokens in ranges', () => {
+    const result = parseCron('0 9 * * MON-FRI')
+    if (!result.ok) throw new Error(result.error)
+    expect(result.provisionalNotes).toHaveLength(1)
+    expect(result.provisionalNotes[0]).toContain('awaits GHA-validator arbitration')
+  })
+
+  it('flags name tokens in steps', () => {
+    const result = parseCron('0 0 1 JAN/2 *')
+    if (!result.ok) throw new Error(result.error)
+    expect(result.provisionalNotes).toHaveLength(1)
+    expect(result.provisionalNotes[0]).toContain('JAN/2')
+  })
+
+  it('does not flag numeric ranges or plain name values', () => {
+    const result = parseCron('0 9-17 * JAN MON')
+    if (!result.ok) throw new Error(result.error)
+    expect(result.provisionalNotes).toEqual([])
+  })
+})
+
 describe('isRestricted', () => {
   it('treats bare * as unrestricted', () => {
     const ast = expectOk('* * * * *')
