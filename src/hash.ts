@@ -3,9 +3,11 @@ export interface HashState {
   warningId: string | null;
 }
 
+const RESERVED_FRAGMENTS = new Set(["results"]);
+
 export function parseHash(hash: string): HashState | null {
   const value = hash.startsWith("#") ? hash.slice(1) : hash;
-  if (!value) return null;
+  if (!value || RESERVED_FRAGMENTS.has(value)) return null;
   const separator = value.lastIndexOf("#");
   const encodedExpression = separator === -1 ? value : value.slice(0, separator);
   try {

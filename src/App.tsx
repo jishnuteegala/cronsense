@@ -62,7 +62,7 @@ export function App({
   useEffect(() => {
     const onHashChange = () => {
       const state = parseHash(window.location.hash);
-      if (!state || state.expression === "results") return;
+      if (!state) return;
       setInput(state.expression);
       if (state.warningId) document.getElementById(state.warningId)?.scrollIntoView();
     };

@@ -135,6 +135,16 @@ describe("App", () => {
     expect(scrollIntoView).toHaveBeenCalled();
   });
 
+  it("does not treat a direct /#results load as a cron expression", () => {
+    window.location.hash = "#results";
+    render(<App />);
+    expect(screen.queryByRole("alert")?.textContent ?? "").not.toContain("results");
+    expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe(
+      "*/15 9-17 * * MON-FRI",
+    );
+    expect(screen.getByRole("table")).toBeTruthy();
+  });
+
   it("keeps the expression and results when the skip link changes the hash", () => {
     render(<App initialExpression="0 12 * * *" />);
     window.location.hash = "#results";
