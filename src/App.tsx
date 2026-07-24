@@ -97,7 +97,7 @@ export function App({
     if (!onToolPage) return;
     const warningId = parseHash(window.location.hash)?.warningId;
     if (warningId) focusWarning(warningId);
-  }, [onToolPage, output]);
+  }, [onToolPage]);
 
   const updateInput = (value: string) => {
     setInput(value);

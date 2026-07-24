@@ -136,6 +136,22 @@ describe("App", () => {
     expect(document.activeElement?.id).toBe("sub-minimum-interval");
   });
 
+  it("does not steal focus back to the warning on the minute refresh", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(Date.UTC(2026, 0, 15, 12, 0, 30)));
+    window.location.hash = "#*%20*%20*%20*%20*#sub-minimum-interval";
+    render(<App />);
+    expect(document.activeElement?.id).toBe("sub-minimum-interval");
+    const input = screen.getByLabelText("Cron expression");
+    act(() => {
+      input.focus();
+    });
+    act(() => {
+      vi.advanceTimersByTime(60000);
+    });
+    expect(document.activeElement).toBe(input);
+  });
+
   it("ignores hash state on non-tool paths", () => {
     window.history.replaceState(null, "", "/gotchas/foo#0%205%20*%20*%20*");
     render(<App />);
