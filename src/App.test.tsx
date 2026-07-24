@@ -124,12 +124,20 @@ describe("App", () => {
   });
 
   it("gives each rendered warning a composable permalink anchor", () => {
-    render(<App initialExpression="* * * * *" />);
-    const warning = screen.getByRole("alert", { name: /shortest interval/i });
-    expect(warning.id).toBe("sub-minimum-interval");
-    expect(`#${encodeURIComponent("* * * * *")}#${warning.id}`).toBe(
-      "#*%20*%20*%20*%20*#sub-minimum-interval",
-    );
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    window.location.hash = "#*%20*%20*%20*%20*#sub-minimum-interval";
+    render(<App />);
+    expect(screen.getByRole("alert", { name: /shortest interval/i }).id).toBe("sub-minimum-interval");
+    expect(scrollIntoView).toHaveBeenCalled();
+  });
+
+  it("keeps the expression and results when the skip link changes the hash", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    window.location.hash = "#results";
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("0 12 * * *");
+    expect(screen.getByRole("table")).toBeTruthy();
   });
 
   it("discloses a truncated firing list near the maximum representable date", () => {

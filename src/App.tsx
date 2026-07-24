@@ -62,7 +62,7 @@ export function App({
   useEffect(() => {
     const onHashChange = () => {
       const state = parseHash(window.location.hash);
-      if (!state) return;
+      if (!state || state.expression === "results") return;
       setInput(state.expression);
       if (state.warningId) document.getElementById(state.warningId)?.scrollIntoView();
     };
@@ -119,18 +119,21 @@ export function App({
           {result.error}
         </p>
       )}
-      <aside aria-label="Contextual note" style={{ borderLeft: "3px solid #666", paddingLeft: "0.75rem" }}>
-      {CONTEXTUAL_NOTES.map((note) => (
-        <p key={note.id} style={{ color: "#555" }}>
-          {note.message}{" "}
-          <span style={{ fontSize: "0.85rem" }}>
-            (verified against <a href={note.sourceUrl}>GitHub docs</a> on {note.verifiedOn})
-          </span>
-        </p>
-      ))}
+      <aside
+        aria-label="Contextual note"
+        style={{ borderLeft: "3px solid #666", paddingLeft: "0.75rem" }}
+      >
+        {CONTEXTUAL_NOTES.map((note) => (
+          <p key={note.id} style={{ color: "#555" }}>
+            {note.message}{" "}
+            <span style={{ fontSize: "0.85rem" }}>
+              (verified against <a href={note.sourceUrl}>GitHub docs</a> on {note.verifiedOn})
+            </span>
+          </p>
+        ))}
       </aside>
       {result.ok && output && (
-        <section id="results">
+        <section id="results" tabIndex={-1}>
           <p>{output.translation.sentence}</p>
           <p style={{ fontSize: "0.9rem", color: "#555" }}>{output.translation.timezoneNote}</p>
           {output.provisionalNotes.map((note) => (
