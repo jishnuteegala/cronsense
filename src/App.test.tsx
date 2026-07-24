@@ -1,10 +1,11 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App, DST_NOTE, formatLocal, formatUtc } from "./App";
 
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  window.history.replaceState(null, "", "/");
 });
 
 describe("App", () => {
@@ -107,6 +108,28 @@ describe("App", () => {
   it("does not expose provisional DOM/DOW caveat text", () => {
     render(<App initialExpression="0 0 */2 * 1" />);
     expect(screen.queryByText(/Vixie cron source precedent/)).toBeNull();
+  });
+
+  it("loads the expression from an encoded permalink", () => {
+    window.location.hash = "#0%2012%20*%20*%20*";
+    render(<App />);
+    expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("0 12 * * *");
+    expect(screen.getByText("At 12:00 UTC.")).toBeTruthy();
+  });
+
+  it("updates the expression permalink when the input changes", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    fireEvent.change(screen.getByLabelText("Cron expression"), { target: { value: "5 8 * * *" } });
+    expect(window.location.hash).toBe("#5%208%20*%20*%20*");
+  });
+
+  it("gives each rendered warning a composable permalink anchor", () => {
+    render(<App initialExpression="* * * * *" />);
+    const warning = screen.getByRole("alert", { name: /shortest interval/i });
+    expect(warning.id).toBe("sub-minimum-interval");
+    expect(`#${encodeURIComponent("* * * * *")}#${warning.id}`).toBe(
+      "#*%20*%20*%20*%20*#sub-minimum-interval",
+    );
   });
 
   it("discloses a truncated firing list near the maximum representable date", () => {
