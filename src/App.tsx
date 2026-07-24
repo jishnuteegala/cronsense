@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { domDowProvisionalNote, neverFiresReason, nextFirings } from "./cron/firings";
 import { parseCron } from "./cron/parse";
 import { translate } from "./cron/translate";
-import { evaluateWarnings } from "./cron/warnings";
+import { evaluateWarnings, INACTIVITY_NOTE } from "./cron/warning-engine";
 
 export const DST_NOTE =
   "scheduled times are computed in UTC; local times shift when your timezone changes for DST";
@@ -96,6 +96,15 @@ export function App({
           {result.error}
         </p>
       )}
+      {INACTIVITY_NOTE && (
+        <p style={{ color: "#555" }}>
+          {INACTIVITY_NOTE.message}{" "}
+          <span style={{ fontSize: "0.85rem" }}>
+            (verified against <a href={INACTIVITY_NOTE.sourceUrl}>GitHub docs</a> on{" "}
+            {INACTIVITY_NOTE.verifiedOn})
+          </span>
+        </p>
+      )}
       {result.ok && output && (
         <>
           <p>{output.translation.sentence}</p>
@@ -105,22 +114,24 @@ export function App({
               {note}
             </p>
           ))}
-          {output.warnings.map((warning) => (
-            <p
-              key={warning.id}
-              role={warning.rank === "diagnostic" ? "alert" : undefined}
-              style={{ color: warning.rank === "contextual" ? "#555" : "#8a5a00" }}
-            >
-              {warning.message}{" "}
-              <span style={{ fontSize: "0.85rem", color: "#555" }}>
-                (verified against{" "}
-                <a href={warning.sourceUrl} style={{ color: "inherit" }}>
-                  GitHub docs
-                </a>{" "}
-                on {warning.verifiedOn})
-              </span>
-            </p>
-          ))}
+          {output.warnings
+            .filter((warning) => warning.id !== "inactivity-pause")
+            .map((warning) => (
+              <p
+                key={warning.id}
+                role={warning.rank === "diagnostic" ? "alert" : undefined}
+                style={{ color: "#8a5a00", fontWeight: warning.emphasised ? "bold" : "normal" }}
+              >
+                {warning.message}{" "}
+                <span style={{ fontSize: "0.85rem", color: "#555" }}>
+                  (verified against{" "}
+                  <a href={warning.sourceUrl} style={{ color: "inherit" }}>
+                    GitHub docs
+                  </a>{" "}
+                  on {warning.verifiedOn})
+                </span>
+              </p>
+            ))}
           {!output.never && (
             <>
               <h2>

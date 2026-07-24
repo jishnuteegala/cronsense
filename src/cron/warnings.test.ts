@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseCron } from "./parse";
-import { WARNINGS, evaluateWarnings } from "./warnings";
+import { evaluateWarnings } from "./warning-engine";
+import { WARNINGS } from "./warnings";
 
 function ast(input: string) {
   const result = parseCron(input);
@@ -18,7 +19,7 @@ describe("warning definitions", () => {
     for (const warning of WARNINGS) {
       expect(warning.verifiedOn).toBe("2026-07-24");
       expect(warning.sourceUrl).toMatch(/^https:\/\/docs\.github\.com\//);
-      expect(warning.sourcePath).toMatch(/\.md$/);
+      expect(warning.sourcePaths.every((path) => path.endsWith(".md"))).toBe(true);
       expect(typeof warning.predicate.kind).toBe("string");
       expect(warning.message).not.toBe("");
     }
@@ -78,5 +79,12 @@ describe("contextual caveats", () => {
     expect(warning?.message).toContain(
       "In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days.",
     );
+  });
+
+  it("records both sourced inactivity-note paths", () => {
+    expect(WARNINGS.find((warning) => warning.id === "inactivity-pause")?.sourcePaths).toEqual([
+      "content/actions/reference/workflows-and-actions/events-that-trigger-workflows.md",
+      "data/reusables/actions/scheduled-workflows-disabled.md",
+    ]);
   });
 });

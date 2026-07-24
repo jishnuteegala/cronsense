@@ -34,6 +34,7 @@ describe("App", () => {
     expect(screen.getByRole("alert").textContent).toContain("GitHub Actions does not support");
     expect(screen.queryByRole("table")).toBeNull();
     expect(screen.getAllByText(new RegExp(DST_NOTE)).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/scheduled workflows are automatically disabled/)).toBeTruthy();
   });
 
   it("shows all caveats for a never-firing expression without a table", () => {
@@ -68,6 +69,11 @@ describe("App", () => {
   it("shows the sub-minimum-interval warning for every-minute schedules", () => {
     render(<App initialExpression="* * * * *" />);
     expect(screen.getByText(/once every 5 minutes/)).toBeTruthy();
+  });
+
+  it("visibly emphasises the high-load caveat at minute zero", () => {
+    render(<App initialExpression="0 * * * *" />);
+    expect(screen.getByText(/some queued jobs may be dropped/).style.fontWeight).toBe("bold");
   });
 
   it("renders warning source metadata with a docs link and verification date", () => {
