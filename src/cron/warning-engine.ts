@@ -23,11 +23,7 @@ type SteppedTerm = Exclude<FieldTerm, { kind: "value" }>;
 function unevenStepTerms(field: FieldAst): SteppedTerm[] {
   const { min, max } = FIELD_RANGES[field.field];
   return field.terms.filter((term): term is SteppedTerm => {
-    if (term.kind === "value") return false;
-    const from = term.kind === "wildcard" ? min : term.from;
-    const to = term.kind === "wildcard" ? max : term.to;
-    const last = from + Math.floor((to - from) / term.step) * term.step;
-    return term.step > 1 && from + (max - min + 1) - last !== term.step;
+    return term.kind === "wildcard" && term.explicitStep && (max - min + 1) % term.step !== 0;
   });
 }
 
@@ -55,10 +51,9 @@ function messageFor(warning: WarningDefinition, ast: CronAst): string {
       unevenStepTerms(field).map((term) => {
         const { min, max } = FIELD_RANGES[field.field];
         const from = term.kind === "wildcard" ? min : term.from;
-        const to = term.kind === "wildcard" ? max : term.to;
+        const to = max;
         const last = from + Math.floor((to - from) / term.step) * term.step;
-        const boundaryGap = from + (max - min + 1) - last;
-        return `${field.field} ${term.kind === "wildcard" ? `*/${term.step}` : `${from}-${to}/${term.step}`} fires at ${from}, ..., ${last}, then ${from} after ${boundaryGap} units`;
+        return `${field.field} */${term.step} selects ${from}, ..., ${last}, then restarts at ${from}`;
       }),
   );
   return warning.message.replace("{details}", details.join("; "));

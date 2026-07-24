@@ -83,15 +83,15 @@ describe("expression-specific warnings", () => {
       (item) => item.id === "uneven-step-reset",
     );
     expect(warning?.message).toContain("minute */7");
-    expect(warning?.message).toContain("0, ..., 56, then 0 after 4 units");
+    expect(warning?.message).toContain("0, ..., 56, then restarts at 0");
   });
 
-  it("detects equivalent stepped ranges", () => {
-    expect(warningIds("0-59/7 * * * *")).toContain("uneven-step-reset");
+  it("does not mislabel stepped ranges as wildcard reset schedules", () => {
     expect(warningIds("5-55/10 * * * *")).not.toContain("uneven-step-reset");
+    expect(warningIds("0-59/7 * * * *")).not.toContain("uneven-step-reset");
     expect(
       evaluateWarnings(ast("*/8 * * * *")).find((item) => item.id === "uneven-step-reset")?.message,
-    ).toContain("56, then 0 after 4 units");
+    ).toContain("56, then restarts at 0");
   });
 
   it("identifies never-firing conflicting fields", () => {
