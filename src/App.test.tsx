@@ -100,6 +100,17 @@ describe("App", () => {
     expect(screen.getByText(/Vixie cron source precedent/)).toBeTruthy();
   });
 
+  it("discloses a truncated firing list near the maximum representable date", () => {
+    vi.useFakeTimers();
+    const from = new Date(Date.UTC(2026, 0, 1));
+    from.setUTCFullYear(275755);
+    vi.setSystemTime(from);
+    render(<App initialExpression="0 0 29 2 *" />);
+    expect(screen.getByRole("heading", { level: 2, name: /Next \d firings?/ })).toBeTruthy();
+    expect(screen.getByText(/maximum date JavaScript can represent/)).toBeTruthy();
+    expect(screen.queryByText("Next 10 firings")).toBeNull();
+  });
+
   it("refreshes exactly at the next minute boundary, not mount-relative", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(Date.UTC(2026, 0, 15, 12, 0, 29)));

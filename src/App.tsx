@@ -124,7 +124,17 @@ export function App({
           )}
           {!output.never && (
             <>
-              <h2>Next 10 firings</h2>
+              <h2>
+                {output.firings.length < 10
+                  ? `Next ${output.firings.length} firing${output.firings.length === 1 ? "" : "s"}`
+                  : "Next 10 firings"}
+              </h2>
+              {output.firings.length < 10 && (
+                <p style={{ fontSize: "0.85rem", color: "#555" }}>
+                  Only {output.firings.length} firing{output.firings.length === 1 ? "" : "s"} can be
+                  shown: later occurrences fall beyond the maximum date JavaScript can represent.
+                </p>
+              )}
               <table style={{ borderCollapse: "collapse", width: "100%" }}>
                 <thead>
                   <tr>

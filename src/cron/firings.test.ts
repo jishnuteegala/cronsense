@@ -354,6 +354,17 @@ describe("JavaScript Date boundary", () => {
   it("returns nothing for an invalid from date", () => {
     expect(nextFirings(ast("* * * * *"), new Date(Number.NaN), 10)).toEqual([]);
   });
+
+  it("returns a partial list when fewer than the requested firings are representable", () => {
+    const from = new Date(Date.UTC(275755, 0, 1));
+    const firings = nextFirings(ast("0 0 29 2 *"), from, 10);
+    expect(firings.length).toBeLessThan(10);
+    expect(firings.length).toBeGreaterThan(0);
+    for (const firing of firings) {
+      expect(firing.getUTCMonth()).toBe(1);
+      expect(firing.getUTCDate()).toBe(29);
+    }
+  });
 });
 
 describe("never fires", () => {
