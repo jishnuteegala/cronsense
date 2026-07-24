@@ -20,16 +20,27 @@ export interface ActiveWarning {
 
 type SteppedTerm = Exclude<FieldTerm, { kind: "value" }>;
 
+const FIELD_LABELS: Record<FieldName, string> = {
+  minute: "minute",
+  hour: "hour",
+  dayOfMonth: "day of the month",
+  month: "month",
+  dayOfWeek: "day of the week",
+};
+
 function unevenStepTerms(field: FieldAst): SteppedTerm[] {
+  const steppedTerms = field.terms.filter(
+    (term): term is SteppedTerm =>
+      term.kind !== "value" && term.step > 1 && (term.kind !== "wildcard" || term.explicitStep),
+  );
+  if (steppedTerms.length === 0) return [];
   const { min, max } = FIELD_RANGES[field.field];
-  return field.terms.filter((term): term is SteppedTerm => {
-    if (term.kind === "value") return false;
-    if (term.step === 1 || (term.kind === "wildcard" && !term.explicitStep)) return false;
-    const from = term.kind === "wildcard" ? min : term.from;
-    const to = term.kind === "wildcard" ? max : term.to;
-    const last = from + Math.floor((to - from) / term.step) * term.step;
-    return max - last + from - min + 1 !== term.step;
+  const values = [...expandField(field)].sort((a, b) => a - b);
+  const gaps = values.map((value, index) => {
+    const next = values[(index + 1) % values.length] ?? value;
+    return index === values.length - 1 ? max - value + next - min + 1 : next - value;
   });
+  return gaps.every((gap) => gap === gaps[0]) ? [] : steppedTerms;
 }
 
 function unevenStepFields(ast: CronAst): FieldName[] {
@@ -60,7 +71,7 @@ function messageFor(warning: WarningDefinition, ast: CronAst): string {
         const last = from + Math.floor((to - from) / term.step) * term.step;
         const expression =
           term.kind === "wildcard" ? `*/${term.step}` : `${from}-${to}/${term.step}`;
-        return `The ${field.field} ${expression} schedule selects ${from}, ..., ${last}; it resets at ${from} when the field wraps`;
+        return `The ${FIELD_LABELS[field.field]} ${expression} schedule selects ${from}, ..., ${last}; it resets at ${from} when the field wraps`;
       }),
   );
   return warning.message.replace("{details}", details.join("; "));

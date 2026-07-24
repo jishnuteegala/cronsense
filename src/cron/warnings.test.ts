@@ -63,8 +63,14 @@ describe("warning definitions", () => {
         ],
       ],
     );
-    expect(WARNINGS.find((warning) => warning.id === "high-load-delay-drop")?.message).toContain(
-      "If the load is sufficiently high enough, some queued jobs may be dropped. To decrease the chance of delay, schedule your workflow to run at a different time of the hour.",
+    expect(WARNINGS.find((warning) => warning.id === "sub-minimum-interval")?.message).toBe(
+      'GitHub docs: "The shortest interval you can run scheduled workflows is once every 5 minutes." This expression fires more often; the docs do not say what happens to such an expression.',
+    );
+    expect(WARNINGS.find((warning) => warning.id === "high-load-delay-drop")?.message).toBe(
+      'GitHub docs: "The `schedule` event can be delayed during periods of high loads of GitHub Actions workflow runs. High load times include the start of every hour." "If the load is sufficiently high enough, some queued jobs may be dropped. To decrease the chance of delay, schedule your workflow to run at a different time of the hour."',
+    );
+    expect(WARNINGS.find((warning) => warning.id === "inactivity-pause")?.message).toBe(
+      'GitHub docs: "In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days." This applies to public repositories; GitHub does not document an equivalent 60-day pause for private repositories.',
     );
   });
 
@@ -88,6 +94,7 @@ describe("expression-specific warnings", () => {
 
   it("detects stepped ranges whose boundary gap differs from their step", () => {
     expect(warningIds("5-55/10 * * * *")).not.toContain("uneven-step-reset");
+    expect(warningIds("0-20/10,30-50/10 * * * *")).not.toContain("uneven-step-reset");
     const warning = evaluateWarnings(ast("0-59/7 * * * *")).find(
       (item) => item.id === "uneven-step-reset",
     );
@@ -97,6 +104,13 @@ describe("expression-specific warnings", () => {
     expect(
       evaluateWarnings(ast("*/8 * * * *")).find((item) => item.id === "uneven-step-reset")?.message,
     ).toContain("56; it resets at 0 when the field wraps");
+  });
+
+  it("uses documented labels for non-minute uneven steps", () => {
+    const warning = evaluateWarnings(ast("0 0 */7 * *")).find(
+      (item) => item.id === "uneven-step-reset",
+    );
+    expect(warning?.message).toContain("The day of the month */7 schedule");
   });
 
   it("identifies never-firing conflicting fields", () => {
@@ -135,6 +149,10 @@ describe("contextual caveats", () => {
     expect(warning?.message).toContain(
       "In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days.",
     );
+  });
+
+  it("excludes contextual notes from expression-specific warnings", () => {
+    expect(warningIds("17 4 * * *")).not.toContain("inactivity-pause");
   });
 
   it("records both sourced inactivity-note paths", () => {

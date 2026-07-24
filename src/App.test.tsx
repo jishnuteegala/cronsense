@@ -99,14 +99,14 @@ describe("App", () => {
     expect(screen.getByText(/awaits GHA-validator arbitration/)).toBeTruthy();
   });
 
-  it("flags DOM/DOW OR semantics as provisional when both fields are restricted", () => {
+  it("suppresses the empirically gated DOM/DOW warning", () => {
     render(<App initialExpression="0 0 15 * 1" />);
-    expect(screen.getByText(/POSIX\/Vixie OR union/)).toBeTruthy();
+    expect(screen.queryByText(/POSIX\/Vixie OR union/)).toBeNull();
   });
 
-  it("flags wildcard-origin DOM/DOW intersection as provisional", () => {
+  it("does not expose provisional DOM/DOW caveat text", () => {
     render(<App initialExpression="0 0 */2 * 1" />);
-    expect(screen.getByText(/Vixie cron source precedent/)).toBeTruthy();
+    expect(screen.queryByText(/Vixie cron source precedent/)).toBeNull();
   });
 
   it("discloses a truncated firing list near the maximum representable date", () => {

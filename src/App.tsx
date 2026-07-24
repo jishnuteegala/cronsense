@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { domDowProvisionalNote, neverFiresReason, nextFirings } from "./cron/firings";
+import { neverFiresReason, nextFirings } from "./cron/firings";
 import { parseCron } from "./cron/parse";
 import { translate } from "./cron/translate";
 import { CONTEXTUAL_NOTES, evaluateWarnings } from "./cron/warning-engine";
@@ -60,16 +60,13 @@ export function App({
   const output = useMemo(() => {
     if (!result.ok) return null;
     const never = neverFiresReason(result.ast);
-    const domDowNote = domDowProvisionalNote(result.ast);
     const warnings = evaluateWarnings(result.ast);
     return {
       translation: translate(result.ast),
       firings: never ? [] : nextFirings(result.ast, new Date(nowMinute * 60000), 10),
       never,
       warnings,
-      provisionalNotes: domDowNote
-        ? [...result.provisionalNotes, domDowNote]
-        : result.provisionalNotes,
+      provisionalNotes: result.provisionalNotes,
     };
   }, [result, nowMinute]);
 
