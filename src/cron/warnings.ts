@@ -57,7 +57,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
   {
     id: "uneven-step-reset",
     predicate: { kind: "uneven-step" },
-    message: "",
+    message: "does not evenly divide its field range, so it resets at the field boundary.",
     verifiedOn: VERIFIED_ON,
     sourceUrl: SCHEDULE_URL,
     sourcePath: "data/reusables/repositories/actions-scheduled-workflow-example.md",
@@ -66,7 +66,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
   {
     id: "never-fires",
     predicate: { kind: "never-fires" },
-    message: "",
+    message: "this expression will never fire: the field constraints admit no date",
     verifiedOn: VERIFIED_ON,
     sourceUrl: SCHEDULE_URL,
     sourcePath: "data/reusables/repositories/cron.md",
@@ -138,7 +138,7 @@ function messageFor(warning: WarningDefinition, ast: CronAst): string {
     );
     return `${field} ${term?.kind === "wildcard" ? `*/${term.step}` : ""}`;
   });
-  return `The ${details.join(" and ")} step does not evenly divide its field range, so it resets at the field boundary.`;
+  return `The ${details.join(" and ")} step ${warning.message}`;
 }
 
 export function evaluateWarnings(ast: CronAst): ActiveWarning[] {

@@ -20,6 +20,7 @@ describe("warning definitions", () => {
       expect(warning.sourceUrl).toMatch(/^https:\/\/docs\.github\.com\//);
       expect(warning.sourcePath).toMatch(/\.md$/);
       expect(typeof warning.predicate.kind).toBe("string");
+      expect(warning.message).not.toBe("");
     }
   });
 

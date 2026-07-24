@@ -61,7 +61,7 @@ export function App({
     if (!result.ok) return null;
     const never = neverFiresReason(result.ast);
     const domDowNote = domDowProvisionalNote(result.ast);
-    const warnings = never ? [] : evaluateWarnings(result.ast);
+    const warnings = evaluateWarnings(result.ast);
     return {
       translation: translate(result.ast),
       firings: never ? [] : nextFirings(result.ast, new Date(nowMinute * 60000), 10),
@@ -106,7 +106,11 @@ export function App({
             </p>
           ))}
           {output.warnings.map((warning) => (
-            <p key={warning.id} role="alert" style={{ color: "#8a5a00" }}>
+            <p
+              key={warning.id}
+              role={warning.rank === "diagnostic" ? "alert" : undefined}
+              style={{ color: warning.rank === "contextual" ? "#555" : "#8a5a00" }}
+            >
               {warning.message}{" "}
               <span style={{ fontSize: "0.85rem", color: "#555" }}>
                 (verified against{" "}
@@ -117,11 +121,6 @@ export function App({
               </span>
             </p>
           ))}
-          {output.never && (
-            <p role="alert" style={{ color: "#b00020" }}>
-              {output.never}
-            </p>
-          )}
           {!output.never && (
             <>
               <h2>

@@ -36,9 +36,11 @@ describe("App", () => {
     expect(screen.getAllByText(new RegExp(DST_NOTE)).length).toBeGreaterThanOrEqual(1);
   });
 
-  it("shows the never-fires message without a table and keeps the DST note", () => {
+  it("shows all caveats for a never-firing expression without a table", () => {
     render(<App initialExpression="0 0 30 2 *" />);
     expect(screen.getByRole("alert").textContent).toContain("never fire");
+    expect(screen.getByText(/some queued jobs may be dropped/)).toBeTruthy();
+    expect(screen.getByText(/scheduled workflows are automatically disabled/)).toBeTruthy();
     expect(screen.queryByRole("table")).toBeNull();
     expect(screen.getAllByText(new RegExp(DST_NOTE)).length).toBeGreaterThanOrEqual(1);
   });
