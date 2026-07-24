@@ -30,7 +30,7 @@ describe("warning definitions", () => {
   });
 
   it("returns exact applicable warnings for a normal schedule", () => {
-    expect(warningIds("17 4 * * *")).toEqual(["high-load-delay-drop", "inactivity-pause"]);
+    expect(warningIds("17 4 * * *")).toEqual(["high-load-delay-drop"]);
   });
 });
 
@@ -40,6 +40,11 @@ describe("expression-specific warnings", () => {
       (item) => item.id === "uneven-step-reset",
     );
     expect(warning?.message).toContain("minute */7");
+    expect(warning?.message).toContain("0, ..., 56, then 0 after 4 units");
+  });
+
+  it("detects equivalent stepped ranges", () => {
+    expect(warningIds("0-59/7 * * * *")).toContain("uneven-step-reset");
   });
 
   it("identifies never-firing conflicting fields", () => {
@@ -56,6 +61,7 @@ describe("expression-specific warnings", () => {
     expect(warning?.message).toContain(
       "The shortest interval you can run scheduled workflows is once every 5 minutes.",
     );
+    expect(warningIds("0 * * * *")).toEqual(["high-load-delay-drop"]);
     expect(warning?.message).not.toContain("rejected");
   });
 });
@@ -72,9 +78,7 @@ describe("contextual caveats", () => {
   });
 
   it("keeps the public-repository inactivity note contextual", () => {
-    const warning = evaluateWarnings(ast("17 4 * * *")).find(
-      (item) => item.id === "inactivity-pause",
-    );
+    const warning = WARNINGS.find((item) => item.id === "inactivity-pause");
     expect(warning?.rank).toBe("contextual");
     expect(warning?.message).toContain(
       "In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days.",
