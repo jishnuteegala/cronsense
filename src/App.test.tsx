@@ -133,6 +133,18 @@ describe("App", () => {
       .find((element) => /shortest interval/.test(element.textContent ?? ""));
     expect(warning?.id).toBe("sub-minimum-interval");
     expect(scrollIntoView).toHaveBeenCalled();
+    expect(document.activeElement?.id).toBe("sub-minimum-interval");
+  });
+
+  it("ignores hash state on non-tool paths", () => {
+    window.history.replaceState(null, "", "/gotchas/foo#0%205%20*%20*%20*");
+    render(<App />);
+    expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe(
+      "*/15 9-17 * * MON-FRI",
+    );
+    fireEvent.change(screen.getByLabelText("Cron expression"), { target: { value: "5 8 * * *" } });
+    expect(window.location.hash).toBe("#0%205%20*%20*%20*");
+    window.history.replaceState(null, "", "/");
   });
 
   it("does not treat a direct /#results load as a cron expression", () => {

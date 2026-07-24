@@ -5,6 +5,10 @@ export interface HashState {
 
 const RESERVED_FRAGMENTS = new Set(["results"]);
 
+export function isToolPage(pathname: string): boolean {
+  return pathname === "/" || pathname === "/index.html";
+}
+
 export function parseHash(hash: string): HashState | null {
   const value = hash.startsWith("#") ? hash.slice(1) : hash;
   if (!value || RESERVED_FRAGMENTS.has(value)) return null;

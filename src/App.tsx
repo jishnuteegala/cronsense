@@ -3,7 +3,7 @@ import { neverFiresReason, nextFirings } from "./cron/firings";
 import { parseCron } from "./cron/parse";
 import { translate } from "./cron/translate";
 import { CONTEXTUAL_NOTES, evaluateWarnings } from "./cron/warning-engine";
-import { expressionHash, parseHash } from "./hash";
+import { expressionHash, isToolPage, parseHash } from "./hash";
 
 export const DST_NOTE =
   "scheduled times are computed in UTC; local times shift when your timezone changes for DST";
@@ -26,6 +26,13 @@ export function formatLocal(date: Date, timeZone?: string, locale?: string): str
   });
 }
 
+function focusWarning(warningId: string) {
+  const element = document.getElementById(warningId);
+  if (!element) return;
+  element.scrollIntoView();
+  element.focus();
+}
+
 export function App({
   initialExpression,
   timeZone,
@@ -35,7 +42,8 @@ export function App({
   timeZone?: string;
   locale?: string;
 }) {
-  const initialHash = typeof window === "undefined" ? null : parseHash(window.location.hash);
+  const onToolPage = typeof window !== "undefined" && isToolPage(window.location.pathname);
+  const initialHash = onToolPage ? parseHash(window.location.hash) : null;
   const [input, setInput] = useState(
     initialHash?.expression ?? initialExpression ?? "*/15 9-17 * * MON-FRI",
   );
@@ -60,15 +68,16 @@ export function App({
     };
   }, []);
   useEffect(() => {
+    if (!onToolPage) return;
     const onHashChange = () => {
       const state = parseHash(window.location.hash);
       if (!state) return;
       setInput(state.expression);
-      if (state.warningId) document.getElementById(state.warningId)?.scrollIntoView();
+      if (state.warningId) focusWarning(state.warningId);
     };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
-  }, []);
+  }, [onToolPage]);
   const result = useMemo(() => parseCron(input), [input]);
   const nowMinute = Math.floor(now.getTime() / 60000);
   const output = useMemo(() => {
@@ -85,13 +94,14 @@ export function App({
   }, [result, nowMinute]);
 
   useEffect(() => {
+    if (!onToolPage) return;
     const warningId = parseHash(window.location.hash)?.warningId;
-    if (warningId) document.getElementById(warningId)?.scrollIntoView();
-  }, [output]);
+    if (warningId) focusWarning(warningId);
+  }, [onToolPage, output]);
 
   const updateInput = (value: string) => {
     setInput(value);
-    window.history.replaceState(null, "", expressionHash(value));
+    if (onToolPage) window.history.replaceState(null, "", expressionHash(value));
   };
 
   return (
@@ -154,6 +164,7 @@ export function App({
               <article
                 id={warning.id}
                 key={warning.id}
+                tabIndex={-1}
                 role={warning.rank === "diagnostic" ? "alert" : undefined}
                 style={{
                   borderLeft: `3px solid ${warning.rank === "diagnostic" ? "#b00020" : "#8a5a00"}`,
