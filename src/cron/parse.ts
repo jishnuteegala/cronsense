@@ -155,19 +155,23 @@ function parseTerm(token: string, spec: FieldSpec, notes: string[]): FieldTerm |
   return { kind: "value", value: value.value };
 }
 
+function isLwSyntaxAtom(atom: string, spec: FieldSpec): boolean {
+  if (!/[LW]/i.test(atom) || spec.names?.[atom.toUpperCase()] !== undefined) {
+    return false;
+  }
+  if (/^[LW\d]+$/i.test(atom)) {
+    return true;
+  }
+  const core = atom.replace(/^[LW]+/i, "").replace(/[LW]+$/i, "");
+  return spec.names?.[core.toUpperCase()] !== undefined;
+}
+
 function parseField(raw: string, spec: FieldSpec, notes: string[]): FieldAst | string {
   const unsupportedToken = raw.match(/[#?]/);
   if (unsupportedToken) {
     return `"${unsupportedToken[0]}" in ${spec.field} is not part of GitHub Actions cron syntax (presumed rejected; pending GHA-validator confirmation)`;
   }
-  const lwAtom = raw
-    .split(/[,/-]/)
-    .find(
-      (atom) =>
-        /^[LW\d]+$/i.test(atom) &&
-        /[LW]/i.test(atom) &&
-        spec.names?.[atom.toUpperCase()] === undefined,
-    );
+  const lwAtom = raw.split(/[,/-]/).find((atom) => isLwSyntaxAtom(atom, spec));
   if (lwAtom !== undefined) {
     return `"${lwAtom}" in ${spec.field} uses L/W tokens that are not part of GitHub Actions cron syntax (presumed rejected; pending GHA-validator confirmation)`;
   }
