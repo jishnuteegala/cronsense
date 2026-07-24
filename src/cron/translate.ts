@@ -121,7 +121,7 @@ function dayPhrase(ast: CronAst): string {
     if (union) {
       return `on ${domPart}, or on ${dowPart} (either matching day fires; awaiting empirical verification of GHA's combined day-of-month/day-of-week behaviour)`
     }
-    return `on ${domPart} that is also ${dowPart}`
+    return `on ${domPart} that is also ${dowPart} (wildcard-origin day fields intersect, per Vixie cron precedent; awaiting empirical verification of GHA's combined day-of-month/day-of-week behaviour)`
   }
   if (domRestricted) {
     return `on ${domPart}`

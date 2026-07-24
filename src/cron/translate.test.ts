@@ -74,6 +74,13 @@ describe('translate', () => {
     expect(text).toContain('awaiting empirical verification')
   })
 
+  it('wildcard-origin DOM with restricted DOW spells out intersection with the Vixie caveat', () => {
+    const text = sentence('0 0 */2 * MON')
+    expect(text).toContain('that is also Monday')
+    expect(text).toContain('per Vixie cron precedent')
+    expect(text).toContain('awaiting empirical verification')
+  })
+
   it('stepped wildcard months name the starting month', () => {
     expect(sentence('0 0 * */2 *')).toBe(
       'At 00:00 UTC, in every 2 months starting with January (resetting each boundary).',

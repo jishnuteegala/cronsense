@@ -79,7 +79,12 @@ describe('App', () => {
 
   it('flags DOM/DOW OR semantics as provisional when both fields are restricted', () => {
     render(<App initialExpression="0 0 15 * 1" />)
-    expect(screen.getByText(/POSIX OR interpretation/)).toBeTruthy()
+    expect(screen.getByText(/POSIX\/Vixie OR union/)).toBeTruthy()
+  })
+
+  it('flags wildcard-origin DOM/DOW intersection as provisional', () => {
+    render(<App initialExpression="0 0 */2 * 1" />)
+    expect(screen.getByText(/Vixie cron source precedent/)).toBeTruthy()
   })
 })
 

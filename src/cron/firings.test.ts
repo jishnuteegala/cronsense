@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  DOM_DOW_INTERSECTION_PROVISIONAL_NOTE,
+  DOM_DOW_PROVISIONAL_NOTE,
   canEverFire,
+  domDowProvisionalNote,
   expandField,
   minimumIntervalMinutes,
   neverFiresReason,
@@ -230,6 +233,34 @@ describe('DOM/DOW OR semantics (provisional, awaiting empirical verification)', 
       '2026-01-03T00:00Z',
       '2026-01-04T00:00Z',
     ])
+  })
+
+  it('pins */N DOM with restricted DOW to Vixie intersection semantics', () => {
+    const firings = nextFirings(ast('0 0 */2 * MON'), new Date(Date.UTC(2026, 0, 1, 0, 0)), 4)
+    expect(iso(firings)).toEqual([
+      '2026-01-05T00:00Z',
+      '2026-01-19T00:00Z',
+      '2026-02-09T00:00Z',
+      '2026-02-23T00:00Z',
+    ])
+  })
+})
+
+describe('domDowProvisionalNote', () => {
+  it('returns the OR-union note when neither day field is wildcard-origin', () => {
+    expect(domDowProvisionalNote(ast('0 0 15 * MON'))).toBe(DOM_DOW_PROVISIONAL_NOTE)
+  })
+
+  it('returns the intersection note when a day field is wildcard-origin', () => {
+    expect(domDowProvisionalNote(ast('0 0 */2 * MON'))).toBe(
+      DOM_DOW_INTERSECTION_PROVISIONAL_NOTE,
+    )
+  })
+
+  it('returns null when only one day field is restricted', () => {
+    expect(domDowProvisionalNote(ast('0 0 15 * *'))).toBeNull()
+    expect(domDowProvisionalNote(ast('0 0 * * MON'))).toBeNull()
+    expect(domDowProvisionalNote(ast('0 0 * * *'))).toBeNull()
   })
 })
 

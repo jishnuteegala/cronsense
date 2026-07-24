@@ -231,17 +231,18 @@ export function subMinimumIntervalWarning(ast: CronAst): string | null {
 }
 
 export const DOM_DOW_PROVISIONAL_NOTE =
-  'This expression restricts both day-of-month and day-of-week. GitHub does not document how these combine; the firing times below assume the POSIX OR interpretation (a day matching either field fires) and are provisional until empirically verified against GitHub Actions.'
+  'This expression restricts both day-of-month and day-of-week. GitHub does not document how these combine; the firing times below assume the POSIX/Vixie OR union (a day matching either field fires) and are provisional until empirically verified against GitHub Actions via the verification repo (ticket #9), at which point this may change.'
+
+export const DOM_DOW_INTERSECTION_PROVISIONAL_NOTE =
+  'This expression combines a wildcard-origin day field ("*" or "*/N") with the other day field. Following Vixie cron source precedent, wildcard-origin fields retain wildcard status and the two day fields intersect (a day must match both). GitHub does not document this behaviour; the firing times below are provisional until empirically verified against GitHub Actions via the verification repo (ticket #9), at which point this may change.'
 
 export function domDowProvisionalNote(ast: CronAst): string | null {
-  if (
-    usesDayUnion(ast) &&
-    isRestricted(ast.dayOfMonth) &&
-    isRestricted(ast.dayOfWeek)
-  ) {
-    return DOM_DOW_PROVISIONAL_NOTE
+  if (!isRestricted(ast.dayOfMonth) || !isRestricted(ast.dayOfWeek)) {
+    return null
   }
-  return null
+  return usesDayUnion(ast)
+    ? DOM_DOW_PROVISIONAL_NOTE
+    : DOM_DOW_INTERSECTION_PROVISIONAL_NOTE
 }
 
 export function restrictedFields(ast: CronAst): FieldName[] {
