@@ -216,17 +216,6 @@ export function minimumIntervalMinutes(ast: CronAst): number | null {
   return Math.min(minWithinDay, crossDay);
 }
 
-export const SUB_MINIMUM_INTERVAL_WARNING =
-  'GitHub docs: "The shortest interval you can run scheduled workflows is once every 5 minutes." This expression fires more often; the docs do not say what happens to such an expression, so the outcome on GitHub Actions is undocumented.';
-
-export function subMinimumIntervalWarning(ast: CronAst): string | null {
-  const min = minimumIntervalMinutes(ast);
-  if (min !== null && min < 5) {
-    return SUB_MINIMUM_INTERVAL_WARNING;
-  }
-  return null;
-}
-
 export const DOM_DOW_PROVISIONAL_NOTE =
   "This expression restricts both day-of-month and day-of-week. GitHub does not document how these combine; the firing times below assume the POSIX/Vixie OR union (a day matching either field fires) and are provisional until empirically verified against GitHub Actions via the verification repo (ticket #9), at which point this may change.";
 

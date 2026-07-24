@@ -8,7 +8,6 @@ import {
   minimumIntervalMinutes,
   neverFiresReason,
   nextFirings,
-  subMinimumIntervalWarning,
 } from "./firings";
 import { parseCron } from "./parse";
 
@@ -387,29 +386,5 @@ describe("minimumIntervalMinutes", () => {
 
   it("returns null for never-firing expressions", () => {
     expect(minimumIntervalMinutes(ast("0 0 30 2 *"))).toBeNull();
-  });
-});
-
-describe("subMinimumIntervalWarning", () => {
-  it("warns for every-minute schedules quoting the docs", () => {
-    const warning = subMinimumIntervalWarning(ast("* * * * *"));
-    expect(warning).toContain("once every 5 minutes");
-    expect(warning).toContain("undocumented");
-  });
-
-  it("warns for */7 because of the 4-minute boundary gap", () => {
-    expect(subMinimumIntervalWarning(ast("*/7 * * * *"))).not.toBeNull();
-  });
-
-  it("does not warn for */5", () => {
-    expect(subMinimumIntervalWarning(ast("*/5 * * * *"))).toBeNull();
-  });
-
-  it("does not warn for hourly schedules", () => {
-    expect(subMinimumIntervalWarning(ast("0 * * * *"))).toBeNull();
-  });
-
-  it("returns null for never-firing expressions", () => {
-    expect(subMinimumIntervalWarning(ast("0 0 30 2 *"))).toBeNull();
   });
 });

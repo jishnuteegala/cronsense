@@ -62,6 +62,13 @@ describe("App", () => {
     expect(screen.getByText(/once every 5 minutes/)).toBeTruthy();
   });
 
+  it("renders warning source metadata with a docs link and verification date", () => {
+    render(<App initialExpression="* * * * *" />);
+    const link = screen.getByRole("link", { name: "GitHub docs" });
+    expect(link.getAttribute("href")).toContain("https://docs.github.com/");
+    expect(screen.getByText(/verified against/).textContent).toMatch(/on \d{4}-\d{2}-\d{2}/);
+  });
+
   it("shows the sub-minimum-interval warning for */7 boundary gaps", () => {
     render(<App initialExpression="*/7 * * * *" />);
     expect(screen.getByText(/once every 5 minutes/)).toBeTruthy();

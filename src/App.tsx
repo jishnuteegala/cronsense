@@ -1,12 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  domDowProvisionalNote,
-  neverFiresReason,
-  nextFirings,
-  subMinimumIntervalWarning,
-} from "./cron/firings";
+import { domDowProvisionalNote, neverFiresReason, nextFirings } from "./cron/firings";
 import { parseCron } from "./cron/parse";
 import { translate } from "./cron/translate";
+import { evaluateWarnings } from "./cron/warnings";
 
 export const DST_NOTE =
   "scheduled times are computed in UTC; local times shift when your timezone changes for DST";
@@ -44,12 +40,12 @@ export function App({
     if (!result.ok) return null;
     const never = neverFiresReason(result.ast);
     const domDowNote = domDowProvisionalNote(result.ast);
-    const subMinimum = never ? null : subMinimumIntervalWarning(result.ast);
+    const warnings = never ? [] : evaluateWarnings(result.ast);
     return {
       translation: translate(result.ast),
       firings: never ? [] : nextFirings(result.ast, new Date(nowMinute * 60000), 10),
       never,
-      subMinimum,
+      warnings,
       provisionalNotes: domDowNote
         ? [...result.provisionalNotes, domDowNote]
         : result.provisionalNotes,
@@ -88,11 +84,18 @@ export function App({
               {note}
             </p>
           ))}
-          {output.subMinimum && (
-            <p role="alert" style={{ color: "#8a5a00" }}>
-              {output.subMinimum}
+          {output.warnings.map((warning) => (
+            <p key={warning.id} role="alert" style={{ color: "#8a5a00" }}>
+              {warning.message}{" "}
+              <span style={{ fontSize: "0.85rem", color: "#555" }}>
+                (verified against{" "}
+                <a href={warning.sourceUrl} style={{ color: "inherit" }}>
+                  GitHub docs
+                </a>{" "}
+                on {warning.verifiedOn})
+              </span>
             </p>
-          )}
+          ))}
           {output.never && (
             <p role="alert" style={{ color: "#b00020" }}>
               {output.never}
