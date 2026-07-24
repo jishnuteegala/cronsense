@@ -15,14 +15,15 @@ function formatUtc(date: Date): string {
   return date.toISOString().replace('T', ' ').slice(0, 16) + ' UTC'
 }
 
-function formatLocal(date: Date): string {
-  return date.toLocaleString(undefined, {
+export function formatLocal(date: Date, timeZone?: string, locale?: string): string {
+  return date.toLocaleString(locale, {
     year: 'numeric',
     month: 'short',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     timeZoneName: 'short',
+    timeZone,
   })
 }
 

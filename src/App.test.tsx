@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
-import { App, DST_NOTE } from './App'
+import { App, DST_NOTE, formatLocal } from './App'
 
 afterEach(cleanup)
 
@@ -64,5 +64,24 @@ describe('App', () => {
   it('flags DOM/DOW OR semantics as provisional when both fields are restricted', () => {
     render(<App initialExpression="0 0 15 * 1" />)
     expect(screen.getByText(/POSIX OR interpretation/)).toBeTruthy()
+  })
+})
+
+describe('formatLocal', () => {
+  it('converts UTC to a DST-observing zone in summer', () => {
+    const text = formatLocal(new Date(Date.UTC(2026, 6, 1, 12, 0)), 'Europe/London', 'en-GB')
+    expect(text).toContain('13:00')
+    expect(text).toContain('BST')
+  })
+
+  it('converts UTC to the same zone in winter without the DST offset', () => {
+    const text = formatLocal(new Date(Date.UTC(2026, 0, 1, 12, 0)), 'Europe/London', 'en-GB')
+    expect(text).toContain('12:00')
+    expect(text).toContain('GMT')
+  })
+
+  it('handles zones with non-hour offsets', () => {
+    const text = formatLocal(new Date(Date.UTC(2026, 0, 1, 12, 0)), 'Asia/Kolkata', 'en-GB')
+    expect(text).toContain('17:30')
   })
 })

@@ -98,6 +98,9 @@ function parseStep(token: string, spec: FieldSpec): number | string {
     return `step value "${token}" in ${spec.field} must be a positive number`
   }
   const step = Number(token)
+  if (!Number.isSafeInteger(step)) {
+    return `step value "${token}" in ${spec.field} is too large`
+  }
   if (step === 0) {
     return `step value in ${spec.field} must be at least 1`
   }
@@ -166,7 +169,12 @@ function parseField(raw: string, spec: FieldSpec, notes: string[]): FieldAst | s
   }
   const lwAtom = raw
     .split(/[,/-]/)
-    .find((atom) => /^(L|W|\d+L|\d+W|LW)$/i.test(atom))
+    .find(
+      (atom) =>
+        /^[LW\d]+$/i.test(atom) &&
+        /[LW]/i.test(atom) &&
+        spec.names?.[atom.toUpperCase()] === undefined,
+    )
   if (lwAtom !== undefined) {
     return `"${lwAtom}" in ${spec.field} uses L/W tokens that are not part of GitHub Actions cron syntax (presumed rejected; pending GHA-validator confirmation)`
   }

@@ -140,6 +140,27 @@ describe('parseCron rejection', () => {
     },
   )
 
+  it.each(['0 0 1LW * *', '0 0 WL * *', '0 0 L5 * *'])(
+    'rejects compound L/W forms as presumed-rejected: %s',
+    (input) => {
+      const error = expectError(input)
+      expect(error).toContain('presumed rejected')
+    },
+  )
+
+  it('still accepts names containing L or W letters like JUL and WED', () => {
+    expectOk('0 0 1 JUL WED')
+  })
+
+  it('rejects steps above the safe-integer range', () => {
+    expect(expectError('*/999999999999999999999 * * * *')).toContain('too large')
+    expect(
+      expectError(
+        '*/99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999 * * * *',
+      ),
+    ).toContain('too large')
+  })
+
   it('rejects the ? token', () => {
     expect(expectError('0 0 ? * *')).toContain('not part of GitHub Actions cron syntax')
   })

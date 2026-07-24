@@ -106,6 +106,33 @@ describe('month and year rollover', () => {
   })
 })
 
+describe('stepped DOM across variable month lengths', () => {
+  it('*/10 DOM resets at each month start across February and March', () => {
+    const firings = nextFirings(ast('0 0 */10 * *'), new Date(Date.UTC(2026, 0, 31, 12, 0)), 8)
+    expect(iso(firings)).toEqual([
+      '2026-02-01T00:00Z',
+      '2026-02-11T00:00Z',
+      '2026-02-21T00:00Z',
+      '2026-03-01T00:00Z',
+      '2026-03-11T00:00Z',
+      '2026-03-21T00:00Z',
+      '2026-03-31T00:00Z',
+      '2026-04-01T00:00Z',
+    ])
+  })
+
+  it('*/10 DOM includes day 31 only in 31-day months', () => {
+    const firings = nextFirings(ast('0 0 */10 * *'), new Date(Date.UTC(2026, 3, 21, 12, 0)), 5)
+    expect(iso(firings)).toEqual([
+      '2026-05-01T00:00Z',
+      '2026-05-11T00:00Z',
+      '2026-05-21T00:00Z',
+      '2026-05-31T00:00Z',
+      '2026-06-01T00:00Z',
+    ])
+  })
+})
+
 describe('leap years', () => {
   it('Feb 29 fires only in leap years', () => {
     const firings = nextFirings(ast('0 0 29 2 *'), T0, 2)
