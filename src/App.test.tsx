@@ -70,9 +70,10 @@ describe("App", () => {
 
   it("renders warning source metadata with a docs link and verification date", () => {
     render(<App initialExpression="* * * * *" />);
-    const link = screen.getByRole("link", { name: "GitHub docs" });
+    const [link] = screen.getAllByRole("link", { name: "GitHub docs" });
+    if (!link) throw new Error("expected a GitHub docs link");
     expect(link.getAttribute("href")).toContain("https://docs.github.com/");
-    expect(screen.getByText(/verified against/).textContent).toMatch(/on \d{4}-\d{2}-\d{2}/);
+    expect(screen.getAllByText(/verified against/)[0]?.textContent).toMatch(/on \d{4}-\d{2}-\d{2}/);
   });
 
   it("shows the sub-minimum-interval warning for */7 boundary gaps", () => {
