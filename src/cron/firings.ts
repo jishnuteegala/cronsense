@@ -71,14 +71,21 @@ function dayMatches(expanded: ExpandedCron, date: Date): boolean {
 // schedules spanning the non-leap century year 2100 (gaps of up to 8 years).
 const MAX_YEARS_PER_FIRING = 400;
 
+// Maximum timestamp representable by a JavaScript Date (ECMA-262: 8.64e15 ms).
+const MAX_DATE_TIME = 8640000000000000;
+
 function utcDate(year: number, monthIndex: number, day: number, hour = 0, minute = 0): Date {
   const date = new Date(Date.UTC(2000, monthIndex, day, hour, minute));
   date.setUTCFullYear(year + (date.getUTCFullYear() - 2000));
   return date;
 }
 
-function utcTime(year: number, monthIndex: number, day: number): number {
-  return utcDate(year, monthIndex, day).getTime();
+// Clamped to the Date range: near the upper representable boundary the
+// 400-year horizon would otherwise overflow to an invalid Date (NaN) and
+// silently disable the search.
+function horizonLimit(year: number): number {
+  const time = utcDate(year + MAX_YEARS_PER_FIRING, 0, 1).getTime();
+  return Number.isNaN(time) ? MAX_DATE_TIME : Math.min(time, MAX_DATE_TIME);
 }
 
 const MONTH_MAX_DAYS = new Map<number, number>([
@@ -133,6 +140,7 @@ export function nextFirings(ast: CronAst, from: Date, count: number): Date[] {
   const expanded = expandCron(ast);
   const results: Date[] = [];
   if (!Number.isSafeInteger(count) || count <= 0) return results;
+  if (Number.isNaN(from.getTime())) return results;
   if (!canEverFire(ast)) return results;
   const sortedMinutes = [...expanded.minutes].sort((a, b) => a - b);
   const sortedHours = [...expanded.hours].sort((a, b) => a - b);
@@ -143,7 +151,7 @@ export function nextFirings(ast: CronAst, from: Date, count: number): Date[] {
     from.getUTCHours(),
     from.getUTCMinutes() + 1,
   );
-  let limit = utcTime(start.getUTCFullYear() + MAX_YEARS_PER_FIRING, 0, 1);
+  let limit = horizonLimit(start.getUTCFullYear());
   const day = utcDate(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
   let isFirstDay = true;
   while (day.getTime() < limit && results.length < count) {
@@ -164,7 +172,7 @@ export function nextFirings(ast: CronAst, from: Date, count: number): Date[] {
             utcDate(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate(), hour, minute),
           );
           if (results.length >= count) return results;
-          limit = utcTime(day.getUTCFullYear() + MAX_YEARS_PER_FIRING, 0, 1);
+          limit = horizonLimit(day.getUTCFullYear());
         }
       }
     }

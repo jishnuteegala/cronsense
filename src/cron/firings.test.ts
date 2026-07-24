@@ -331,6 +331,24 @@ describe("years below 100", () => {
   });
 });
 
+describe("JavaScript Date boundary", () => {
+  it("still finds firings when the 400-year horizon exceeds the max Date", () => {
+    const from = new Date(Date.UTC(275500, 0, 1));
+    const firings = nextFirings(ast("0 0 1 1 *"), from, 2);
+    expect(firings.map((d) => d.getUTCFullYear())).toEqual([275501, 275502]);
+  });
+
+  it("returns no firings past the max representable Date", () => {
+    const from = new Date(8640000000000000 - 60000);
+    const firings = nextFirings(ast("0 0 1 1 *"), from, 1);
+    expect(firings).toEqual([]);
+  });
+
+  it("returns nothing for an invalid from date", () => {
+    expect(nextFirings(ast("* * * * *"), new Date(Number.NaN), 10)).toEqual([]);
+  });
+});
+
 describe("never fires", () => {
   it("detects Feb 30", () => {
     expect(canEverFire(ast("0 0 30 2 *"))).toBe(false);

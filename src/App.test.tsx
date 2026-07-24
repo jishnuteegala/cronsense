@@ -13,8 +13,14 @@ describe("App", () => {
     expect(screen.getByText("At 12:00 UTC.")).toBeTruthy();
     expect(screen.getByRole("table")).toBeTruthy();
     expect(screen.getByText("UTC")).toBeTruthy();
-    expect(screen.getAllByText(new RegExp(DST_NOTE)).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText(new RegExp(DST_NOTE)).length).toBe(1);
     expect(screen.getAllByRole("row").length).toBe(11);
+  });
+
+  it("renders the single DST note inside the local-time column header", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    const localHeader = screen.getByRole("columnheader", { name: new RegExp("Your local time") });
+    expect(localHeader.textContent).toContain(DST_NOTE);
   });
 
   it("keeps the DST note visible next to the local-time column", () => {

@@ -154,7 +154,9 @@ export function App({
           )}
         </>
       )}
-      <p style={{ fontSize: "0.85rem", color: "#555", marginTop: "1rem" }}>Note: {DST_NOTE}.</p>
+      {(!result.ok || !output || output.never !== null) && (
+        <p style={{ fontSize: "0.85rem", color: "#555", marginTop: "1rem" }}>Note: {DST_NOTE}.</p>
+      )}
     </main>
   );
 }
