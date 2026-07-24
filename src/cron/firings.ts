@@ -154,7 +154,7 @@ export function nextFirings(ast: CronAst, from: Date, count: number): Date[] {
   let limit = horizonLimit(start.getUTCFullYear());
   const day = utcDate(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
   let isFirstDay = true;
-  while (day.getTime() < limit && results.length < count) {
+  while (day.getTime() <= limit && results.length < count) {
     const month = day.getUTCMonth() + 1;
     if (!expanded.months.has(month)) {
       day.setUTCMonth(day.getUTCMonth() + 1, 1);
@@ -168,9 +168,15 @@ export function nextFirings(ast: CronAst, from: Date, count: number): Date[] {
         if (hour < startHour) continue;
         for (const minute of sortedMinutes) {
           if (hour === startHour && isFirstDay && minute < startMinute) continue;
-          results.push(
-            utcDate(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate(), hour, minute),
+          const firing = utcDate(
+            day.getUTCFullYear(),
+            day.getUTCMonth(),
+            day.getUTCDate(),
+            hour,
+            minute,
           );
+          if (Number.isNaN(firing.getTime())) return results;
+          results.push(firing);
           if (results.length >= count) return results;
           limit = horizonLimit(day.getUTCFullYear());
         }
@@ -184,44 +190,72 @@ export function nextFirings(ast: CronAst, from: Date, count: number): Date[] {
 
 const GREGORIAN_CYCLE_DAYS = 146097;
 
-export function minimumIntervalMinutes(ast: CronAst): number | null {
-  if (!canEverFire(ast)) return null;
-  const expanded = expandCron(ast);
+function sortedDayTimes(expanded: ExpandedCron): number[] {
   const times: number[] = [];
   for (const hour of expanded.hours) {
     for (const minute of expanded.minutes) {
       times.push(hour * 60 + minute);
     }
   }
-  times.sort((a, b) => a - b);
+  return times.sort((a, b) => a - b);
+}
+
+function minWithinDayGap(times: number[]): number {
+  let min = Infinity;
+  for (let i = 1; i < times.length; i += 1) {
+    const gap = (times[i] ?? 0) - (times[i - 1] ?? 0);
+    if (gap < min) min = gap;
+  }
+  return min;
+}
+
+export function minimumIntervalMinutes(ast: CronAst): number | null {
+  if (!canEverFire(ast)) return null;
+  const expanded = expandCron(ast);
+  const times = sortedDayTimes(expanded);
   const firstTime = times[0];
   const lastTime = times[times.length - 1];
   if (firstTime === undefined || lastTime === undefined) return null;
-  let minWithinDay = Infinity;
-  for (let i = 1; i < times.length; i += 1) {
-    const gap = (times[i] ?? 0) - (times[i - 1] ?? 0);
-    if (gap < minWithinDay) minWithinDay = gap;
-  }
+  const minWithinDay = minWithinDayGap(times);
   const day = new Date(Date.UTC(2000, 0, 1));
   let firstMatch: number | null = null;
   let lastMatch: number | null = null;
   let minDayGap = Infinity;
   for (let i = 0; i < GREGORIAN_CYCLE_DAYS; i += 1) {
     if (expanded.months.has(day.getUTCMonth() + 1) && dayMatches(expanded, day)) {
-      if (firstMatch === null) firstMatch = i;
       if (lastMatch !== null) {
         const gap = i - lastMatch;
         if (gap < minDayGap) minDayGap = gap;
       }
+      if (firstMatch === null) firstMatch = i;
       lastMatch = i;
+      if (minDayGap === 1) break;
     }
     day.setUTCDate(day.getUTCDate() + 1);
   }
   if (firstMatch === null || lastMatch === null) return null;
-  const wrapGap = firstMatch + GREGORIAN_CYCLE_DAYS - lastMatch;
-  if (wrapGap < minDayGap) minDayGap = wrapGap;
+  if (minDayGap !== 1) {
+    const wrapGap = firstMatch + GREGORIAN_CYCLE_DAYS - lastMatch;
+    if (wrapGap < minDayGap) minDayGap = wrapGap;
+  }
   const crossDay = minDayGap * 1440 - (lastTime - firstTime);
   return Math.min(minWithinDay, crossDay);
+}
+
+// Fast predicate for the sub-minimum-interval warning: avoids the full
+// Gregorian-cycle day scan on the render path whenever the answer is
+// decidable from within-day gaps alone.
+export function firesMoreOftenThanEveryFiveMinutes(ast: CronAst): boolean {
+  if (!canEverFire(ast)) return false;
+  const expanded = expandCron(ast);
+  const times = sortedDayTimes(expanded);
+  const firstTime = times[0];
+  const lastTime = times[times.length - 1];
+  if (firstTime === undefined || lastTime === undefined) return false;
+  if (minWithinDayGap(times) < 5) return true;
+  if (1440 - (lastTime - firstTime) >= 5) return false;
+  const min = minimumIntervalMinutes(ast);
+  return min !== null && min < 5;
 }
 
 export const DOM_DOW_PROVISIONAL_NOTE =

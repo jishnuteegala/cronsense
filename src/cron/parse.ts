@@ -162,8 +162,18 @@ function isLwSyntaxAtom(atom: string, spec: FieldSpec): boolean {
   if (/^[LW\d]+$/i.test(atom)) {
     return true;
   }
-  const core = atom.replace(/^[LW]+/i, "").replace(/[LW]+$/i, "");
-  return spec.names?.[core.toUpperCase()] !== undefined;
+  const leading = atom.match(/^[LW]*/i)?.[0].length ?? 0;
+  const trailing = atom.match(/[LW]*$/i)?.[0].length ?? 0;
+  for (let p = 0; p <= leading; p += 1) {
+    for (let s = 0; s <= trailing; s += 1) {
+      if (p === 0 && s === 0) continue;
+      const core = atom.slice(p, atom.length - s);
+      if (core !== "" && spec.names?.[core.toUpperCase()] !== undefined) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 function parseField(raw: string, spec: FieldSpec, notes: string[]): FieldAst | string {

@@ -1,5 +1,5 @@
 import type { CronAst } from "./parse";
-import { minimumIntervalMinutes } from "./firings";
+import { firesMoreOftenThanEveryFiveMinutes } from "./firings";
 
 export interface WarningDefinition {
   id: string;
@@ -21,10 +21,7 @@ export interface ActiveWarning {
 export const WARNINGS: WarningDefinition[] = [
   {
     id: "sub-minimum-interval",
-    predicate: (ast) => {
-      const min = minimumIntervalMinutes(ast);
-      return min !== null && min < 5;
-    },
+    predicate: firesMoreOftenThanEveryFiveMinutes,
     message:
       'GitHub docs: "The shortest interval you can run scheduled workflows is once every 5 minutes." This expression fires more often; the docs do not say what happens to such an expression, so the outcome on GitHub Actions is undocumented.',
     verifiedOn: "2026-07-24",

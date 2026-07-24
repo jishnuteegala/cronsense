@@ -5,6 +5,7 @@ import {
   canEverFire,
   domDowProvisionalNote,
   expandField,
+  firesMoreOftenThanEveryFiveMinutes,
   minimumIntervalMinutes,
   neverFiresReason,
   nextFirings,
@@ -344,6 +345,12 @@ describe("JavaScript Date boundary", () => {
     expect(firings).toEqual([]);
   });
 
+  it("includes a firing at exactly the max representable Date", () => {
+    const from = new Date(8640000000000000 - 60000);
+    const firings = nextFirings(ast("* * * * *"), from, 1);
+    expect(firings.map((d) => d.getTime())).toEqual([8640000000000000]);
+  });
+
   it("returns nothing for an invalid from date", () => {
     expect(nextFirings(ast("* * * * *"), new Date(Number.NaN), 10)).toEqual([]);
   });
@@ -404,5 +411,37 @@ describe("minimumIntervalMinutes", () => {
 
   it("returns null for never-firing expressions", () => {
     expect(minimumIntervalMinutes(ast("0 0 30 2 *"))).toBeNull();
+  });
+});
+
+describe("firesMoreOftenThanEveryFiveMinutes", () => {
+  it("agrees with minimumIntervalMinutes on representative expressions", () => {
+    for (const expr of [
+      "* * * * *",
+      "*/7 * * * *",
+      "*/5 * * * *",
+      "0 * * * *",
+      "0,59 23,0 * * *",
+      "0 0 * * MON",
+      "0 0 29 2 *",
+      "57-59 23 * * *",
+      "0-2 0 * * *",
+    ]) {
+      const min = minimumIntervalMinutes(ast(expr));
+      expect(firesMoreOftenThanEveryFiveMinutes(ast(expr))).toBe(min !== null && min < 5);
+    }
+  });
+
+  it("detects a sub-5-minute gap that only occurs across a midnight boundary", () => {
+    expect(firesMoreOftenThanEveryFiveMinutes(ast("58 23 * * *"))).toBe(false);
+    expect(firesMoreOftenThanEveryFiveMinutes(ast("58,0 23,0 * * *"))).toBe(true);
+  });
+
+  it("returns false for never-firing expressions", () => {
+    expect(firesMoreOftenThanEveryFiveMinutes(ast("0 0 30 2 *"))).toBe(false);
+  });
+
+  it("returns false for a cross-day gap that only misses 5 minutes on sparse days", () => {
+    expect(firesMoreOftenThanEveryFiveMinutes(ast("58,0 23,0 29 2 *"))).toBe(false);
   });
 });

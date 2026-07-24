@@ -148,14 +148,22 @@ describe("parseCron rejection", () => {
     },
   );
 
-  it.each(["0 0 * * MONL", "0 0 * JANW *", "0 0 * * LMON", "0 0 * DECL *", "0 0 * * MON-FRIL"])(
-    "rejects L/W suffixed onto name tokens as presumed-rejected: %s",
-    (input) => {
-      const error = expectError(input);
-      expect(error).toContain("L/W");
-      expect(error).toContain("presumed rejected");
-    },
-  );
+  it.each([
+    "0 0 * * MONL",
+    "0 0 * JANW *",
+    "0 0 * * LMON",
+    "0 0 * DECL *",
+    "0 0 * * MON-FRIL",
+    "0 0 * * WEDL",
+    "0 0 * * WEDW",
+    "0 0 * * LWED",
+    "0 0 1 JULL *",
+    "0 0 1 JULW *",
+  ])("rejects L/W affixed onto name tokens as presumed-rejected: %s", (input) => {
+    const error = expectError(input);
+    expect(error).toContain("L/W");
+    expect(error).toContain("presumed rejected");
+  });
 
   it("still accepts names containing L or W letters like JUL and WED", () => {
     expectOk("0 0 1 JUL WED");
