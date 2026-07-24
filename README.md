@@ -17,7 +17,7 @@ Paste a cron expression, get a plain-English translation and the next 10 firing 
 ## What it does
 
 - Parses the cron grammar GitHub Actions documents: five fields (minute, hour, day-of-month, month or JAN-DEC, day-of-week or SUN-SAT) with `*`, `,`, `-`, `/`; interpretations the docs leave open are flagged as provisional until verified against the real GHA validator.
-- Rejects what GHA rejects: `@`-shortcuts, a seconds field, and `L`/`W`/`#` tokens (the latter presumed rejected pending confirmation against the real GHA validator).
+- Rejects what GHA rejects: `@`-shortcuts are documented as unsupported; a seconds field and `L`/`W`/`#` tokens are presumed rejected pending confirmation against the real GHA validator.
 - Computes the next 10 firings in UTC; browser-local times are display-only, with a static DST note.
 - Flags undocumented behaviours as provisional: name tokens in ranges/steps, and combined day-of-month/day-of-week semantics. When both day fields are restricted and neither originates from a wildcard, the POSIX/Vixie OR union applies (a day matching either field fires); a wildcard-origin day field (`*` or `*/N`) retains wildcard status and the day fields intersect, matching Vixie cron source precedent. GHA's actual behaviour is undocumented and awaits empirical verification via the verification repo, at which point this may change.
 
