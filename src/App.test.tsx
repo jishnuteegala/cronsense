@@ -41,6 +41,21 @@ describe('App', () => {
     )
   })
 
+  it('shows the sub-minimum-interval warning for every-minute schedules', () => {
+    render(<App initialExpression="* * * * *" />)
+    expect(screen.getByText(/once every 5 minutes/)).toBeTruthy()
+  })
+
+  it('shows the sub-minimum-interval warning for */7 boundary gaps', () => {
+    render(<App initialExpression="*/7 * * * *" />)
+    expect(screen.getByText(/once every 5 minutes/)).toBeTruthy()
+  })
+
+  it('does not show the sub-minimum-interval warning for */15', () => {
+    render(<App initialExpression="*/15 * * * *" />)
+    expect(screen.queryByText(/once every 5 minutes/)).toBeNull()
+  })
+
   it('flags name tokens in ranges as provisional', () => {
     render(<App initialExpression="0 9 * * MON-FRI" />)
     expect(screen.getByText(/awaits GHA-validator arbitration/)).toBeTruthy()

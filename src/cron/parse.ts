@@ -1,7 +1,7 @@
 export type FieldName = 'minute' | 'hour' | 'dayOfMonth' | 'month' | 'dayOfWeek'
 
 export type FieldTerm =
-  | { kind: 'wildcard'; step: number }
+  | { kind: 'wildcard'; step: number; explicitStep: boolean }
   | { kind: 'value'; value: number }
   | { kind: 'range'; from: number; to: number; step: number }
 
@@ -87,9 +87,6 @@ function parseValue(
   if (named !== undefined) {
     return { value: named, named: true }
   }
-  if (/^(L|W|\d+L|\d+W|LW)$/i.test(token)) {
-    return `"${token}" in ${spec.field} uses L/W tokens that are not part of GitHub Actions cron syntax (presumed rejected; pending GHA-validator confirmation)`
-  }
   if (/^[a-z]+$/i.test(token)) {
     return `"${token}" is not a valid ${spec.field} name`
   }
@@ -132,7 +129,7 @@ function parseTerm(
     step = parsed
   }
   if (base === '*') {
-    return { kind: 'wildcard', step }
+    return { kind: 'wildcard', step, explicitStep: stepToken !== undefined }
   }
   const rangeParts = base.split('-')
   if (rangeParts.length > 2) {
@@ -166,6 +163,12 @@ function parseField(raw: string, spec: FieldSpec, notes: string[]): FieldAst | s
   const unsupportedToken = raw.match(/[#?]/)
   if (unsupportedToken) {
     return `"${unsupportedToken[0]}" in ${spec.field} is not part of GitHub Actions cron syntax (presumed rejected; pending GHA-validator confirmation)`
+  }
+  const lwAtom = raw
+    .split(/[,/-]/)
+    .find((atom) => /^(L|W|\d+L|\d+W|LW)$/i.test(atom))
+  if (lwAtom !== undefined) {
+    return `"${lwAtom}" in ${spec.field} uses L/W tokens that are not part of GitHub Actions cron syntax (presumed rejected; pending GHA-validator confirmation)`
   }
   const terms: FieldTerm[] = []
   for (const token of raw.split(',')) {
@@ -230,5 +233,5 @@ export function parseCron(input: string): ParseResult {
 }
 
 export function isRestricted(field: FieldAst): boolean {
-  return !field.terms.some((term) => term.kind === 'wildcard' && term.step === 1)
+  return !field.terms.some((term) => term.kind === 'wildcard' && !term.explicitStep)
 }

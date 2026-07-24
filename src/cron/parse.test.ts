@@ -20,7 +20,7 @@ function expectError(input: string): string {
 describe('parseCron acceptance', () => {
   it('accepts the wildcard expression', () => {
     const ast = expectOk('* * * * *')
-    expect(ast.minute.terms).toEqual([{ kind: 'wildcard', step: 1 }])
+    expect(ast.minute.terms).toEqual([{ kind: 'wildcard', step: 1, explicitStep: false }])
   })
 
   it('accepts plain values in every field', () => {
@@ -49,7 +49,7 @@ describe('parseCron acceptance', () => {
 
   it('accepts wildcard steps', () => {
     const ast = expectOk('*/15 * * * *')
-    expect(ast.minute.terms).toEqual([{ kind: 'wildcard', step: 15 }])
+    expect(ast.minute.terms).toEqual([{ kind: 'wildcard', step: 15, explicitStep: true }])
   })
 
   it('accepts range steps', () => {
@@ -126,6 +126,14 @@ describe('parseCron rejection', () => {
 
   it.each(['0 0 L * *', '0 0 15W * *', '0 0 * * 5#3'])(
     'rejects L/W/# tokens as presumed-rejected: %s',
+    (input) => {
+      const error = expectError(input)
+      expect(error).toContain('presumed rejected')
+    },
+  )
+
+  it.each(['*/W * * * *', '*/L * * * *', '1-10/W * * * *', '0 0 1-L * *'])(
+    'rejects L/W tokens in step and range positions: %s',
     (input) => {
       const error = expectError(input)
       expect(error).toContain('presumed rejected')
@@ -226,6 +234,11 @@ describe('isRestricted', () => {
 
   it('treats */N as restricted', () => {
     const ast = expectOk('0 0 */2 * *')
+    expect(isRestricted(ast.dayOfMonth)).toBe(true)
+  })
+
+  it('treats */1 as restricted (syntactically not a bare *)', () => {
+    const ast = expectOk('0 0 */1 * *')
     expect(isRestricted(ast.dayOfMonth)).toBe(true)
   })
 

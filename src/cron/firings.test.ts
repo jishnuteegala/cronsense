@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { canEverFire, expandField, minimumIntervalMinutes, neverFiresReason, nextFirings } from './firings'
+import {
+  canEverFire,
+  expandField,
+  minimumIntervalMinutes,
+  neverFiresReason,
+  nextFirings,
+  subMinimumIntervalWarning,
+} from './firings'
 import { parseCron } from './parse'
 
 function ast(input: string) {
@@ -161,6 +168,16 @@ describe('DOM/DOW OR semantics (provisional, awaiting empirical verification)', 
     expect(iso(firings)).toEqual(['2026-01-18T00:00Z', '2026-01-25T00:00Z'])
   })
 
+  it('treats */1 in DOM as restricted so it fires every day under OR', () => {
+    const firings = nextFirings(ast('0 0 */1 * MON'), new Date(Date.UTC(2026, 0, 1, 0, 0)), 4)
+    expect(iso(firings)).toEqual([
+      '2026-01-02T00:00Z',
+      '2026-01-03T00:00Z',
+      '2026-01-04T00:00Z',
+      '2026-01-05T00:00Z',
+    ])
+  })
+
   it('treats */N in DOM as restricted for OR purposes', () => {
     const firings = nextFirings(ast('0 0 */10 * WED'), new Date(Date.UTC(2026, 0, 1, 0, 0)), 5)
     expect(iso(firings)).toEqual([
@@ -198,6 +215,10 @@ describe('never fires', () => {
 })
 
 describe('minimumIntervalMinutes', () => {
+  it('computes 1 for every minute', () => {
+    expect(minimumIntervalMinutes(ast('* * * * *'))).toBe(1)
+  })
+
   it('computes 15 for */15', () => {
     expect(minimumIntervalMinutes(ast('*/15 * * * *'))).toBe(15)
   })
@@ -206,7 +227,47 @@ describe('minimumIntervalMinutes', () => {
     expect(minimumIntervalMinutes(ast('*/7 * * * *'))).toBe(4)
   })
 
+  it('spans the day boundary for a late-plus-early pair', () => {
+    expect(minimumIntervalMinutes(ast('0,59 23,0 * * *'))).toBe(1)
+  })
+
+  it('computes 1440 for a daily schedule', () => {
+    expect(minimumIntervalMinutes(ast('0 12 * * *'))).toBe(1440)
+  })
+
+  it('computes a weekly gap for a single weekday', () => {
+    expect(minimumIntervalMinutes(ast('0 0 * * MON'))).toBe(7 * 1440)
+  })
+
+  it('handles the leap-day annual schedule', () => {
+    expect(minimumIntervalMinutes(ast('0 0 29 2 *'))).toBe(4 * 365 * 1440 + 1440)
+  })
+
   it('returns null for never-firing expressions', () => {
     expect(minimumIntervalMinutes(ast('0 0 30 2 *'))).toBeNull()
+  })
+})
+
+describe('subMinimumIntervalWarning', () => {
+  it('warns for every-minute schedules quoting the docs', () => {
+    const warning = subMinimumIntervalWarning(ast('* * * * *'))
+    expect(warning).toContain('once every 5 minutes')
+    expect(warning).toContain('undocumented')
+  })
+
+  it('warns for */7 because of the 4-minute boundary gap', () => {
+    expect(subMinimumIntervalWarning(ast('*/7 * * * *'))).not.toBeNull()
+  })
+
+  it('does not warn for */5', () => {
+    expect(subMinimumIntervalWarning(ast('*/5 * * * *'))).toBeNull()
+  })
+
+  it('does not warn for hourly schedules', () => {
+    expect(subMinimumIntervalWarning(ast('0 * * * *'))).toBeNull()
+  })
+
+  it('returns null for never-firing expressions', () => {
+    expect(subMinimumIntervalWarning(ast('0 0 30 2 *'))).toBeNull()
   })
 })

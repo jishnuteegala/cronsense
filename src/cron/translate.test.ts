@@ -74,6 +74,12 @@ describe('translate', () => {
     expect(text).toContain('awaiting empirical verification')
   })
 
+  it('stepped day-of-month starts at day 1, not 0', () => {
+    expect(sentence('0 0 */10 * *')).toBe(
+      'At 00:00 UTC, on every 10 day-of-months starting at day-of-month 1 (resetting each boundary).',
+    )
+  })
+
   it('range with step in hours', () => {
     expect(sentence('0 8-18/2 * * *')).toBe(
       'At minute 0 past every 2 hours from 8 through 18 (UTC).',

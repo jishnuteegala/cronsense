@@ -1,5 +1,10 @@
 import { useMemo, useState } from 'react'
-import { domDowProvisionalNote, neverFiresReason, nextFirings } from './cron/firings'
+import {
+  domDowProvisionalNote,
+  neverFiresReason,
+  nextFirings,
+  subMinimumIntervalWarning,
+} from './cron/firings'
 import { parseCron } from './cron/parse'
 import { translate } from './cron/translate'
 
@@ -28,10 +33,12 @@ export function App({ initialExpression = '*/15 9-17 * * MON-FRI' }: { initialEx
     if (!result.ok) return null
     const never = neverFiresReason(result.ast)
     const domDowNote = domDowProvisionalNote(result.ast)
+    const subMinimum = never ? null : subMinimumIntervalWarning(result.ast)
     return {
       translation: translate(result.ast),
       firings: never ? [] : nextFirings(result.ast, new Date(), 10),
       never,
+      subMinimum,
       provisionalNotes: domDowNote
         ? [...result.provisionalNotes, domDowNote]
         : result.provisionalNotes,
@@ -63,6 +70,11 @@ export function App({ initialExpression = '*/15 9-17 * * MON-FRI' }: { initialEx
               {note}
             </p>
           ))}
+          {output.subMinimum && (
+            <p role="alert" style={{ color: '#8a5a00' }}>
+              {output.subMinimum}
+            </p>
+          )}
           {output.never && (
             <p role="alert" style={{ color: '#b00020' }}>
               {output.never}

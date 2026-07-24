@@ -47,10 +47,10 @@ function pad(value: number): string {
   return String(value).padStart(2, '0')
 }
 
-function describeNumericTerm(term: FieldTerm, unit: string): string {
+function describeNumericTerm(term: FieldTerm, unit: string, min: number): string {
   if (term.kind === 'wildcard') {
     if (term.step === 1) return `every ${unit}`
-    return `every ${term.step} ${unit}s starting at ${unit} 0 (resetting each boundary)`
+    return `every ${term.step} ${unit}s starting at ${unit} ${min} (resetting each boundary)`
   }
   if (term.kind === 'value') {
     return `${unit} ${term.value}`
@@ -89,14 +89,14 @@ function timePhrase(ast: CronAst): string {
       return `At ${pad(hourTerm.value)}:${pad(minuteTerm.value)} UTC`
     }
   }
-  const minutePart = describeField(ast.minute, (t) => describeNumericTerm(t, 'minute'))
+  const minutePart = describeField(ast.minute, (t) => describeNumericTerm(t, 'minute', 0))
   if (!isRestricted(ast.hour)) {
     if (!isRestricted(ast.minute)) {
       return 'Every minute'
     }
     return `At ${minutePart} of every hour (UTC)`
   }
-  const hourPart = describeField(ast.hour, (t) => describeNumericTerm(t, 'hour'))
+  const hourPart = describeField(ast.hour, (t) => describeNumericTerm(t, 'hour', 0))
   if (!isRestricted(ast.minute)) {
     return `Every minute during ${hourPart} (UTC)`
   }
@@ -106,7 +106,7 @@ function timePhrase(ast: CronAst): string {
 function dayPhrase(ast: CronAst): string {
   const domRestricted = isRestricted(ast.dayOfMonth)
   const dowRestricted = isRestricted(ast.dayOfWeek)
-  const domPart = describeField(ast.dayOfMonth, (t) => describeNumericTerm(t, 'day-of-month'))
+  const domPart = describeField(ast.dayOfMonth, (t) => describeNumericTerm(t, 'day-of-month', 1))
   const dowPart = describeField(ast.dayOfWeek, (t) => describeLabeledTerm(t, dowLabel, 'every day of the week'))
   if (domRestricted && dowRestricted) {
     return `on ${domPart}, or on ${dowPart} (either matching day fires; awaiting empirical verification of GHA's combined day-of-month/day-of-week behaviour)`

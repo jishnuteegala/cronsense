@@ -172,18 +172,57 @@ export function nextFirings(ast: CronAst, from: Date, count: number): Date[] {
   return results
 }
 
+const GREGORIAN_CYCLE_DAYS = 146097
+
 export function minimumIntervalMinutes(ast: CronAst): number | null {
-  const firings = nextFirings(ast, new Date(Date.UTC(2026, 0, 1)), 50)
-  if (firings.length < 2) return null
-  let min = Infinity
-  for (let i = 1; i < firings.length; i += 1) {
-    const current = firings[i]
-    const previous = firings[i - 1]
-    if (!current || !previous) continue
-    const gap = (current.getTime() - previous.getTime()) / 60000
-    if (gap < min) min = gap
+  if (!canEverFire(ast)) return null
+  const expanded = expandCron(ast)
+  const times: number[] = []
+  for (const hour of expanded.hours) {
+    for (const minute of expanded.minutes) {
+      times.push(hour * 60 + minute)
+    }
   }
-  return min === Infinity ? null : min
+  times.sort((a, b) => a - b)
+  const firstTime = times[0]
+  const lastTime = times[times.length - 1]
+  if (firstTime === undefined || lastTime === undefined) return null
+  let minWithinDay = Infinity
+  for (let i = 1; i < times.length; i += 1) {
+    const gap = (times[i] ?? 0) - (times[i - 1] ?? 0)
+    if (gap < minWithinDay) minWithinDay = gap
+  }
+  const day = new Date(Date.UTC(2000, 0, 1))
+  let firstMatch: number | null = null
+  let lastMatch: number | null = null
+  let minDayGap = Infinity
+  for (let i = 0; i < GREGORIAN_CYCLE_DAYS; i += 1) {
+    if (expanded.months.has(day.getUTCMonth() + 1) && dayMatches(expanded, day)) {
+      if (firstMatch === null) firstMatch = i
+      if (lastMatch !== null) {
+        const gap = i - lastMatch
+        if (gap < minDayGap) minDayGap = gap
+      }
+      lastMatch = i
+    }
+    day.setUTCDate(day.getUTCDate() + 1)
+  }
+  if (firstMatch === null || lastMatch === null) return null
+  const wrapGap = firstMatch + GREGORIAN_CYCLE_DAYS - lastMatch
+  if (wrapGap < minDayGap) minDayGap = wrapGap
+  const crossDay = minDayGap * 1440 - (lastTime - firstTime)
+  return Math.min(minWithinDay, crossDay)
+}
+
+export const SUB_MINIMUM_INTERVAL_WARNING =
+  'GitHub docs: "The shortest interval you can run scheduled workflows is once every 5 minutes." This expression fires more often; the docs do not say what happens to such an expression, so the outcome on GitHub Actions is undocumented.'
+
+export function subMinimumIntervalWarning(ast: CronAst): string | null {
+  const min = minimumIntervalMinutes(ast)
+  if (min !== null && min < 5) {
+    return SUB_MINIMUM_INTERVAL_WARNING
+  }
+  return null
 }
 
 export const DOM_DOW_PROVISIONAL_NOTE =
