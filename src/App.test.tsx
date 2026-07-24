@@ -145,12 +145,21 @@ describe("App", () => {
     expect(screen.getByRole("table")).toBeTruthy();
   });
 
-  it("keeps the expression and results when the skip link changes the hash", () => {
+  it("moves focus to results on skip-link activation without clobbering the permalink", () => {
     render(<App initialExpression="0 12 * * *" />);
-    window.location.hash = "#results";
-    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    window.history.replaceState(null, "", "#0%2012%20*%20*%20*");
+    fireEvent.click(screen.getByRole("link", { name: "Skip to results" }));
+    expect(document.activeElement?.id).toBe("results");
+    expect(window.location.hash).toBe("#0%2012%20*%20*%20*");
     expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("0 12 * * *");
     expect(screen.getByRole("table")).toBeTruthy();
+  });
+
+  it("focuses the results region via the skip link even for invalid input", () => {
+    render(<App initialExpression="@hourly" />);
+    fireEvent.click(screen.getByRole("link", { name: "Skip to results" }));
+    expect(document.activeElement?.id).toBe("results");
+    expect(document.activeElement?.textContent).toContain("GitHub Actions does not support");
   });
 
   it("discloses a truncated firing list near the maximum representable date", () => {

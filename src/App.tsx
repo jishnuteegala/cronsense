@@ -122,11 +122,6 @@ export function App({
         spellCheck={false}
         style={{ width: "100%", padding: "0.5rem", fontFamily: "monospace", fontSize: "1rem" }}
       />
-      {!result.ok && (
-        <p role="alert" style={{ color: "#b00020" }}>
-          {result.error}
-        </p>
-      )}
       <aside
         aria-label="Contextual note"
         style={{ borderLeft: "3px solid #666", paddingLeft: "0.75rem" }}
@@ -140,101 +135,109 @@ export function App({
           </p>
         ))}
       </aside>
-      {result.ok && output && (
-        <section id="results" tabIndex={-1}>
-          <p>{output.translation.sentence}</p>
-          <p style={{ fontSize: "0.9rem", color: "#555" }}>{output.translation.timezoneNote}</p>
-          {output.provisionalNotes.map((note) => (
-            <p key={note} style={{ fontSize: "0.9rem", color: "#8a5a00" }}>
-              {note}
-            </p>
-          ))}
-          {output.warnings.map((warning) => (
-            <article
-              id={warning.id}
-              key={warning.id}
-              role={warning.rank === "diagnostic" ? "alert" : undefined}
-              style={{
-                borderLeft: `3px solid ${warning.rank === "diagnostic" ? "#b00020" : "#8a5a00"}`,
-                color: warning.rank === "diagnostic" ? "#8a0018" : "#664400",
-                fontWeight: warning.emphasised ? "bold" : "normal",
-                margin: "1rem 0",
-                paddingLeft: "0.75rem",
-              }}
-            >
-              {warning.message}{" "}
-              <span style={{ fontSize: "0.85rem", color: "#555" }}>
-                (verified against{" "}
-                <a href={warning.sourceUrl} style={{ color: "inherit" }}>
-                  GitHub docs
-                </a>{" "}
-                on {warning.verifiedOn})
-              </span>
-            </article>
-          ))}
-          {!output.never && (
-            <>
-              <h2>
-                {output.firings.length < 10
-                  ? `Next ${output.firings.length} firing${output.firings.length === 1 ? "" : "s"}`
-                  : "Next 10 firings"}
-              </h2>
-              {output.firings.length < 10 && (
-                <p style={{ fontSize: "0.85rem", color: "#555" }}>
-                  Only {output.firings.length} firing{output.firings.length === 1 ? "" : "s"} can be
-                  shown: later occurrences fall beyond the maximum date JavaScript can represent.
-                </p>
-              )}
-              <table style={{ borderCollapse: "collapse", width: "100%" }}>
-                <thead>
-                  <tr>
-                    <th
-                      style={{
-                        textAlign: "left",
-                        borderBottom: "1px solid #ccc",
-                        padding: "0.25rem",
-                      }}
-                    >
-                      UTC
-                    </th>
-                    <th
-                      style={{
-                        textAlign: "left",
-                        borderBottom: "1px solid #ccc",
-                        padding: "0.25rem",
-                      }}
-                    >
-                      Your local time
-                      <span
+      <section id="results" tabIndex={-1}>
+        {!result.ok && (
+          <p role="alert" style={{ color: "#b00020" }}>
+            {result.error}
+          </p>
+        )}
+        {result.ok && output && (
+          <>
+            <p>{output.translation.sentence}</p>
+            <p style={{ fontSize: "0.9rem", color: "#555" }}>{output.translation.timezoneNote}</p>
+            {output.provisionalNotes.map((note) => (
+              <p key={note} style={{ fontSize: "0.9rem", color: "#8a5a00" }}>
+                {note}
+              </p>
+            ))}
+            {output.warnings.map((warning) => (
+              <article
+                id={warning.id}
+                key={warning.id}
+                role={warning.rank === "diagnostic" ? "alert" : undefined}
+                style={{
+                  borderLeft: `3px solid ${warning.rank === "diagnostic" ? "#b00020" : "#8a5a00"}`,
+                  color: warning.rank === "diagnostic" ? "#8a0018" : "#664400",
+                  fontWeight: warning.emphasised ? "bold" : "normal",
+                  margin: "1rem 0",
+                  paddingLeft: "0.75rem",
+                }}
+              >
+                {warning.message}{" "}
+                <span style={{ fontSize: "0.85rem", color: "#555" }}>
+                  (verified against{" "}
+                  <a href={warning.sourceUrl} style={{ color: "inherit" }}>
+                    GitHub docs
+                  </a>{" "}
+                  on {warning.verifiedOn})
+                </span>
+              </article>
+            ))}
+            {!output.never && (
+              <>
+                <h2>
+                  {output.firings.length < 10
+                    ? `Next ${output.firings.length} firing${output.firings.length === 1 ? "" : "s"}`
+                    : "Next 10 firings"}
+                </h2>
+                {output.firings.length < 10 && (
+                  <p style={{ fontSize: "0.85rem", color: "#555" }}>
+                    Only {output.firings.length} firing{output.firings.length === 1 ? "" : "s"} can
+                    be shown: later occurrences fall beyond the maximum date JavaScript can
+                    represent.
+                  </p>
+                )}
+                <table style={{ borderCollapse: "collapse", width: "100%" }}>
+                  <thead>
+                    <tr>
+                      <th
                         style={{
-                          display: "block",
-                          fontWeight: "normal",
-                          fontSize: "0.8rem",
-                          color: "#555",
+                          textAlign: "left",
+                          borderBottom: "1px solid #ccc",
+                          padding: "0.25rem",
                         }}
                       >
-                        {DST_NOTE}
-                      </span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {output.firings.map((firing) => (
-                    <tr key={firing.getTime()}>
-                      <td style={{ padding: "0.25rem", fontFamily: "monospace" }}>
-                        {formatUtc(firing)}
-                      </td>
-                      <td style={{ padding: "0.25rem", fontFamily: "monospace" }}>
-                        {formatLocal(firing, timeZone, locale)}
-                      </td>
+                        UTC
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "left",
+                          borderBottom: "1px solid #ccc",
+                          padding: "0.25rem",
+                        }}
+                      >
+                        Your local time
+                        <span
+                          style={{
+                            display: "block",
+                            fontWeight: "normal",
+                            fontSize: "0.8rem",
+                            color: "#555",
+                          }}
+                        >
+                          {DST_NOTE}
+                        </span>
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
-        </section>
-      )}
+                  </thead>
+                  <tbody>
+                    {output.firings.map((firing) => (
+                      <tr key={firing.getTime()}>
+                        <td style={{ padding: "0.25rem", fontFamily: "monospace" }}>
+                          {formatUtc(firing)}
+                        </td>
+                        <td style={{ padding: "0.25rem", fontFamily: "monospace" }}>
+                          {formatLocal(firing, timeZone, locale)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
+          </>
+        )}
+      </section>
       {(!result.ok || !output || output.never !== null) && (
         <p style={{ fontSize: "0.85rem", color: "#555", marginTop: "1rem" }}>Note: {DST_NOTE}.</p>
       )}
