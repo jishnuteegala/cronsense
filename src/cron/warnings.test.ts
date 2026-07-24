@@ -89,7 +89,9 @@ describe("expression-specific warnings", () => {
       (item) => item.id === "uneven-step-reset",
     );
     expect(warning?.message).toContain("The minute */7 schedule");
-    expect(warning?.message).toContain("0, ..., 56; it resets at 0 when the field wraps");
+    expect(warning?.message).toContain(
+      "0, ..., 56; it resets at 0 when the field wraps, creating a 4-minute gap",
+    );
   });
 
   it("detects stepped ranges whose boundary gap differs from their step", () => {
@@ -100,11 +102,11 @@ describe("expression-specific warnings", () => {
       (item) => item.id === "uneven-step-reset",
     );
     expect(warning?.message).toContain(
-      "The minute 0-59/7 schedule selects 0, ..., 56; it resets at 0 when the field wraps",
+      "The minute 0-59/7 schedule selects 0, ..., 56; it resets at 0 when the field wraps, creating a 4-minute gap",
     );
     expect(
       evaluateWarnings(ast("*/8 * * * *")).find((item) => item.id === "uneven-step-reset")?.message,
-    ).toContain("56; it resets at 0 when the field wraps");
+    ).toContain("56; it resets at 0 when the field wraps, creating a 4-minute gap");
   });
 
   it("uses documented labels for non-minute uneven steps", () => {

@@ -65,9 +65,10 @@ function messageFor(warning: WarningDefinition, ast: CronAst): string {
         const from = term.kind === "wildcard" ? min : term.from;
         const to = term.kind === "wildcard" ? max : term.to;
         const last = from + Math.floor((to - from) / term.step) * term.step;
+        const boundaryGap = max - last + from - min + 1;
         const expression =
           term.kind === "wildcard" ? `*/${term.step}` : `${from}-${to}/${term.step}`;
-        return `The ${FIELD_LABELS[field.field]} ${expression} schedule selects ${from}, ..., ${last}; it resets at ${from} when the field wraps`;
+        return `The ${FIELD_LABELS[field.field]} ${expression} schedule selects ${from}, ..., ${last}; it resets at ${from} when the field wraps, creating a ${boundaryGap}-${FIELD_LABELS[field.field]} gap`;
       }),
   );
   return warning.message.replace("{details}", details.join("; "));
