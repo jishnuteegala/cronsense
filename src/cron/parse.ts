@@ -178,8 +178,12 @@ function parseField(raw: string, spec: FieldSpec, notes: string[]): FieldAst | s
   if (lwAtom !== undefined) {
     return `"${lwAtom}" in ${spec.field} uses L/W tokens that are not part of GitHub Actions cron syntax (presumed rejected; pending GHA-validator confirmation)`
   }
+  const tokens = raw.split(',')
+  if (tokens.length > 1 && tokens.some((token) => token.startsWith('*'))) {
+    return `"${raw}" mixes "*" with a value list in ${spec.field}; this form is undocumented for GitHub Actions cron (presumed rejected; pending GHA-validator confirmation)`
+  }
   const terms: FieldTerm[] = []
-  for (const token of raw.split(',')) {
+  for (const token of tokens) {
     const term = parseTerm(token, spec, notes)
     if (typeof term === 'string') return term
     terms.push(term)

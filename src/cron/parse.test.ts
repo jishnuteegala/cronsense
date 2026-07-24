@@ -161,6 +161,15 @@ describe('parseCron rejection', () => {
     ).toContain('too large')
   })
 
+  it.each(['0 0 *,15 * *', '0 0 15 * *,MON', '*,5 * * * *', '0 0 */2,15 * *'])(
+    'rejects wildcard mixed into a value list: %s',
+    (input) => {
+      const error = expectError(input)
+      expect(error).toContain('mixes "*" with a value list')
+      expect(error).toContain('presumed rejected')
+    },
+  )
+
   it('rejects the ? token', () => {
     expect(expectError('0 0 ? * *')).toContain('not part of GitHub Actions cron syntax')
   })

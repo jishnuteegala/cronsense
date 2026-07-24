@@ -217,6 +217,45 @@ describe('DOM/DOW OR semantics (provisional, awaiting empirical verification)', 
   })
 })
 
+describe('name tokens in ranges and steps (provisional pending GHA-validator arbitration)', () => {
+  it('fires on MON-FRI weekdays only', () => {
+    const firings = nextFirings(ast('0 9 * * MON-FRI'), new Date(Date.UTC(2026, 0, 16, 12, 0)), 4)
+    expect(iso(firings)).toEqual([
+      '2026-01-19T09:00Z',
+      '2026-01-20T09:00Z',
+      '2026-01-21T09:00Z',
+      '2026-01-22T09:00Z',
+    ])
+  })
+
+  it('fires on every second weekday of mon-fri/2 in mixed case', () => {
+    const firings = nextFirings(ast('0 9 * * mon-FRI/2'), new Date(Date.UTC(2026, 0, 18, 12, 0)), 3)
+    expect(iso(firings)).toEqual([
+      '2026-01-19T09:00Z',
+      '2026-01-21T09:00Z',
+      '2026-01-23T09:00Z',
+    ])
+  })
+
+  it('fires on odd months from JAN/2 across a year rollover', () => {
+    const firings = nextFirings(ast('0 0 1 JAN/2 *'), new Date(Date.UTC(2026, 9, 15, 0, 0)), 3)
+    expect(iso(firings)).toEqual([
+      '2026-11-01T00:00Z',
+      '2027-01-01T00:00Z',
+      '2027-03-01T00:00Z',
+    ])
+  })
+
+  it('fires only in JAN-MAR/2 months', () => {
+    const firings = nextFirings(ast('0 0 15 JAN-MAR/2 *'), T0, 3)
+    expect(iso(firings)).toEqual([
+      '2026-03-15T00:00Z',
+      '2027-01-15T00:00Z',
+      '2027-03-15T00:00Z',
+    ])
+  })
+})
+
 describe('years below 100', () => {
   it('does not remap two-digit years to the 1900s', () => {
     const from = new Date('0098-06-15T12:00:00Z')
