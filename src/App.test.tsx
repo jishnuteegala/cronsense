@@ -1,6 +1,6 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { App, DST_NOTE, formatLocal } from "./App";
+import { App, DST_NOTE, formatLocal, formatUtc } from "./App";
 
 afterEach(() => {
   cleanup();
@@ -98,6 +98,24 @@ describe("App", () => {
   it("flags wildcard-origin DOM/DOW intersection as provisional", () => {
     render(<App initialExpression="0 0 */2 * 1" />);
     expect(screen.getByText(/Vixie cron source precedent/)).toBeTruthy();
+  });
+});
+
+describe("formatUtc", () => {
+  it("formats a normal date", () => {
+    expect(formatUtc(new Date(Date.UTC(2026, 0, 15, 12, 5)))).toBe("2026-01-15 12:05 UTC");
+  });
+
+  it("formats extended ISO years without truncating the minutes", () => {
+    const date = new Date(Date.UTC(2000, 0, 1, 9, 30));
+    date.setUTCFullYear(275500);
+    expect(formatUtc(date)).toBe("275500-01-01 09:30 UTC");
+  });
+
+  it("pads sub-100 years to four digits", () => {
+    const date = new Date(Date.UTC(2000, 11, 31, 23, 59));
+    date.setUTCFullYear(99);
+    expect(formatUtc(date)).toBe("0099-12-31 23:59 UTC");
   });
 });
 

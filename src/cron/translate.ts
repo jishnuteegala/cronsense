@@ -39,13 +39,17 @@ function pad(value: number): string {
   return String(value).padStart(2, "0");
 }
 
-function describeNumericTerm(term: FieldTerm, unit: string, min: number): string {
+function describeNumericTerm(term: FieldTerm, unit: string, min: number, max: number): string {
   if (term.kind === "wildcard") {
     if (term.step === 1) return `every ${unit}`;
+    if (min + term.step > max) return `${unit} ${min} (the step ${term.step} exceeds the range)`;
     return `every ${term.step} ${unit}s starting at ${unit} ${min} (resetting each boundary)`;
   }
   if (term.kind === "value") {
     return `${unit} ${term.value}`;
+  }
+  if (term.from === term.to || term.from + term.step > term.to) {
+    return `${unit} ${term.from}`;
   }
   if (term.step === 1) {
     return `every ${unit} from ${term.from} through ${term.to}`;
@@ -59,13 +63,20 @@ function describeLabeledTerm(
   everyText: string,
   unit: string,
   first: number,
+  last: number,
 ): string {
   if (term.kind === "wildcard") {
     if (term.step === 1) return everyText;
+    if (first + term.step > last) {
+      return `${label(first)} (the step ${term.step} exceeds the range)`;
+    }
     return `every ${term.step} ${unit}s starting with ${label(first)} (resetting each boundary)`;
   }
   if (term.kind === "value") {
     return label(term.value);
+  }
+  if (term.from === term.to || term.from + term.step > term.to) {
+    return label(term.from);
   }
   if (term.step === 1) {
     return `${label(term.from)} through ${label(term.to)}`;
@@ -87,14 +98,14 @@ function timePhrase(ast: CronAst): string {
       return `At ${pad(hourTerm.value)}:${pad(minuteTerm.value)} UTC`;
     }
   }
-  const minutePart = describeField(ast.minute, (t) => describeNumericTerm(t, "minute", 0));
+  const minutePart = describeField(ast.minute, (t) => describeNumericTerm(t, "minute", 0, 59));
   if (!isRestricted(ast.hour)) {
     if (!isRestricted(ast.minute)) {
       return "Every minute";
     }
     return `At ${minutePart} of every hour (UTC)`;
   }
-  const hourPart = describeField(ast.hour, (t) => describeNumericTerm(t, "hour", 0));
+  const hourPart = describeField(ast.hour, (t) => describeNumericTerm(t, "hour", 0, 23));
   if (!isRestricted(ast.minute)) {
     return `Every minute during ${hourPart} (UTC)`;
   }
@@ -105,9 +116,11 @@ function dayPhrase(ast: CronAst): string {
   const domRestricted = isRestricted(ast.dayOfMonth);
   const dowRestricted = isRestricted(ast.dayOfWeek);
   const union = !hasWildcardOrigin(ast.dayOfMonth) && !hasWildcardOrigin(ast.dayOfWeek);
-  const domPart = describeField(ast.dayOfMonth, (t) => describeNumericTerm(t, "day-of-month", 1));
+  const domPart = describeField(ast.dayOfMonth, (t) =>
+    describeNumericTerm(t, "day-of-month", 1, 31),
+  );
   const dowPart = describeField(ast.dayOfWeek, (t) =>
-    describeLabeledTerm(t, dowLabel, "every day of the week", "weekday", 0),
+    describeLabeledTerm(t, dowLabel, "every day of the week", "weekday", 0, 6),
   );
   if (domRestricted && dowRestricted) {
     if (union) {
@@ -127,7 +140,7 @@ function dayPhrase(ast: CronAst): string {
 function monthPhrase(ast: CronAst): string {
   if (!isRestricted(ast.month)) return "";
   const part = describeField(ast.month, (t) =>
-    describeLabeledTerm(t, monthLabel, "every month", "month", 1),
+    describeLabeledTerm(t, monthLabel, "every month", "month", 1, 12),
   );
   return `in ${part}`;
 }

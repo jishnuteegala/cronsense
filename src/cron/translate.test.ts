@@ -115,4 +115,36 @@ describe("translate", () => {
     expect(translation.timezoneNote).toContain("timezone");
     expect(translation.timezoneNote).toContain("UTC-based firing times do not apply");
   });
+
+  it("collapses an oversized minute step to its sole firing minute", () => {
+    expect(sentence("*/61 * * * *")).toBe(
+      "At minute 0 (the step 61 exceeds the range) of every hour (UTC).",
+    );
+  });
+
+  it("collapses a step equal to the field span to its start", () => {
+    expect(sentence("*/60 * * * *")).toBe(
+      "At minute 0 (the step 60 exceeds the range) of every hour (UTC).",
+    );
+  });
+
+  it("keeps a step exactly covering two firings", () => {
+    expect(sentence("*/59 * * * *")).toBe(
+      "At every 59 minutes starting at minute 0 (resetting each boundary) of every hour (UTC).",
+    );
+  });
+
+  it("collapses an oversized month step to January only", () => {
+    expect(sentence("0 0 * */13 *")).toBe(
+      "At 00:00 UTC, in January (the step 13 exceeds the range).",
+    );
+  });
+
+  it("collapses an oversized range step to the range start", () => {
+    expect(sentence("10-20/30 * * * *")).toBe("At minute 10 of every hour (UTC).");
+  });
+
+  it("collapses an oversized weekday step to the first weekday", () => {
+    expect(sentence("0 0 * * */7")).toBe("At 00:00 UTC, on Sunday (the step 7 exceeds the range).");
+  });
 });

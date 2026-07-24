@@ -7,8 +7,10 @@ import { evaluateWarnings } from "./cron/warnings";
 export const DST_NOTE =
   "scheduled times are computed in UTC; local times shift when your timezone changes for DST";
 
-function formatUtc(date: Date): string {
-  return date.toISOString().replace("T", " ").slice(0, 16) + " UTC";
+export function formatUtc(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const year = String(date.getUTCFullYear()).padStart(4, "0");
+  return `${year}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())} UTC`;
 }
 
 export function formatLocal(date: Date, timeZone?: string, locale?: string): string {
