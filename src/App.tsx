@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   domDowProvisionalNote,
   neverFiresReason,
@@ -29,7 +29,13 @@ export function formatLocal(date: Date, timeZone?: string, locale?: string): str
 
 export function App({ initialExpression = '*/15 9-17 * * MON-FRI' }: { initialExpression?: string }) {
   const [input, setInput] = useState(initialExpression)
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 30000)
+    return () => clearInterval(interval)
+  }, [])
   const result = useMemo(() => parseCron(input), [input])
+  const nowMinute = Math.floor(now.getTime() / 60000)
   const output = useMemo(() => {
     if (!result.ok) return null
     const never = neverFiresReason(result.ast)
@@ -37,14 +43,14 @@ export function App({ initialExpression = '*/15 9-17 * * MON-FRI' }: { initialEx
     const subMinimum = never ? null : subMinimumIntervalWarning(result.ast)
     return {
       translation: translate(result.ast),
-      firings: never ? [] : nextFirings(result.ast, new Date(), 10),
+      firings: never ? [] : nextFirings(result.ast, new Date(nowMinute * 60000), 10),
       never,
       subMinimum,
       provisionalNotes: domDowNote
         ? [...result.provisionalNotes, domDowNote]
         : result.provisionalNotes,
     }
-  }, [result])
+  }, [result, nowMinute])
 
   return (
     <main style={{ maxWidth: 720, margin: '2rem auto', fontFamily: 'system-ui, sans-serif', padding: '0 1rem' }}>

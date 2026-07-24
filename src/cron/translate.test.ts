@@ -74,6 +74,18 @@ describe('translate', () => {
     expect(text).toContain('awaiting empirical verification')
   })
 
+  it('stepped wildcard months name the starting month', () => {
+    expect(sentence('0 0 * */2 *')).toBe(
+      'At 00:00 UTC, in every 2 months starting with January (resetting each boundary).',
+    )
+  })
+
+  it('stepped wildcard weekdays name the starting day', () => {
+    expect(sentence('0 0 * * */2')).toBe(
+      'At 00:00 UTC, on every 2 weekdays starting with Sunday (resetting each boundary).',
+    )
+  })
+
   it('stepped day-of-month starts at day 1, not 0', () => {
     expect(sentence('0 0 */10 * *')).toBe(
       'At 00:00 UTC, on every 10 day-of-months starting at day-of-month 1 (resetting each boundary).',

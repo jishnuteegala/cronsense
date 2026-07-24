@@ -1,8 +1,11 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { act, cleanup, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { App, DST_NOTE, formatLocal } from './App'
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+})
 
 describe('App', () => {
   it('shows translation, firings table, and the DST note for a valid expression', () => {
@@ -39,6 +42,19 @@ describe('App', () => {
     expect(screen.getByText(/`timezone` key/).textContent).toContain(
       'UTC-based firing times do not apply',
     )
+  })
+
+  it('rolls expired firings out as time advances', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2026, 0, 15, 12, 0, 30)))
+    render(<App initialExpression="* * * * *" />)
+    const firstBefore = screen.getAllByRole('row')[1]?.textContent
+    expect(firstBefore).toContain('2026-01-15 12:01 UTC')
+    act(() => {
+      vi.advanceTimersByTime(120000)
+    })
+    const firstAfter = screen.getAllByRole('row')[1]?.textContent
+    expect(firstAfter).toContain('2026-01-15 12:03 UTC')
   })
 
   it('shows the sub-minimum-interval warning for every-minute schedules', () => {

@@ -217,6 +217,14 @@ describe('DOM/DOW OR semantics (provisional, awaiting empirical verification)', 
   })
 })
 
+describe('years below 100', () => {
+  it('does not remap two-digit years to the 1900s', () => {
+    const from = new Date('0098-06-15T12:00:00Z')
+    const firings = nextFirings(ast('0 0 1 1 *'), from, 2)
+    expect(iso(firings)).toEqual(['0099-01-01T00:00Z', '0100-01-01T00:00Z'])
+  })
+})
+
 describe('never fires', () => {
   it('detects Feb 30', () => {
     expect(canEverFire(ast('0 0 30 2 *'))).toBe(false)

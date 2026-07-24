@@ -61,10 +61,16 @@ function describeNumericTerm(term: FieldTerm, unit: string, min: number): string
   return `every ${term.step} ${unit}s from ${term.from} through ${term.to}`
 }
 
-function describeLabeledTerm(term: FieldTerm, label: (v: number) => string, everyText: string): string {
+function describeLabeledTerm(
+  term: FieldTerm,
+  label: (v: number) => string,
+  everyText: string,
+  unit: string,
+  first: number,
+): string {
   if (term.kind === 'wildcard') {
     if (term.step === 1) return everyText
-    return `every ${term.step} of them starting from the first (resetting each boundary)`
+    return `every ${term.step} ${unit}s starting with ${label(first)} (resetting each boundary)`
   }
   if (term.kind === 'value') {
     return label(term.value)
@@ -107,7 +113,9 @@ function dayPhrase(ast: CronAst): string {
   const domRestricted = isRestricted(ast.dayOfMonth)
   const dowRestricted = isRestricted(ast.dayOfWeek)
   const domPart = describeField(ast.dayOfMonth, (t) => describeNumericTerm(t, 'day-of-month', 1))
-  const dowPart = describeField(ast.dayOfWeek, (t) => describeLabeledTerm(t, dowLabel, 'every day of the week'))
+  const dowPart = describeField(ast.dayOfWeek, (t) =>
+    describeLabeledTerm(t, dowLabel, 'every day of the week', 'weekday', 0),
+  )
   if (domRestricted && dowRestricted) {
     return `on ${domPart}, or on ${dowPart} (either matching day fires; awaiting empirical verification of GHA's combined day-of-month/day-of-week behaviour)`
   }
@@ -122,7 +130,9 @@ function dayPhrase(ast: CronAst): string {
 
 function monthPhrase(ast: CronAst): string {
   if (!isRestricted(ast.month)) return ''
-  const part = describeField(ast.month, (t) => describeLabeledTerm(t, monthLabel, 'every month'))
+  const part = describeField(ast.month, (t) =>
+    describeLabeledTerm(t, monthLabel, 'every month', 'month', 1),
+  )
   return `in ${part}`
 }
 

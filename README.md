@@ -16,7 +16,7 @@ Paste a cron expression, get a plain-English translation and the next 10 firing 
 
 ## What it does
 
-- Parses exactly the cron grammar GitHub Actions accepts: five fields (minute, hour, day-of-month, month or JAN-DEC, day-of-week or SUN-SAT) with `*`, `,`, `-`, `/`.
+- Parses the cron grammar GitHub Actions documents: five fields (minute, hour, day-of-month, month or JAN-DEC, day-of-week or SUN-SAT) with `*`, `,`, `-`, `/`; interpretations the docs leave open are flagged as provisional until verified against the real GHA validator.
 - Rejects what GHA rejects: `@`-shortcuts, a seconds field, and `L`/`W`/`#` tokens (the latter presumed rejected pending confirmation against the real GHA validator).
 - Computes the next 10 firings in UTC; browser-local times are display-only, with a static DST note.
 - Flags undocumented behaviours as provisional: name tokens in ranges/steps, and combined day-of-month/day-of-week semantics (POSIX implies OR; awaiting empirical verification).

@@ -61,6 +61,22 @@ function dayMatches(expanded: ExpandedCron, date: Date): boolean {
 
 const MAX_YEARS_PER_FIRING = 9
 
+function utcDate(
+  year: number,
+  monthIndex: number,
+  day: number,
+  hour = 0,
+  minute = 0,
+): Date {
+  const date = new Date(Date.UTC(2000, monthIndex, day, hour, minute))
+  date.setUTCFullYear(year + (date.getUTCFullYear() - 2000))
+  return date
+}
+
+function utcTime(year: number, monthIndex: number, day: number): number {
+  return utcDate(year, monthIndex, day).getTime()
+}
+
 export function canEverFire(ast: CronAst): boolean {
   const expanded = expandCron(ast)
   if (
@@ -122,19 +138,15 @@ export function nextFirings(ast: CronAst, from: Date, count: number): Date[] {
   if (!canEverFire(ast)) return results
   const sortedMinutes = [...expanded.minutes].sort((a, b) => a - b)
   const sortedHours = [...expanded.hours].sort((a, b) => a - b)
-  const start = new Date(
-    Date.UTC(
-      from.getUTCFullYear(),
-      from.getUTCMonth(),
-      from.getUTCDate(),
-      from.getUTCHours(),
-      from.getUTCMinutes() + 1,
-    ),
+  const start = utcDate(
+    from.getUTCFullYear(),
+    from.getUTCMonth(),
+    from.getUTCDate(),
+    from.getUTCHours(),
+    from.getUTCMinutes() + 1,
   )
-  let limit = Date.UTC(start.getUTCFullYear() + MAX_YEARS_PER_FIRING, 0, 1)
-  const day = new Date(
-    Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()),
-  )
+  let limit = utcTime(start.getUTCFullYear() + MAX_YEARS_PER_FIRING, 0, 1)
+  const day = utcDate(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate())
   let isFirstDay = true
   while (day.getTime() < limit && results.length < count) {
     const month = day.getUTCMonth() + 1
@@ -151,18 +163,10 @@ export function nextFirings(ast: CronAst, from: Date, count: number): Date[] {
         for (const minute of sortedMinutes) {
           if (hour === startHour && isFirstDay && minute < startMinute) continue
           results.push(
-            new Date(
-              Date.UTC(
-                day.getUTCFullYear(),
-                day.getUTCMonth(),
-                day.getUTCDate(),
-                hour,
-                minute,
-              ),
-            ),
+            utcDate(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate(), hour, minute),
           )
           if (results.length >= count) return results
-          limit = Date.UTC(day.getUTCFullYear() + MAX_YEARS_PER_FIRING, 0, 1)
+          limit = utcTime(day.getUTCFullYear() + MAX_YEARS_PER_FIRING, 0, 1)
         }
       }
     }
