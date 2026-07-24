@@ -51,7 +51,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
     id: "uneven-step-reset",
     predicate: { kind: "uneven-step" },
     messageKind: "uneven-step",
-    message: "The {details} reset at the field boundary.",
+    message: "{details}.",
     verifiedOn: VERIFIED_ON,
     sourceUrl: SCHEDULE_URL,
     sourcePaths: ["data/reusables/repositories/actions-scheduled-workflow-example.md"],

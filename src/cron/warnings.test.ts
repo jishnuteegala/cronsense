@@ -82,16 +82,21 @@ describe("expression-specific warnings", () => {
     const warning = evaluateWarnings(ast("*/7 * * * *")).find(
       (item) => item.id === "uneven-step-reset",
     );
-    expect(warning?.message).toContain("minute */7");
-    expect(warning?.message).toContain("0, ..., 56, then restarts at 0");
+    expect(warning?.message).toContain("The minute */7 schedule");
+    expect(warning?.message).toContain("0, ..., 56; it resets at 0 when the field wraps");
   });
 
-  it("does not mislabel stepped ranges as wildcard reset schedules", () => {
+  it("detects stepped ranges whose boundary gap differs from their step", () => {
     expect(warningIds("5-55/10 * * * *")).not.toContain("uneven-step-reset");
-    expect(warningIds("0-59/7 * * * *")).not.toContain("uneven-step-reset");
+    const warning = evaluateWarnings(ast("0-59/7 * * * *")).find(
+      (item) => item.id === "uneven-step-reset",
+    );
+    expect(warning?.message).toContain(
+      "The minute 0-59/7 schedule selects 0, ..., 56; it resets at 0 when the field wraps",
+    );
     expect(
       evaluateWarnings(ast("*/8 * * * *")).find((item) => item.id === "uneven-step-reset")?.message,
-    ).toContain("56, then restarts at 0");
+    ).toContain("56; it resets at 0 when the field wraps");
   });
 
   it("identifies never-firing conflicting fields", () => {

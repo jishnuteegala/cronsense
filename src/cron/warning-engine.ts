@@ -23,7 +23,12 @@ type SteppedTerm = Exclude<FieldTerm, { kind: "value" }>;
 function unevenStepTerms(field: FieldAst): SteppedTerm[] {
   const { min, max } = FIELD_RANGES[field.field];
   return field.terms.filter((term): term is SteppedTerm => {
-    return term.kind === "wildcard" && term.explicitStep && (max - min + 1) % term.step !== 0;
+    if (term.kind === "value") return false;
+    if (term.step === 1 || (term.kind === "wildcard" && !term.explicitStep)) return false;
+    const from = term.kind === "wildcard" ? min : term.from;
+    const to = term.kind === "wildcard" ? max : term.to;
+    const last = from + Math.floor((to - from) / term.step) * term.step;
+    return max - last + from - min + 1 !== term.step;
   });
 }
 
@@ -51,9 +56,11 @@ function messageFor(warning: WarningDefinition, ast: CronAst): string {
       unevenStepTerms(field).map((term) => {
         const { min, max } = FIELD_RANGES[field.field];
         const from = term.kind === "wildcard" ? min : term.from;
-        const to = max;
+        const to = term.kind === "wildcard" ? max : term.to;
         const last = from + Math.floor((to - from) / term.step) * term.step;
-        return `${field.field} */${term.step} selects ${from}, ..., ${last}, then restarts at ${from}`;
+        const expression =
+          term.kind === "wildcard" ? `*/${term.step}` : `${from}-${to}/${term.step}`;
+        return `The ${field.field} ${expression} schedule selects ${from}, ..., ${last}; it resets at ${from} when the field wraps`;
       }),
   );
   return warning.message.replace("{details}", details.join("; "));
