@@ -25,6 +25,49 @@ describe("warning definitions", () => {
     }
   });
 
+  it("locks the sourced quotes and docs watch paths", () => {
+    expect(WARNINGS.map((warning) => [warning.id, warning.sourceUrl, warning.sourcePaths])).toEqual(
+      [
+        [
+          "dom-dow-or-semantics",
+          "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule",
+          ["content/actions/reference/workflows-and-actions/events-that-trigger-workflows.md"],
+        ],
+        [
+          "uneven-step-reset",
+          "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule",
+          ["data/reusables/repositories/actions-scheduled-workflow-example.md"],
+        ],
+        [
+          "never-fires",
+          "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule",
+          ["data/reusables/repositories/cron.md"],
+        ],
+        [
+          "sub-minimum-interval",
+          "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule",
+          ["data/reusables/repositories/actions-scheduled-workflow-example.md"],
+        ],
+        [
+          "high-load-delay-drop",
+          "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule",
+          ["data/reusables/actions/schedule-delay.md"],
+        ],
+        [
+          "inactivity-pause",
+          "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule",
+          [
+            "content/actions/reference/workflows-and-actions/events-that-trigger-workflows.md",
+            "data/reusables/actions/scheduled-workflows-disabled.md",
+          ],
+        ],
+      ],
+    );
+    expect(WARNINGS.find((warning) => warning.id === "high-load-delay-drop")?.message).toContain(
+      "If the load is sufficiently high enough, some queued jobs may be dropped. To decrease the chance of delay, schedule your workflow to run at a different time of the hour.",
+    );
+  });
+
   it("suppresses the empirically gated DOM/DOW warning", () => {
     expect(warningIds("0 0 1 * MON")).not.toContain("dom-dow-or-semantics");
   });
@@ -45,6 +88,10 @@ describe("expression-specific warnings", () => {
 
   it("detects equivalent stepped ranges", () => {
     expect(warningIds("0-59/7 * * * *")).toContain("uneven-step-reset");
+    expect(warningIds("5-55/10 * * * *")).not.toContain("uneven-step-reset");
+    expect(
+      evaluateWarnings(ast("*/8 * * * *")).find((item) => item.id === "uneven-step-reset")?.message,
+    ).toContain("56, then 0 after 4 units");
   });
 
   it("identifies never-firing conflicting fields", () => {

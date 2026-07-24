@@ -24,8 +24,10 @@ function unevenStepTerms(field: FieldAst): SteppedTerm[] {
   const { min, max } = FIELD_RANGES[field.field];
   return field.terms.filter((term): term is SteppedTerm => {
     if (term.kind === "value") return false;
-    const span = term.kind === "wildcard" ? max - min + 1 : term.to - term.from + 1;
-    return term.step > 1 && span % term.step !== 0;
+    const from = term.kind === "wildcard" ? min : term.from;
+    const to = term.kind === "wildcard" ? max : term.to;
+    const last = from + Math.floor((to - from) / term.step) * term.step;
+    return term.step > 1 && from + (max - min + 1) - last !== term.step;
   });
 }
 
@@ -45,7 +47,9 @@ function matches(predicate: WarningPredicate, ast: CronAst): boolean {
 
 function messageFor(warning: WarningDefinition, ast: CronAst): string {
   if (warning.messageKind === "static") return warning.message;
-  if (warning.messageKind === "never-fires") return neverFiresReason(ast) ?? warning.message;
+  if (warning.messageKind === "never-fires") {
+    return warning.message.replace("{reason}", neverFiresReason(ast) ?? "");
+  }
   const details = [ast.minute, ast.hour, ast.dayOfMonth, ast.month, ast.dayOfWeek].flatMap(
     (field) =>
       unevenStepTerms(field).map((term) => {
@@ -53,10 +57,11 @@ function messageFor(warning: WarningDefinition, ast: CronAst): string {
         const from = term.kind === "wildcard" ? min : term.from;
         const to = term.kind === "wildcard" ? max : term.to;
         const last = from + Math.floor((to - from) / term.step) * term.step;
-        return `${field.field} ${term.kind === "wildcard" ? `*/${term.step}` : `${from}-${to}/${term.step}`} fires at ${from}, ..., ${last}, then ${from} after ${term.step - (to - last)} units`;
+        const boundaryGap = from + (max - min + 1) - last;
+        return `${field.field} ${term.kind === "wildcard" ? `*/${term.step}` : `${from}-${to}/${term.step}`} fires at ${from}, ..., ${last}, then ${from} after ${boundaryGap} units`;
       }),
   );
-  return `The ${details.join("; ")} and resets at the field boundary.`;
+  return warning.message.replace("{details}", details.join("; "));
 }
 
 function activate(warning: WarningDefinition, ast: CronAst): ActiveWarning {
