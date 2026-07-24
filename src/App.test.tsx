@@ -128,7 +128,10 @@ describe("App", () => {
     Element.prototype.scrollIntoView = scrollIntoView;
     window.location.hash = "#*%20*%20*%20*%20*#sub-minimum-interval";
     render(<App />);
-    expect(screen.getByRole("alert", { name: /shortest interval/i }).id).toBe("sub-minimum-interval");
+    const warning = screen
+      .getAllByRole("alert")
+      .find((element) => /shortest interval/.test(element.textContent ?? ""));
+    expect(warning?.id).toBe("sub-minimum-interval");
     expect(scrollIntoView).toHaveBeenCalled();
   });
 
