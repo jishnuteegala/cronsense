@@ -61,7 +61,15 @@ function dayMatches(expanded: ExpandedCron, date: Date): boolean {
   return domMatch && dowMatch;
 }
 
-const MAX_YEARS_PER_FIRING = 9;
+// The Gregorian calendar repeats exactly every 400 years (146097 days, which is
+// divisible by 7), so any satisfiable (month, day-of-month, day-of-week) pattern
+// matches at least once in every 400-year window. Searching up to 400 years past
+// the previous firing (or the start) is therefore provably sufficient for 5-field
+// cron: canEverFire filters unsatisfiable expressions, and every satisfiable
+// expression fires within the window. This covers sparse schedules such as
+// "0 0 */31 2 MON" (Feb 1 on a Monday, gaps of up to 11 years) and leap-day
+// schedules spanning the non-leap century year 2100 (gaps of up to 8 years).
+const MAX_YEARS_PER_FIRING = 400;
 
 function utcDate(year: number, monthIndex: number, day: number, hour = 0, minute = 0): Date {
   const date = new Date(Date.UTC(2000, monthIndex, day, hour, minute));

@@ -173,6 +173,22 @@ describe("leap years", () => {
     expect(iso(firings)).toEqual(["2104-02-29T00:00Z", "2108-02-29T00:00Z"]);
   });
 
+  it("returns 10 leap-day firings across the 8-year gap around 2100", () => {
+    const firings = nextFirings(ast("0 0 29 2 *"), new Date(Date.UTC(2095, 2, 1)), 10);
+    expect(iso(firings)).toEqual([
+      "2096-02-29T00:00Z",
+      "2104-02-29T00:00Z",
+      "2108-02-29T00:00Z",
+      "2112-02-29T00:00Z",
+      "2116-02-29T00:00Z",
+      "2120-02-29T00:00Z",
+      "2124-02-29T00:00Z",
+      "2128-02-29T00:00Z",
+      "2132-02-29T00:00Z",
+      "2136-02-29T00:00Z",
+    ]);
+  });
+
   it("Feb 28 fires every year", () => {
     const firings = nextFirings(ast("0 0 28 2 *"), T0, 2);
     expect(iso(firings)).toEqual(["2026-02-28T00:00Z", "2027-02-28T00:00Z"]);
@@ -235,6 +251,29 @@ describe("DOM/DOW OR semantics (provisional, awaiting empirical verification)", 
       "2026-02-09T00:00Z",
       "2026-02-23T00:00Z",
     ]);
+  });
+});
+
+describe("sparse schedules beyond a 9-year gap", () => {
+  it("finds 0 0 */31 2 MON firings across multi-decade gaps (Feb 1 on a Monday)", () => {
+    const firings = nextFirings(ast("0 0 */31 2 MON"), new Date(Date.UTC(2027, 1, 2)), 10);
+    expect(iso(firings)).toEqual([
+      "2038-02-01T00:00Z",
+      "2044-02-01T00:00Z",
+      "2049-02-01T00:00Z",
+      "2055-02-01T00:00Z",
+      "2066-02-01T00:00Z",
+      "2072-02-01T00:00Z",
+      "2077-02-01T00:00Z",
+      "2083-02-01T00:00Z",
+      "2094-02-01T00:00Z",
+      "2100-02-01T00:00Z",
+    ]);
+  });
+
+  it("finds the next firing when the gap alone exceeds 9 years", () => {
+    const firings = nextFirings(ast("0 0 */31 2 MON"), new Date(Date.UTC(2027, 1, 2)), 1);
+    expect(iso(firings)).toEqual(["2038-02-01T00:00Z"]);
   });
 });
 
