@@ -84,6 +84,9 @@ function parseValue(token: string, spec: FieldSpec): number | string {
   if (named !== undefined) {
     return named
   }
+  if (/^(L|W|\d+L|\d+W|LW)$/i.test(token)) {
+    return `"${token}" in ${spec.field} uses L/W tokens that are not part of GitHub Actions cron syntax (presumed rejected; pending GHA-validator confirmation)`
+  }
   if (/^[a-z]+$/i.test(token)) {
     return `"${token}" is not a valid ${spec.field} name`
   }
@@ -143,7 +146,7 @@ function parseTerm(token: string, spec: FieldSpec): FieldTerm | string {
 }
 
 function parseField(raw: string, spec: FieldSpec): FieldAst | string {
-  const unsupportedToken = raw.match(/[LW#?]/i)
+  const unsupportedToken = raw.match(/[#?]/)
   if (unsupportedToken) {
     return `"${unsupportedToken[0]}" in ${spec.field} is not part of GitHub Actions cron syntax (presumed rejected; pending GHA-validator confirmation)`
   }
