@@ -95,6 +95,7 @@ describe("expression-specific warnings", () => {
   it("detects stepped ranges whose boundary gap differs from their step", () => {
     expect(warningIds("5-55/10 * * * *")).not.toContain("uneven-step-reset");
     expect(warningIds("0-20/10,30-50/10 * * * *")).not.toContain("uneven-step-reset");
+    expect(warningIds("0-50/10,55 * * * *")).not.toContain("uneven-step-reset");
     const warning = evaluateWarnings(ast("0-59/7 * * * *")).find(
       (item) => item.id === "uneven-step-reset",
     );

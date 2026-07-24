@@ -35,12 +35,8 @@ function unevenStepTerms(field: FieldAst): SteppedTerm[] {
   );
   if (steppedTerms.length === 0) return [];
   const { min, max } = FIELD_RANGES[field.field];
-  const values = [...expandField(field)].sort((a, b) => a - b);
-  const gaps = values.map((value, index) => {
-    const next = values[(index + 1) % values.length] ?? value;
-    return index === values.length - 1 ? max - value + next - min + 1 : next - value;
-  });
-  return gaps.every((gap) => gap === gaps[0]) ? [] : steppedTerms;
+  const span = max - min + 1;
+  return steppedTerms.filter((term) => span % term.step !== 0);
 }
 
 function unevenStepFields(ast: CronAst): FieldName[] {
