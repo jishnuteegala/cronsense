@@ -1,5 +1,5 @@
-import type { CronAst, FieldAst, FieldName, FieldTerm } from "./parse";
-import { FIELD_RANGES, isRestricted } from "./parse";
+import type { CronAst, FieldAst, FieldName } from "./parse";
+import { FIELD_RANGES, hasWildcardOrigin } from "./parse";
 import { expandField, firesMoreOftenThanEveryFiveMinutes, neverFiresReason } from "./firings";
 import {
   WARNINGS,
@@ -18,8 +18,6 @@ export interface ActiveWarning {
   emphasised: boolean;
 }
 
-type SteppedTerm = Exclude<FieldTerm, { kind: "value" }>;
-
 const FIELD_LABELS: Record<FieldName, string> = {
   minute: "minute",
   hour: "hour",
@@ -28,29 +26,35 @@ const FIELD_LABELS: Record<FieldName, string> = {
   dayOfWeek: "day of the week",
 };
 
-function unevenStepTerms(field: FieldAst): SteppedTerm[] {
-  const steppedTerms = field.terms.filter(
-    (term): term is SteppedTerm =>
-      term.kind !== "value" && term.step > 1 && (term.kind !== "wildcard" || term.explicitStep),
-  );
-  if (steppedTerms.length === 0) return [];
+interface UnevenStepField {
+  field: FieldName;
+  values: number[];
+  gaps: number[];
+}
+
+function unevenStepField(field: FieldAst): UnevenStepField | null {
+  if (!field.terms.some((term) => term.kind !== "value" && term.step > 1)) return null;
   const { min, max } = FIELD_RANGES[field.field];
   const span = max - min + 1;
-  return steppedTerms.filter((term) => span % term.step !== 0);
+  const values = [...expandField(field)].sort((a, b) => a - b);
+  if (values.length < 2) return null;
+  const gaps = values.slice(1).map((value, index) => value - (values[index] ?? value));
+  gaps.push((values[0] ?? min) + span - (values.at(-1) ?? max));
+  return gaps.every((gap) => gap === gaps[0]) ? null : { field: field.field, values, gaps };
 }
 
-function unevenStepFields(ast: CronAst): FieldName[] {
+function unevenStepFields(ast: CronAst): UnevenStepField[] {
   return [ast.minute, ast.hour, ast.dayOfMonth, ast.month, ast.dayOfWeek]
-    .filter((field) => unevenStepTerms(field).length > 0)
-    .map((field) => field.field);
+    .map(unevenStepField)
+    .filter((field): field is UnevenStepField => field !== null);
 }
 
-function matches(predicate: WarningPredicate, ast: CronAst): boolean {
+export function matchesWarningPredicate(predicate: WarningPredicate, ast: CronAst): boolean {
   if (predicate.kind === "always") return true;
   if (predicate.kind === "never-fires") return neverFiresReason(ast) !== null;
   if (predicate.kind === "sub-minimum-interval") return firesMoreOftenThanEveryFiveMinutes(ast);
   if (predicate.kind === "uneven-step") return unevenStepFields(ast).length > 0;
-  return predicate.fields.every((field) => isRestricted(ast[field]));
+  return predicate.fields.every((field) => !hasWildcardOrigin(ast[field]));
 }
 
 function messageFor(warning: WarningDefinition, ast: CronAst): string {
@@ -58,18 +62,9 @@ function messageFor(warning: WarningDefinition, ast: CronAst): string {
   if (warning.messageKind === "never-fires") {
     return warning.message.replace("{reason}", neverFiresReason(ast) ?? "");
   }
-  const details = [ast.minute, ast.hour, ast.dayOfMonth, ast.month, ast.dayOfWeek].flatMap(
-    (field) =>
-      unevenStepTerms(field).map((term) => {
-        const { min, max } = FIELD_RANGES[field.field];
-        const from = term.kind === "wildcard" ? min : term.from;
-        const to = term.kind === "wildcard" ? max : term.to;
-        const last = from + Math.floor((to - from) / term.step) * term.step;
-        const boundaryGap = max - last + from - min + 1;
-        const expression =
-          term.kind === "wildcard" ? `*/${term.step}` : `${from}-${to}/${term.step}`;
-        return `The ${FIELD_LABELS[field.field]} ${expression} schedule selects ${from}, ..., ${last}; it resets at ${from} when the field wraps, creating a ${boundaryGap}-${FIELD_LABELS[field.field]} gap`;
-      }),
+  const details = unevenStepFields(ast).map(
+    ({ field, values, gaps }) =>
+      `The ${FIELD_LABELS[field]} schedule selects ${values.join(", ")}; its consecutive gaps are ${gaps.join(", ")} ${FIELD_LABELS[field]} values`,
   );
   return warning.message.replace("{details}", details.join("; "));
 }
@@ -91,7 +86,9 @@ function activate(warning: WarningDefinition, ast: CronAst): ActiveWarning {
 export function evaluateWarnings(ast: CronAst): ActiveWarning[] {
   return WARNINGS.filter(
     (warning) =>
-      warning.rank !== "contextual" && !warning.suppressed && matches(warning.predicate, ast),
+      warning.rank !== "contextual" &&
+      !warning.suppressed &&
+      matchesWarningPredicate(warning.predicate, ast),
   ).map((warning) => activate(warning, ast));
 }
 

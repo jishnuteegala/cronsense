@@ -7,7 +7,7 @@ export type WarningId =
   | "inactivity-pause";
 
 export type WarningPredicate =
-  | { kind: "both-restricted"; fields: ["dayOfMonth", "dayOfWeek"] }
+  | { kind: "both-restricted"; fields: readonly ["dayOfMonth", "dayOfWeek"] }
   | { kind: "uneven-step" }
   | { kind: "never-fires" }
   | { kind: "sub-minimum-interval" }
@@ -25,6 +25,7 @@ export interface WarningDefinition {
   sourcePaths: readonly string[];
   rank: "diagnostic" | "informational" | "contextual";
   suppressed?: boolean;
+  empiricalGate?: { sourceTicket: number; closesOn: string };
   emphasiseWhen?: { field: "minute"; includes: number };
 }
 
@@ -46,6 +47,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
     ],
     rank: "diagnostic",
     suppressed: true,
+    empiricalGate: { sourceTicket: 9, closesOn: "2026-07-31" },
   },
   {
     id: "uneven-step-reset",

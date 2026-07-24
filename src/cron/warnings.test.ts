@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseCron } from "./parse";
-import { evaluateWarnings } from "./warning-engine";
+import { evaluateWarnings, matchesWarningPredicate } from "./warning-engine";
 import { WARNINGS } from "./warnings";
 
 function ast(input: string) {
@@ -76,6 +76,19 @@ describe("warning definitions", () => {
 
   it("suppresses the empirically gated DOM/DOW warning", () => {
     expect(warningIds("0 0 1 * MON")).not.toContain("dom-dow-or-semantics");
+    expect(
+      WARNINGS.find((warning) => warning.id === "dom-dow-or-semantics")?.empiricalGate,
+    ).toEqual({
+      sourceTicket: 9,
+      closesOn: "2026-07-31",
+    });
+  });
+
+  it("only considers both non-wildcard-origin day fields for DOM/DOW semantics", () => {
+    const predicate = { kind: "both-restricted", fields: ["dayOfMonth", "dayOfWeek"] } as const;
+    expect(matchesWarningPredicate(predicate, ast("0 0 1 * MON"))).toBe(true);
+    expect(matchesWarningPredicate(predicate, ast("0 0 */2 * 1"))).toBe(false);
+    expect(matchesWarningPredicate(predicate, ast("0 0 1 * */2"))).toBe(false);
   });
 
   it("returns exact applicable warnings for a normal schedule", () => {
@@ -88,32 +101,43 @@ describe("expression-specific warnings", () => {
     const warning = evaluateWarnings(ast("*/7 * * * *")).find(
       (item) => item.id === "uneven-step-reset",
     );
-    expect(warning?.message).toContain("The minute */7 schedule");
     expect(warning?.message).toContain(
-      "0, ..., 56; it resets at 0 when the field wraps, creating a 4-minute gap",
+      "The minute schedule selects 0, 7, 14, 21, 28, 35, 42, 49, 56",
+    );
+    expect(warning?.message).toContain(
+      "its consecutive gaps are 7, 7, 7, 7, 7, 7, 7, 7, 4 minute values",
     );
   });
 
-  it("detects stepped ranges whose boundary gap differs from their step", () => {
+  it("derives stepped range and list gaps from the complete selected field values", () => {
     expect(warningIds("5-55/10 * * * *")).not.toContain("uneven-step-reset");
     expect(warningIds("0-20/10,30-50/10 * * * *")).not.toContain("uneven-step-reset");
-    expect(warningIds("0-50/10,55 * * * *")).not.toContain("uneven-step-reset");
-    const warning = evaluateWarnings(ast("0-59/7 * * * *")).find(
+    expect(warningIds("0-50/10,55 * * * *")).toContain("uneven-step-reset");
+    expect(warningIds("0-20/10 * * * *")).toEqual(["uneven-step-reset", "high-load-delay-drop"]);
+    expect(warningIds("0-20/7,21-59/7 * * * *")).toEqual([
+      "uneven-step-reset",
+      "sub-minimum-interval",
+      "high-load-delay-drop",
+    ]);
+    const rangeWarning = evaluateWarnings(ast("0-20/10 * * * *")).find(
       (item) => item.id === "uneven-step-reset",
     );
-    expect(warning?.message).toContain(
-      "The minute 0-59/7 schedule selects 0, ..., 56; it resets at 0 when the field wraps, creating a 4-minute gap",
+    expect(rangeWarning?.message).toContain(
+      "selects 0, 10, 20; its consecutive gaps are 10, 10, 40 minute values",
     );
-    expect(
-      evaluateWarnings(ast("*/8 * * * *")).find((item) => item.id === "uneven-step-reset")?.message,
-    ).toContain("56; it resets at 0 when the field wraps, creating a 4-minute gap");
+    const listWarning = evaluateWarnings(ast("0-20/7,21-59/7 * * * *")).find(
+      (item) => item.id === "uneven-step-reset",
+    );
+    expect(listWarning?.message).toContain(
+      "selects 0, 7, 14, 21, 28, 35, 42, 49, 56; its consecutive gaps are 7, 7, 7, 7, 7, 7, 7, 7, 4 minute values",
+    );
   });
 
   it("uses documented labels for non-minute uneven steps", () => {
     const warning = evaluateWarnings(ast("0 0 */7 * *")).find(
       (item) => item.id === "uneven-step-reset",
     );
-    expect(warning?.message).toContain("The day of the month */7 schedule");
+    expect(warning?.message).toContain("The day of the month schedule");
   });
 
   it("identifies never-firing conflicting fields", () => {
@@ -130,6 +154,9 @@ describe("expression-specific warnings", () => {
     expect(warning?.message).toContain(
       "The shortest interval you can run scheduled workflows is once every 5 minutes.",
     );
+    expect(warningIds("* * * * *")).toEqual(["sub-minimum-interval", "high-load-delay-drop"]);
+    expect(warningIds("*/4 * * * *")).toEqual(["sub-minimum-interval", "high-load-delay-drop"]);
+    expect(warningIds("0 0 30 2 *")).toEqual(["never-fires", "high-load-delay-drop"]);
     expect(warningIds("0 * * * *")).toEqual(["high-load-delay-drop"]);
     expect(warning?.message).not.toContain("rejected");
   });
