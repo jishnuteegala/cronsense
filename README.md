@@ -1,6 +1,6 @@
 # cronsense
 
-The cron checker that tells you when your GitHub Actions workflow will *actually* fire.
+The cron checker that tells you when your GitHub Actions workflow will _actually_ fire.
 
 ## Why didn't my scheduled workflow run?
 
