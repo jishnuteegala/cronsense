@@ -27,14 +27,33 @@ export function formatLocal(date: Date, timeZone?: string, locale?: string): str
 
 export function App({
   initialExpression = "*/15 9-17 * * MON-FRI",
+  timeZone,
+  locale,
 }: {
   initialExpression?: string;
+  timeZone?: string;
+  locale?: string;
 }) {
   const [input, setInput] = useState(initialExpression);
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 30000);
-    return () => clearInterval(interval);
+    let timer: ReturnType<typeof setTimeout>;
+    const scheduleNextMinute = () => {
+      const delay = 60000 - (Date.now() % 60000);
+      timer = setTimeout(() => {
+        setNow(new Date());
+        scheduleNextMinute();
+      }, delay);
+    };
+    scheduleNextMinute();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") setNow(new Date());
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, []);
   const result = useMemo(() => parseCron(input), [input]);
   const nowMinute = Math.floor(now.getTime() / 60000);
@@ -146,7 +165,7 @@ export function App({
                         {formatUtc(firing)}
                       </td>
                       <td style={{ padding: "0.25rem", fontFamily: "monospace" }}>
-                        {formatLocal(firing)}
+                        {formatLocal(firing, timeZone, locale)}
                       </td>
                     </tr>
                   ))}

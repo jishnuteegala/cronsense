@@ -99,6 +99,53 @@ describe("App", () => {
     render(<App initialExpression="0 0 */2 * 1" />);
     expect(screen.getByText(/Vixie cron source precedent/)).toBeTruthy();
   });
+
+  it("refreshes exactly at the next minute boundary, not mount-relative", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(Date.UTC(2026, 0, 15, 12, 0, 29)));
+    render(<App initialExpression="* * * * *" />);
+    expect(screen.getAllByRole("row")[1]?.textContent).toContain("2026-01-15 12:01 UTC");
+    act(() => {
+      vi.advanceTimersByTime(31000);
+    });
+    expect(screen.getAllByRole("row")[1]?.textContent).toContain("2026-01-15 12:02 UTC");
+  });
+
+  it("refreshes when the page becomes visible again", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(Date.UTC(2026, 0, 15, 12, 0, 0)));
+    render(<App initialExpression="* * * * *" />);
+    expect(screen.getAllByRole("row")[1]?.textContent).toContain("2026-01-15 12:01 UTC");
+    vi.setSystemTime(new Date(Date.UTC(2026, 0, 15, 12, 5, 30)));
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(screen.getAllByRole("row")[1]?.textContent).toContain("2026-01-15 12:06 UTC");
+  });
+
+  it("pairs each UTC row with its converted local time across a DST transition", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(Date.UTC(2026, 2, 29, 0, 30)));
+    render(<App initialExpression="0 0,2 29 3 *" timeZone="Europe/London" locale="en-GB" />);
+    const rows = screen.getAllByRole("row").map((row) => row.textContent ?? "");
+    expect(rows[1]).toContain("2026-03-29 02:00 UTC");
+    expect(rows[1]).toContain("03:00");
+    expect(rows[1]).toContain("BST");
+    expect(rows[2]).toContain("2027-03-29 00:00 UTC");
+    expect(rows[2]).toContain("01:00");
+    expect(rows[2]).toContain("BST");
+  });
+
+  it("renders distinct local times in a non-hour-offset timezone", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(Date.UTC(2026, 0, 15, 11, 30)));
+    render(<App initialExpression="0 12,14 * * *" timeZone="Asia/Kolkata" locale="en-GB" />);
+    const rows = screen.getAllByRole("row").map((row) => row.textContent ?? "");
+    expect(rows[1]).toContain("2026-01-15 12:00 UTC");
+    expect(rows[1]).toContain("17:30");
+    expect(rows[2]).toContain("2026-01-15 14:00 UTC");
+    expect(rows[2]).toContain("19:30");
+  });
 });
 
 describe("formatUtc", () => {
