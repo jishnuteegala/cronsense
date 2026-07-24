@@ -130,6 +130,8 @@ export function App({
         value={input}
         onChange={(e) => updateInput(e.target.value)}
         spellCheck={false}
+        aria-invalid={!result.ok}
+        aria-describedby={result.ok ? undefined : "cron-expression-error"}
         style={{ width: "100%", padding: "0.5rem", fontFamily: "monospace", fontSize: "1rem" }}
       />
       <aside
@@ -145,9 +147,9 @@ export function App({
           </p>
         ))}
       </aside>
-      <section id="results" tabIndex={-1}>
+      <section id="results" tabIndex={-1} aria-label="Results">
         {!result.ok && (
-          <p role="alert" style={{ color: "#b00020" }}>
+          <p id="cron-expression-error" role="alert" style={{ color: "#b00020" }}>
             {result.error}
           </p>
         )}

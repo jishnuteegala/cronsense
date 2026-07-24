@@ -183,6 +183,28 @@ describe("App", () => {
     expect(screen.getByRole("table")).toBeTruthy();
   });
 
+  it("associates the parser error with the input for assistive technology", () => {
+    render(<App initialExpression="@hourly" />);
+    const input = screen.getByLabelText("Cron expression");
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(input.getAttribute("aria-describedby")).toBe("cron-expression-error");
+    expect(document.getElementById("cron-expression-error")?.textContent).toContain(
+      "GitHub Actions does not support",
+    );
+  });
+
+  it("marks valid input as not invalid", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    const input = screen.getByLabelText("Cron expression");
+    expect(input.getAttribute("aria-invalid")).toBe("false");
+    expect(input.getAttribute("aria-describedby")).toBeNull();
+  });
+
+  it("names the results region for assistive technology", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    expect(screen.getByRole("region", { name: "Results" }).id).toBe("results");
+  });
+
   it("focuses the results region via the skip link even for invalid input", () => {
     render(<App initialExpression="@hourly" />);
     fireEvent.click(screen.getByRole("link", { name: "Skip to results" }));
