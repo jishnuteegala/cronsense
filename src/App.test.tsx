@@ -74,7 +74,7 @@ describe("App", () => {
 
   it("visibly emphasises the high-load caveat at minute zero", () => {
     render(<App initialExpression="0 * * * *" />);
-    expect(screen.getByText(/some queued jobs may be dropped/).style.fontWeight).toBe("bold");
+    expect(document.getElementById("high-load-delay-drop")?.style.fontWeight).toBe("bold");
   });
 
   it("renders warning source metadata with a docs link and verification date", () => {
@@ -120,11 +120,18 @@ describe("App", () => {
   it("updates the expression permalink when the input changes", () => {
     render(<App initialExpression="0 12 * * *" />);
     fireEvent.change(screen.getByLabelText("Cron expression"), { target: { value: "5 8 * * *" } });
-    expect(window.location.hash).toBe("#e=5%208%20*%20*%20*");
+    expect(window.location.hash).toBe("#5%208%20*%20*%20*");
   });
 
-  it("round-trips the namespaced permalink for any input, including empty and reserved words", () => {
-    for (const value of ["", "results", "0 0 30 2", "30 6 * * MON"]) {
+  it("writes the spec permalink format with no prefix", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    fireEvent.change(screen.getByLabelText("Cron expression"), { target: { value: "0 0 * * *" } });
+    expect(window.location.hash).toBe("#0%200%20*%20*%20*");
+    expect(window.location.hash).not.toContain("e=");
+  });
+
+  it("round-trips the spec permalink for representative inputs", () => {
+    for (const value of ["0 0 30 2", "30 6 * * MON", "*/15 9-17 * * MON-FRI"]) {
       cleanup();
       window.history.replaceState(null, "", "/");
       render(<App initialExpression="0 12 * * *" />);
@@ -135,6 +142,36 @@ describe("App", () => {
       render(<App />);
       expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe(value);
     }
+  });
+
+  it("clears the input and results when navigating back to an empty hash", () => {
+    window.location.hash = "#*%20*%20*%20*%20*";
+    render(<App />);
+    expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("* * * * *");
+    act(() => {
+      window.location.hash = "";
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("");
+    expect(screen.queryByRole("table")).toBeNull();
+    expect(screen.queryByText(/shortest interval/)).toBeNull();
+  });
+
+  it("surfaces the engine's verbatim sourced quote in the warning display", () => {
+    render(<App initialExpression="* * * * *" />);
+    const quote = screen.getByText(
+      "The shortest interval you can run scheduled workflows is once every 5 minutes.",
+    );
+    expect(quote.tagName).toBe("BLOCKQUOTE");
+    expect(quote.getAttribute("cite")).toContain("https://docs.github.com/");
+  });
+
+  it("surfaces both high-load quotes verbatim as blockquotes", () => {
+    render(<App initialExpression="0 * * * *" />);
+    expect(screen.getByText(/some queued jobs may be dropped/).tagName).toBe("BLOCKQUOTE");
+    expect(screen.getByText(/can be delayed during periods of high loads/).tagName).toBe(
+      "BLOCKQUOTE",
+    );
   });
 
   it("loads a compound namespaced permalink with a warning anchor", () => {

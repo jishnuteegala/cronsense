@@ -63,15 +63,59 @@ describe("warning definitions", () => {
         ],
       ],
     );
-    expect(WARNINGS.find((warning) => warning.id === "sub-minimum-interval")?.message).toBe(
-      'GitHub docs: "The shortest interval you can run scheduled workflows is once every 5 minutes." This expression fires more often; the docs do not say what happens to such an expression.',
-    );
-    expect(WARNINGS.find((warning) => warning.id === "high-load-delay-drop")?.message).toBe(
-      'GitHub docs: "The `schedule` event can be delayed during periods of high loads of GitHub Actions workflow runs. High load times include the start of every hour." "If the load is sufficiently high enough, some queued jobs may be dropped. To decrease the chance of delay, schedule your workflow to run at a different time of the hour."',
-    );
-    expect(WARNINGS.find((warning) => warning.id === "inactivity-pause")?.message).toBe(
-      'GitHub docs: "In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days." This applies to public repositories; GitHub does not document an equivalent 60-day pause for private repositories.',
-    );
+    expect(WARNINGS.find((warning) => warning.id === "sub-minimum-interval")?.quotes).toEqual([
+      "The shortest interval you can run scheduled workflows is once every 5 minutes.",
+    ]);
+    expect(WARNINGS.find((warning) => warning.id === "high-load-delay-drop")?.quotes).toEqual([
+      "The `schedule` event can be delayed during periods of high loads of GitHub Actions workflow runs. High load times include the start of every hour.",
+      "If the load is sufficiently high enough, some queued jobs may be dropped. To decrease the chance of delay, schedule your workflow to run at a different time of the hour.",
+    ]);
+    expect(WARNINGS.find((warning) => warning.id === "inactivity-pause")?.quotes).toEqual([
+      "In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days.",
+    ]);
+  });
+
+  it("carries verbatim sourced quotes onto activated warnings", () => {
+    const active = evaluateWarnings(ast("* * * * *"));
+    const subMinimum = active.find((warning) => warning.id === "sub-minimum-interval");
+    expect(subMinimum?.quotes).toEqual([
+      "The shortest interval you can run scheduled workflows is once every 5 minutes.",
+    ]);
+    const highLoad = active.find((warning) => warning.id === "high-load-delay-drop");
+    expect(highLoad?.quotes).toHaveLength(2);
+  });
+
+  it("gives every warning stable metadata: id, anchor target, and quote field", () => {
+    const expressions = ["* * * * *", "0 0 30 2 *", "*/7 * * * *", "17 4 * * *"];
+    const seen = new Set<string>();
+    for (const expression of expressions) {
+      for (const warning of evaluateWarnings(ast(expression))) {
+        expect(warning.id).toMatch(/^[a-z-]+$/);
+        expect(document.getElementById).toBeDefined();
+        expect(Array.isArray(warning.quotes)).toBe(true);
+        expect(warning.sourceUrl).toMatch(/^https:\/\/docs\.github\.com\//);
+        expect(warning.sourcePaths.length).toBeGreaterThan(0);
+        seen.add(warning.id);
+      }
+    }
+    expect(seen).toContain("sub-minimum-interval");
+    expect(seen).toContain("never-fires");
+    expect(seen).toContain("uneven-step-reset");
+    expect(seen).toContain("high-load-delay-drop");
+  });
+
+  it("keeps a quote field on every warning definition, empty only for computed ones", () => {
+    for (const warning of WARNINGS) {
+      expect(Array.isArray(warning.quotes)).toBe(true);
+    }
+    const computed = ["dom-dow-or-semantics", "uneven-step-reset", "never-fires"];
+    for (const warning of WARNINGS) {
+      if (computed.includes(warning.id)) {
+        expect(warning.quotes).toEqual([]);
+      } else {
+        expect(warning.quotes.length).toBeGreaterThan(0);
+      }
+    }
   });
 
   it("suppresses the empirically gated DOM/DOW warning", () => {
@@ -151,7 +195,7 @@ describe("expression-specific warnings", () => {
     const warning = evaluateWarnings(ast("* * * * *")).find(
       (item) => item.id === "sub-minimum-interval",
     );
-    expect(warning?.message).toContain(
+    expect(warning?.quotes).toContain(
       "The shortest interval you can run scheduled workflows is once every 5 minutes.",
     );
     expect(warningIds("* * * * *")).toEqual(["sub-minimum-interval", "high-load-delay-drop"]);
@@ -168,7 +212,7 @@ describe("contextual caveats", () => {
       (item) => item.id === "high-load-delay-drop",
     );
     expect(warning?.emphasised).toBe(true);
-    expect(warning?.message).toContain(
+    expect(warning?.quotes).toContain(
       "The `schedule` event can be delayed during periods of high loads of GitHub Actions workflow runs. High load times include the start of every hour.",
     );
   });
@@ -176,7 +220,7 @@ describe("contextual caveats", () => {
   it("keeps the public-repository inactivity note contextual", () => {
     const warning = WARNINGS.find((item) => item.id === "inactivity-pause");
     expect(warning?.rank).toBe("contextual");
-    expect(warning?.message).toContain(
+    expect(warning?.quotes).toContain(
       "In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days.",
     );
   });
