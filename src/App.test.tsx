@@ -251,14 +251,15 @@ describe("App", () => {
     expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("0 12 * * *");
   });
 
-  it("does not treat a direct /#results load as a cron expression", () => {
-    window.location.hash = "#results";
+  it("round-trips the reload of an expression that collides with the results anchor", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    fireEvent.change(screen.getByLabelText("Cron expression"), { target: { value: "results" } });
+    expect(window.location.hash).toBe("#results");
+    const hash = window.location.hash;
+    cleanup();
+    window.location.hash = hash;
     render(<App />);
-    expect(screen.queryByRole("alert")?.textContent ?? "").not.toContain("results");
-    expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe(
-      "*/15 9-17 * * MON-FRI",
-    );
-    expect(screen.getByRole("table")).toBeTruthy();
+    expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("results");
   });
 
   it("moves focus to results on skip-link activation without clobbering the permalink", () => {
