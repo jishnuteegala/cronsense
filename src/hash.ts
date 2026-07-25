@@ -3,8 +3,8 @@ export interface HashState {
   warningId: string | null;
 }
 
+const LEGACY_PREFIX = "e=";
 const RESERVED_FRAGMENTS = new Set(["results"]);
-const EXPRESSION_PREFIX = "e=";
 
 export function isToolPage(pathname: string): boolean {
   return pathname === "/" || pathname === "/index.html";
@@ -18,20 +18,20 @@ function decode(encodedExpression: string, warningId: string | null): HashState 
   }
 }
 
-export function parseHash(hash: string): HashState | null {
-  const value = hash.startsWith("#") ? hash.slice(1) : hash;
-  if (value.startsWith(EXPRESSION_PREFIX)) {
-    const rest = value.slice(EXPRESSION_PREFIX.length);
-    const separator = rest.lastIndexOf("#");
-    if (separator === -1) return decode(rest, null);
-    return decode(rest.slice(0, separator), rest.slice(separator + 1) || null);
-  }
-  if (!value || RESERVED_FRAGMENTS.has(value)) return null;
+function split(value: string): HashState | null {
   const separator = value.lastIndexOf("#");
   if (separator === -1) return decode(value, null);
   return decode(value.slice(0, separator), value.slice(separator + 1) || null);
 }
 
+export function parseHash(hash: string): HashState | null {
+  const value = hash.startsWith("#") ? hash.slice(1) : hash;
+  if (value === "") return null;
+  if (value.startsWith(LEGACY_PREFIX)) return split(value.slice(LEGACY_PREFIX.length));
+  if (RESERVED_FRAGMENTS.has(value)) return null;
+  return split(value);
+}
+
 export function expressionHash(expression: string): string {
-  return `#${EXPRESSION_PREFIX}${encodeURIComponent(expression)}`;
+  return `#${encodeURIComponent(expression)}`;
 }
