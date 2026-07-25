@@ -30,7 +30,7 @@ Every caveat has a pre-rendered, static, JavaScript-free page at a stable URL, o
 - `/gotchas/never-fires` - this expression will never fire
 - `/gotchas/sub-minimum-interval` - firing more often than every 5 minutes
 - `/gotchas/high-load-delay-drop` - scheduled runs can be delayed or dropped under high load
-- `/gotchas/inactivity-pause` - scheduled workflows pause after 60 days of inactivity
+- `/gotchas/inactivity-pause` - in a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days
 
 Each page carries the exact sourced quote, a dated verification stamp, the primary-source link, and the github/docs file paths. The `~15 minutes` delay figure is community lore and appears nowhere here.
 

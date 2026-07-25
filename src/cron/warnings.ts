@@ -34,7 +34,7 @@ export interface WarningDefinition {
   rank: "diagnostic" | "informational" | "contextual";
   gotcha: GotchaContent;
   suppressed?: boolean;
-  empiricalGate?: { sourceTicket: number; closesOn: string };
+  empiricalGate?: { sourceTicket: number; verificationRepo: string };
   emphasiseWhen?: { field: "minute"; includes: number };
 }
 
@@ -61,10 +61,10 @@ export const WARNINGS: readonly WarningDefinition[] = [
       title: "Day-of-month and day-of-week combine with OR (pending verification)",
       quote: "Use POSIX cron syntax to schedule workflows to run at specific times.",
       explanation:
-        "When both the day-of-month and day-of-week fields are restricted (neither is `*`), how they combine decides which days fire. GitHub does not document whether the fields combine with OR or AND. The docs only link to the POSIX crontab specification, which specifies OR when both fields are restricted, so a day matching either field would fire. This is an inference from the linked POSIX spec, not a documented GitHub behaviour. This warning is empirically gated: it does not appear in the tool until the verification repository confirms GitHub's actual behaviour. The observation window closes on 2026-07-31; until confirmed, treat the OR reading as a POSIX inference only.",
+        "When both the day-of-month and day-of-week fields are restricted (neither is `*`), how they combine decides which days fire. GitHub does not document whether the fields combine with OR or AND. The docs only link to the POSIX crontab specification, which specifies OR when both fields are restricted, so a day matching either field would fire. This is an inference from the linked POSIX spec, not a documented GitHub behaviour. This warning is empirically gated: it does not appear in the tool until the verification repository confirms GitHub's actual behaviour. The empirical observation window is in progress, tracked in ticket #9 and the cronsense-verification repository; until confirmed, treat the OR reading as a POSIX inference only.",
     },
     suppressed: true,
-    empiricalGate: { sourceTicket: 9, closesOn: "2026-07-31" },
+    empiricalGate: { sourceTicket: 9, verificationRepo: "cronsense-verification" },
   },
   {
     id: "uneven-step-reset",
@@ -88,7 +88,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
       quote:
         "Cron syntax has five fields separated by a space, and each field represents a unit of time.",
       explanation:
-        "A step value `*/N` counts from the start of the field's range and resets when the range ends. When `N` does not evenly divide the field's span, the step from the last matching value back to the first is shorter than `N`. For example, `*/7` in the minute field fires at :00, :07, :14, :21, :28, :35, :42, :49, :56, then resets to :00 of the next hour, leaving a 4-minute gap instead of 7. This is arithmetic over the documented step operator; the boundary reset is verified in the deterministic edge-case matrix.",
+        "A step value `*/N` counts from the start of the field's range and resets when the range ends. When `N` does not evenly divide the field's span, the step from the last matching value back to the first is shorter than `N`. For example, `*/7` in the minute field fires at :00, :07, :14, :21, :28, :35, :42, :49, :56, then resets to :00 of the next hour, leaving a 4-minute gap instead of 7. This is arithmetic over the documented step operator; the boundary reset is pending verification in the deterministic edge-case matrix (tracked in ticket #9).",
     },
   },
   {
@@ -110,7 +110,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
       quote:
         "minute (0 - 59), hour (0 - 23), day of the month (1 - 31), month (1 - 12 or JAN-DEC), day of the week (0 - 6 or SUN-SAT)",
       explanation:
-        "Some expressions describe a date-time that cannot exist, so the schedule never runs. This happens when the field constraints admit no satisfiable combination, for example day-of-month 30 in February, or a day-of-month and day-of-week pairing that can never co-occur. Cronsense reports which fields conflict. This is pure computation over the documented field ranges.",
+        "Some expressions describe a date-time that cannot exist, so the schedule never runs. This happens when the field constraints admit no satisfiable combination, for example day-of-month 30 in February, which is an impossible calendar date. Cronsense reports which fields conflict. This is pure computation over the documented field ranges.",
     },
   },
   {
@@ -173,7 +173,8 @@ export const WARNINGS: readonly WarningDefinition[] = [
     rank: "contextual",
     gotcha: {
       slug: "inactivity-pause",
-      title: "Scheduled workflows pause after 60 days of inactivity",
+      title:
+        "In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days",
       quote:
         "In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days.",
       explanation:

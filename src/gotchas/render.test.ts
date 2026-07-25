@@ -75,7 +75,8 @@ describe("renderGotchaPage", () => {
     expect(html).toContain("empirically gated");
     expect(html).toContain("undocumented by GitHub");
     expect(html).toContain("POSIX");
-    expect(html).toContain(warning!.empiricalGate!.closesOn);
+    expect(html).toContain(warning!.empiricalGate!.verificationRepo);
+    expect(html).toContain("in progress");
   });
 
   it("never introduces the undocumented 15-minute figure", () => {

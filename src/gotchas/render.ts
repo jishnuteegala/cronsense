@@ -27,8 +27,9 @@ export function renderInline(text: string): string {
 
 function gateBanner(warning: WarningDefinition): string {
   if (warning.empiricalGate === undefined) return "";
-  const closesOn = escapeHtml(warning.empiricalGate.closesOn);
-  return `        <p class="gate" role="note"><strong>Status: empirically gated.</strong> This behaviour is undocumented by GitHub and inferred from the linked POSIX specification. It is pending empirical verification and does not appear as a live warning until confirmed. Verification window closes ${closesOn}.</p>\n`;
+  const repo = escapeHtml(warning.empiricalGate.verificationRepo);
+  const ticket = warning.empiricalGate.sourceTicket;
+  return `        <p class="gate" role="note"><strong>Status: empirically gated.</strong> This behaviour is undocumented by GitHub and inferred from the linked POSIX specification. It is pending empirical verification and does not appear as a live warning until confirmed. The observation window is in progress, tracked in ticket #${ticket} and the ${repo} repository.</p>\n`;
 }
 
 function sourcePaths(warning: WarningDefinition): string {

@@ -118,7 +118,7 @@ describe("warning definitions", () => {
       WARNINGS.find((warning) => warning.id === "dom-dow-or-semantics")?.empiricalGate,
     ).toEqual({
       sourceTicket: 9,
-      closesOn: "2026-07-31",
+      verificationRepo: "cronsense-verification",
     });
   });
 

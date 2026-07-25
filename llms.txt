@@ -21,7 +21,7 @@ fully client-side: no accounts, no analytics, no third-party requests.
 - [/gotchas/never-fires](/gotchas/never-fires): This expression will never fire
 - [/gotchas/sub-minimum-interval](/gotchas/sub-minimum-interval): Firing more often than every 5 minutes
 - [/gotchas/high-load-delay-drop](/gotchas/high-load-delay-drop): Scheduled runs can be delayed or dropped under high load
-- [/gotchas/inactivity-pause](/gotchas/inactivity-pause): Scheduled workflows pause after 60 days of inactivity
+- [/gotchas/inactivity-pause](/gotchas/inactivity-pause): In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days
 
 ## Notes
 
