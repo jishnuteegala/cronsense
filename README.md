@@ -21,9 +21,22 @@ Paste a cron expression, get a plain-English translation and the next 10 firing 
 - Computes the next 10 firings in UTC; browser-local times are display-only, with a static DST note.
 - Flags undocumented behaviours as provisional: name tokens in ranges/steps, and combined day-of-month/day-of-week semantics. When both day fields are restricted and neither originates from a wildcard, the POSIX/Vixie OR union applies (a day matching either field fires); a wildcard-origin day field (`*` or `*/N`) retains wildcard status and the day fields intersect, matching Vixie cron source precedent. GHA's actual behaviour is undocumented and awaits empirical verification via the verification repo, at which point this may change.
 
+## Gotcha pages
+
+Every caveat has a pre-rendered, static, JavaScript-free page at a stable URL, one per warning. These are the citable pages an agent or crawler can fetch to get a complete, sourced explanation:
+
+- `/gotchas/dom-dow-or-semantics` - day-of-month and day-of-week combine with OR (empirically gated, pending verification)
+- `/gotchas/uneven-step-reset` - uneven `*/N` steps reset at the field boundary
+- `/gotchas/never-fires` - this expression will never fire
+- `/gotchas/sub-minimum-interval` - firing more often than every 5 minutes
+- `/gotchas/high-load-delay-drop` - scheduled runs can be delayed or dropped under high load
+- `/gotchas/inactivity-pause` - in a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days
+
+Each page carries the exact sourced quote, a dated verification stamp, the primary-source link, and the github/docs file paths. The `~15 minutes` delay figure is community lore and appears nowhere here.
+
 ## Agent usage
 
-Everything runs client-side from a static bundle; no accounts, no analytics, no third-party requests. The cron engine lives in `src/cron/` (`parse.ts`, `firings.ts`, `translate.ts`) with the parser's typed AST as the single source of truth.
+Everything runs client-side from a static bundle; no accounts, no analytics, no third-party requests. An `llms.txt` at the repository root and served at `/llms.txt` describes the tool, the six gotcha pages, and the URL scheme. The cron engine lives in `src/cron/` (`parse.ts`, `firings.ts`, `translate.ts`) with the parser's typed AST as the single source of truth; the caveats live as typed data in `src/cron/warnings.ts`, which is the single source for both the warning engine and the gotcha pages.
 
 ## Development
 

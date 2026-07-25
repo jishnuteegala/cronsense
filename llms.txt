@@ -1,0 +1,29 @@
+# Cronsense
+
+> The cron checker that tells you when your GitHub Actions workflow will actually fire.
+
+Cronsense parses a GitHub Actions cron expression and reports the plain-English
+translation, the next 10 firing times in UTC alongside browser-local time, and the
+GitHub-Actions-specific caveats a generic cron tool misses. Every caveat is quoted
+from GitHub's documentation, dated, and linked to its primary source. The tool runs
+fully client-side: no accounts, no analytics, no third-party requests.
+
+## URL scheme
+
+- `/`: the interactive tool. Expression permalinks use the URL hash: `/#<encoded-expression>`.
+- `/gotchas/<slug>`: pre-rendered, static, JavaScript-free explanation pages, one per caveat. These are the stable citable URLs for agents and crawlers.
+- `/llms.txt`: this file.
+
+## Gotcha pages
+
+- [/gotchas/dom-dow-or-semantics](/gotchas/dom-dow-or-semantics): Day-of-month and day-of-week combine with OR (pending verification) (empirically gated, pending verification)
+- [/gotchas/uneven-step-reset](/gotchas/uneven-step-reset): Uneven */N steps reset at the field boundary
+- [/gotchas/never-fires](/gotchas/never-fires): This expression will never fire
+- [/gotchas/sub-minimum-interval](/gotchas/sub-minimum-interval): Firing more often than every 5 minutes
+- [/gotchas/high-load-delay-drop](/gotchas/high-load-delay-drop): Scheduled runs can be delayed or dropped under high load
+- [/gotchas/inactivity-pause](/gotchas/inactivity-pause): In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days
+
+## Notes
+
+- GitHub documents no delay bound. The "~15 minutes" figure is community lore and appears nowhere in Cronsense.
+- Day-of-month/day-of-week combined-field semantics are undocumented by GitHub; that gotcha is gated on empirical verification.
