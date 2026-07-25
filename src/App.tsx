@@ -47,6 +47,7 @@ export function App({
   const [input, setInput] = useState(
     initialHash?.expression ?? initialExpression ?? "*/15 9-17 * * MON-FRI",
   );
+  const [pendingWarningId, setPendingWarningId] = useState(initialHash?.warningId ?? null);
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -73,7 +74,7 @@ export function App({
       const state = parseHash(window.location.hash);
       if (!state) return;
       setInput(state.expression);
-      if (state.warningId) focusWarning(state.warningId);
+      setPendingWarningId(state.warningId);
     };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
@@ -94,10 +95,10 @@ export function App({
   }, [result, nowMinute]);
 
   useEffect(() => {
-    if (!onToolPage) return;
-    const warningId = parseHash(window.location.hash)?.warningId;
-    if (warningId) focusWarning(warningId);
-  }, [onToolPage]);
+    if (!pendingWarningId) return;
+    focusWarning(pendingWarningId);
+    setPendingWarningId(null);
+  }, [pendingWarningId]);
 
   const updateInput = (value: string) => {
     setInput(value);

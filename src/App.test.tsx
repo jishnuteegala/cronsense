@@ -136,6 +136,20 @@ describe("App", () => {
     expect(document.activeElement?.id).toBe("sub-minimum-interval");
   });
 
+  it("focuses a warning that only exists after a hashchange to a new expression", () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    window.location.hash = "#0%2012%20*%20*%20*";
+    render(<App />);
+    expect(document.getElementById("sub-minimum-interval")).toBeNull();
+    act(() => {
+      window.location.hash = "#*%20*%20*%20*%20*#sub-minimum-interval";
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(document.activeElement?.id).toBe("sub-minimum-interval");
+    expect(scrollIntoView).toHaveBeenCalled();
+  });
+
   it("does not steal focus back to the warning on the minute refresh", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(Date.UTC(2026, 0, 15, 12, 0, 30)));
