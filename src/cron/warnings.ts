@@ -20,6 +20,7 @@ export interface WarningDefinition {
   predicate: WarningPredicate;
   messageKind: WarningMessage;
   message: string;
+  quotes: readonly string[];
   verifiedOn: string;
   sourceUrl: string;
   sourcePaths: readonly string[];
@@ -40,6 +41,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
     messageKind: "static",
     message:
       "Empirical verification is required before this warning is shown. GitHub does not document how restricted day-of-month and day-of-week fields combine; the linked POSIX crontab specification implies OR semantics.",
+    quotes: [],
     verifiedOn: VERIFIED_ON,
     sourceUrl: SCHEDULE_URL,
     sourcePaths: [
@@ -54,6 +56,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
     predicate: { kind: "uneven-step" },
     messageKind: "uneven-step",
     message: "{details}.",
+    quotes: [],
     verifiedOn: VERIFIED_ON,
     sourceUrl: SCHEDULE_URL,
     sourcePaths: ["data/reusables/repositories/actions-scheduled-workflow-example.md"],
@@ -64,6 +67,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
     predicate: { kind: "never-fires" },
     messageKind: "never-fires",
     message: "{reason}",
+    quotes: [],
     verifiedOn: VERIFIED_ON,
     sourceUrl: SCHEDULE_URL,
     sourcePaths: ["data/reusables/repositories/cron.md"],
@@ -74,7 +78,8 @@ export const WARNINGS: readonly WarningDefinition[] = [
     predicate: { kind: "sub-minimum-interval" },
     messageKind: "static",
     message:
-      'GitHub docs: "The shortest interval you can run scheduled workflows is once every 5 minutes." This expression fires more often; the docs do not say what happens to such an expression.',
+      "This expression fires more often than the documented minimum interval; the docs do not say what happens to such an expression.",
+    quotes: ["The shortest interval you can run scheduled workflows is once every 5 minutes."],
     verifiedOn: VERIFIED_ON,
     sourceUrl: SCHEDULE_URL,
     sourcePaths: ["data/reusables/repositories/actions-scheduled-workflow-example.md"],
@@ -84,8 +89,11 @@ export const WARNINGS: readonly WarningDefinition[] = [
     id: "high-load-delay-drop",
     predicate: { kind: "always" },
     messageKind: "static",
-    message:
-      'GitHub docs: "The `schedule` event can be delayed during periods of high loads of GitHub Actions workflow runs. High load times include the start of every hour." "If the load is sufficiently high enough, some queued jobs may be dropped. To decrease the chance of delay, schedule your workflow to run at a different time of the hour."',
+    message: "Scheduled runs can be delayed or dropped during high load.",
+    quotes: [
+      "The `schedule` event can be delayed during periods of high loads of GitHub Actions workflow runs. High load times include the start of every hour.",
+      "If the load is sufficiently high enough, some queued jobs may be dropped. To decrease the chance of delay, schedule your workflow to run at a different time of the hour.",
+    ],
     verifiedOn: VERIFIED_ON,
     sourceUrl: SCHEDULE_URL,
     sourcePaths: ["data/reusables/actions/schedule-delay.md"],
@@ -97,7 +105,10 @@ export const WARNINGS: readonly WarningDefinition[] = [
     predicate: { kind: "always" },
     messageKind: "static",
     message:
-      'GitHub docs: "In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days." This applies to public repositories; GitHub does not document an equivalent 60-day pause for private repositories.',
+      "This applies to public repositories; GitHub does not document an equivalent 60-day pause for private repositories.",
+    quotes: [
+      "In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days.",
+    ],
     verifiedOn: VERIFIED_ON,
     sourceUrl: SCHEDULE_URL,
     sourcePaths: [

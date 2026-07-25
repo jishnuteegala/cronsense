@@ -11,6 +11,7 @@ import {
 export interface ActiveWarning {
   id: WarningId;
   message: string;
+  quotes: readonly string[];
   verifiedOn: string;
   sourceUrl: string;
   sourcePaths: readonly string[];
@@ -73,6 +74,7 @@ function activate(warning: WarningDefinition, ast: CronAst): ActiveWarning {
   return {
     id: warning.id,
     message: messageFor(warning, ast),
+    quotes: warning.quotes,
     verifiedOn: warning.verifiedOn,
     sourceUrl: warning.sourceUrl,
     sourcePaths: warning.sourcePaths,
