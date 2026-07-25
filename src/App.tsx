@@ -3,6 +3,7 @@ import { neverFiresReason, nextFirings } from "./cron/firings";
 import { parseCron } from "./cron/parse";
 import { translate } from "./cron/translate";
 import { CONTEXTUAL_NOTES, evaluateWarnings } from "./cron/warning-engine";
+import { expressionHash, isToolPage, parseHash } from "./hash";
 
 export const DST_NOTE =
   "scheduled times are computed in UTC; local times shift when your timezone changes for DST";
@@ -25,8 +26,15 @@ export function formatLocal(date: Date, timeZone?: string, locale?: string): str
   });
 }
 
+function focusWarning(warningId: string) {
+  const element = document.getElementById(warningId);
+  if (!element) return;
+  element.scrollIntoView();
+  element.focus();
+}
+
 export function App({
-  initialExpression = "*/15 9-17 * * MON-FRI",
+  initialExpression,
   timeZone,
   locale,
 }: {
@@ -34,7 +42,12 @@ export function App({
   timeZone?: string;
   locale?: string;
 }) {
-  const [input, setInput] = useState(initialExpression);
+  const onToolPage = typeof window !== "undefined" && isToolPage(window.location.pathname);
+  const initialHash = onToolPage ? parseHash(window.location.hash) : null;
+  const [input, setInput] = useState(
+    initialHash?.expression ?? initialExpression ?? "*/15 9-17 * * MON-FRI",
+  );
+  const [pendingWarningId, setPendingWarningId] = useState(initialHash?.warningId ?? null);
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -55,6 +68,23 @@ export function App({
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, []);
+  useEffect(() => {
+    if (!onToolPage) return;
+    const onHashChange = () => {
+      const rawHash = window.location.hash;
+      const value = rawHash.startsWith("#") ? rawHash.slice(1) : rawHash;
+      if (value === "") {
+        setInput("");
+        return;
+      }
+      const state = parseHash(rawHash);
+      if (!state) return;
+      setInput(state.expression);
+      if (state.warningId) setPendingWarningId(state.warningId);
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, [onToolPage]);
   const result = useMemo(() => parseCron(input), [input]);
   const nowMinute = Math.floor(now.getTime() / 60000);
   const output = useMemo(() => {
@@ -70,6 +100,17 @@ export function App({
     };
   }, [result, nowMinute]);
 
+  useEffect(() => {
+    if (!pendingWarningId) return;
+    focusWarning(pendingWarningId);
+    setPendingWarningId(null);
+  }, [pendingWarningId]);
+
+  const updateInput = (value: string) => {
+    setInput(value);
+    if (onToolPage) window.history.replaceState(null, "", expressionHash(value));
+  };
+
   return (
     <main
       style={{
@@ -79,116 +120,164 @@ export function App({
         padding: "0 1rem",
       }}
     >
+      <a
+        href="#results"
+        onClick={(event) => {
+          event.preventDefault();
+          document.getElementById("results")?.focus();
+        }}
+      >
+        Skip to results
+      </a>
       <h1>Cronsense</h1>
       <p>Paste a GitHub Actions cron expression.</p>
+      <label htmlFor="cron-expression">Cron expression</label>
       <input
+        id="cron-expression"
         value={input}
-        onChange={(e) => setInput(e.target.value)}
-        aria-label="Cron expression"
+        onChange={(e) => updateInput(e.target.value)}
         spellCheck={false}
+        aria-invalid={!result.ok}
+        aria-describedby={result.ok ? undefined : "cron-expression-error"}
         style={{ width: "100%", padding: "0.5rem", fontFamily: "monospace", fontSize: "1rem" }}
       />
-      {!result.ok && (
-        <p role="alert" style={{ color: "#b00020" }}>
-          {result.error}
-        </p>
-      )}
-      {CONTEXTUAL_NOTES.map((note) => (
-        <p key={note.id} style={{ color: "#555" }}>
-          {note.message}{" "}
-          <span style={{ fontSize: "0.85rem" }}>
-            (verified against <a href={note.sourceUrl}>GitHub docs</a> on {note.verifiedOn})
-          </span>
-        </p>
-      ))}
-      {result.ok && output && (
-        <>
-          <p>{output.translation.sentence}</p>
-          <p style={{ fontSize: "0.9rem", color: "#555" }}>{output.translation.timezoneNote}</p>
-          {output.provisionalNotes.map((note) => (
-            <p key={note} style={{ fontSize: "0.9rem", color: "#8a5a00" }}>
-              {note}
-            </p>
-          ))}
-          {output.warnings.map((warning) => (
-            <p
-              key={warning.id}
-              role={warning.rank === "diagnostic" ? "alert" : undefined}
-              style={{ color: "#8a5a00", fontWeight: warning.emphasised ? "bold" : "normal" }}
-            >
-              {warning.message}{" "}
-              <span style={{ fontSize: "0.85rem", color: "#555" }}>
-                (verified against{" "}
-                <a href={warning.sourceUrl} style={{ color: "inherit" }}>
-                  GitHub docs
-                </a>{" "}
-                on {warning.verifiedOn})
+      <aside
+        aria-label="Contextual note"
+        style={{ borderLeft: "3px solid #666", paddingLeft: "0.75rem" }}
+      >
+        {CONTEXTUAL_NOTES.map((note) => (
+          <div key={note.id} style={{ color: "#555" }}>
+            {note.quotes.map((quote) => (
+              <blockquote
+                key={quote}
+                cite={note.sourceUrl}
+                style={{ margin: "0.25rem 0", fontStyle: "italic" }}
+              >
+                {quote}
+              </blockquote>
+            ))}
+            <p>
+              {note.message}{" "}
+              <span style={{ fontSize: "0.85rem" }}>
+                (verified against <a href={note.sourceUrl}>GitHub docs</a> on {note.verifiedOn})
               </span>
             </p>
-          ))}
-          {!output.never && (
-            <>
-              <h2>
-                {output.firings.length < 10
-                  ? `Next ${output.firings.length} firing${output.firings.length === 1 ? "" : "s"}`
-                  : "Next 10 firings"}
-              </h2>
-              {output.firings.length < 10 && (
-                <p style={{ fontSize: "0.85rem", color: "#555" }}>
-                  Only {output.firings.length} firing{output.firings.length === 1 ? "" : "s"} can be
-                  shown: later occurrences fall beyond the maximum date JavaScript can represent.
-                </p>
-              )}
-              <table style={{ borderCollapse: "collapse", width: "100%" }}>
-                <thead>
-                  <tr>
-                    <th
-                      style={{
-                        textAlign: "left",
-                        borderBottom: "1px solid #ccc",
-                        padding: "0.25rem",
-                      }}
-                    >
-                      UTC
-                    </th>
-                    <th
-                      style={{
-                        textAlign: "left",
-                        borderBottom: "1px solid #ccc",
-                        padding: "0.25rem",
-                      }}
-                    >
-                      Your local time
-                      <span
+          </div>
+        ))}
+      </aside>
+      <section id="results" tabIndex={-1} aria-label="Results">
+        {!result.ok && (
+          <p id="cron-expression-error" role="alert" style={{ color: "#b00020" }}>
+            {result.error}
+          </p>
+        )}
+        {result.ok && output && (
+          <>
+            <p>{output.translation.sentence}</p>
+            <p style={{ fontSize: "0.9rem", color: "#555" }}>{output.translation.timezoneNote}</p>
+            {output.provisionalNotes.map((note) => (
+              <p key={note} style={{ fontSize: "0.9rem", color: "#8a5a00" }}>
+                {note}
+              </p>
+            ))}
+            {output.warnings.map((warning) => (
+              <article
+                id={warning.id}
+                key={warning.id}
+                tabIndex={-1}
+                role={warning.rank === "diagnostic" ? "alert" : undefined}
+                style={{
+                  borderLeft: `3px solid ${warning.rank === "diagnostic" ? "#b00020" : "#8a5a00"}`,
+                  color: warning.rank === "diagnostic" ? "#8a0018" : "#664400",
+                  fontWeight: warning.emphasised ? "bold" : "normal",
+                  margin: "1rem 0",
+                  paddingLeft: "0.75rem",
+                }}
+              >
+                {warning.quotes.map((quote) => (
+                  <blockquote
+                    key={quote}
+                    cite={warning.sourceUrl}
+                    style={{ margin: "0.25rem 0", fontStyle: "italic" }}
+                  >
+                    {quote}
+                  </blockquote>
+                ))}
+                {warning.message}{" "}
+                <span style={{ fontSize: "0.85rem", color: "#555" }}>
+                  (verified against{" "}
+                  <a href={warning.sourceUrl} style={{ color: "inherit" }}>
+                    GitHub docs
+                  </a>{" "}
+                  on {warning.verifiedOn})
+                </span>
+              </article>
+            ))}
+            {!output.never && (
+              <>
+                <h2>
+                  {output.firings.length < 10
+                    ? `Next ${output.firings.length} firing${output.firings.length === 1 ? "" : "s"}`
+                    : "Next 10 firings"}
+                </h2>
+                {output.firings.length < 10 && (
+                  <p style={{ fontSize: "0.85rem", color: "#555" }}>
+                    Only {output.firings.length} firing{output.firings.length === 1 ? "" : "s"} can
+                    be shown: later occurrences fall beyond the maximum date JavaScript can
+                    represent.
+                  </p>
+                )}
+                <table style={{ borderCollapse: "collapse", width: "100%" }}>
+                  <thead>
+                    <tr>
+                      <th
                         style={{
-                          display: "block",
-                          fontWeight: "normal",
-                          fontSize: "0.8rem",
-                          color: "#555",
+                          textAlign: "left",
+                          borderBottom: "1px solid #ccc",
+                          padding: "0.25rem",
                         }}
                       >
-                        {DST_NOTE}
-                      </span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {output.firings.map((firing) => (
-                    <tr key={firing.getTime()}>
-                      <td style={{ padding: "0.25rem", fontFamily: "monospace" }}>
-                        {formatUtc(firing)}
-                      </td>
-                      <td style={{ padding: "0.25rem", fontFamily: "monospace" }}>
-                        {formatLocal(firing, timeZone, locale)}
-                      </td>
+                        UTC
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "left",
+                          borderBottom: "1px solid #ccc",
+                          padding: "0.25rem",
+                        }}
+                      >
+                        Your local time
+                        <span
+                          style={{
+                            display: "block",
+                            fontWeight: "normal",
+                            fontSize: "0.8rem",
+                            color: "#555",
+                          }}
+                        >
+                          {DST_NOTE}
+                        </span>
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
-        </>
-      )}
+                  </thead>
+                  <tbody>
+                    {output.firings.map((firing) => (
+                      <tr key={firing.getTime()}>
+                        <td style={{ padding: "0.25rem", fontFamily: "monospace" }}>
+                          {formatUtc(firing)}
+                        </td>
+                        <td style={{ padding: "0.25rem", fontFamily: "monospace" }}>
+                          {formatLocal(firing, timeZone, locale)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
+          </>
+        )}
+      </section>
       {(!result.ok || !output || output.never !== null) && (
         <p style={{ fontSize: "0.85rem", color: "#555", marginTop: "1rem" }}>Note: {DST_NOTE}.</p>
       )}

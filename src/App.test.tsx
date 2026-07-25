@@ -1,10 +1,11 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App, DST_NOTE, formatLocal, formatUtc } from "./App";
 
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  window.history.replaceState(null, "", "/");
 });
 
 describe("App", () => {
@@ -73,7 +74,7 @@ describe("App", () => {
 
   it("visibly emphasises the high-load caveat at minute zero", () => {
     render(<App initialExpression="0 * * * *" />);
-    expect(screen.getByText(/some queued jobs may be dropped/).style.fontWeight).toBe("bold");
+    expect(document.getElementById("high-load-delay-drop")?.style.fontWeight).toBe("bold");
   });
 
   it("renders warning source metadata with a docs link and verification date", () => {
@@ -107,6 +108,197 @@ describe("App", () => {
   it("does not expose provisional DOM/DOW caveat text", () => {
     render(<App initialExpression="0 0 */2 * 1" />);
     expect(screen.queryByText(/Vixie cron source precedent/)).toBeNull();
+  });
+
+  it("loads the expression from an encoded permalink", () => {
+    window.location.hash = "#0%2012%20*%20*%20*";
+    render(<App />);
+    expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("0 12 * * *");
+    expect(screen.getByText("At 12:00 UTC.")).toBeTruthy();
+  });
+
+  it("updates the expression permalink when the input changes", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    fireEvent.change(screen.getByLabelText("Cron expression"), { target: { value: "5 8 * * *" } });
+    expect(window.location.hash).toBe("#5%208%20*%20*%20*");
+  });
+
+  it("writes the spec permalink format with no prefix", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    fireEvent.change(screen.getByLabelText("Cron expression"), { target: { value: "0 0 * * *" } });
+    expect(window.location.hash).toBe("#0%200%20*%20*%20*");
+    expect(window.location.hash).not.toContain("e=");
+  });
+
+  it("round-trips the spec permalink for representative inputs", () => {
+    for (const value of ["0 0 30 2", "30 6 * * MON", "*/15 9-17 * * MON-FRI"]) {
+      cleanup();
+      window.history.replaceState(null, "", "/");
+      render(<App initialExpression="0 12 * * *" />);
+      fireEvent.change(screen.getByLabelText("Cron expression"), { target: { value } });
+      const hash = window.location.hash;
+      cleanup();
+      window.location.hash = hash;
+      render(<App />);
+      expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe(value);
+    }
+  });
+
+  it("clears the input and results when navigating back to an empty hash", () => {
+    window.location.hash = "#*%20*%20*%20*%20*";
+    render(<App />);
+    expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("* * * * *");
+    act(() => {
+      window.location.hash = "";
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("");
+    expect(screen.queryByRole("table")).toBeNull();
+    expect(screen.queryByText(/shortest interval/)).toBeNull();
+  });
+
+  it("surfaces the engine's verbatim sourced quote in the warning display", () => {
+    render(<App initialExpression="* * * * *" />);
+    const quote = screen.getByText(
+      "The shortest interval you can run scheduled workflows is once every 5 minutes.",
+    );
+    expect(quote.tagName).toBe("BLOCKQUOTE");
+    expect(quote.getAttribute("cite")).toContain("https://docs.github.com/");
+  });
+
+  it("surfaces a sourced quote for the computed never-fires and uneven-step warnings", () => {
+    render(<App initialExpression="0 0 30 2 *" />);
+    expect(screen.getByText(/Cron syntax has five fields/).tagName).toBe("BLOCKQUOTE");
+    cleanup();
+    render(<App initialExpression="*/7 * * * *" />);
+    expect(screen.getByText(/You can use these operators/).tagName).toBe("BLOCKQUOTE");
+  });
+
+  it("surfaces both high-load quotes verbatim as blockquotes", () => {
+    render(<App initialExpression="0 * * * *" />);
+    expect(screen.getByText(/some queued jobs may be dropped/).tagName).toBe("BLOCKQUOTE");
+    expect(screen.getByText(/can be delayed during periods of high loads/).tagName).toBe(
+      "BLOCKQUOTE",
+    );
+  });
+
+  it("loads a compound namespaced permalink with a warning anchor", () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    window.location.hash = "#e=*%20*%20*%20*%20*#sub-minimum-interval";
+    render(<App />);
+    expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("* * * * *");
+    expect(document.activeElement?.id).toBe("sub-minimum-interval");
+  });
+
+  it("gives each rendered warning a composable permalink anchor", () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    window.location.hash = "#*%20*%20*%20*%20*#sub-minimum-interval";
+    render(<App />);
+    const warning = screen
+      .getAllByRole("alert")
+      .find((element) => /shortest interval/.test(element.textContent ?? ""));
+    expect(warning?.id).toBe("sub-minimum-interval");
+    expect(scrollIntoView).toHaveBeenCalled();
+    expect(document.activeElement?.id).toBe("sub-minimum-interval");
+  });
+
+  it("focuses a warning that only exists after a hashchange to a new expression", () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    window.location.hash = "#0%2012%20*%20*%20*";
+    render(<App />);
+    expect(document.getElementById("sub-minimum-interval")).toBeNull();
+    act(() => {
+      window.location.hash = "#*%20*%20*%20*%20*#sub-minimum-interval";
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(document.activeElement?.id).toBe("sub-minimum-interval");
+    expect(scrollIntoView).toHaveBeenCalled();
+  });
+
+  it("does not steal focus back to the warning on the minute refresh", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(Date.UTC(2026, 0, 15, 12, 0, 30)));
+    window.location.hash = "#*%20*%20*%20*%20*#sub-minimum-interval";
+    render(<App />);
+    expect(document.activeElement?.id).toBe("sub-minimum-interval");
+    const input = screen.getByLabelText("Cron expression");
+    act(() => {
+      input.focus();
+    });
+    act(() => {
+      vi.advanceTimersByTime(60000);
+    });
+    expect(document.activeElement).toBe(input);
+  });
+
+  it("ignores hash state on non-tool paths", () => {
+    window.history.replaceState(null, "", "/gotchas/foo#0%205%20*%20*%20*");
+    render(<App />);
+    expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe(
+      "*/15 9-17 * * MON-FRI",
+    );
+    fireEvent.change(screen.getByLabelText("Cron expression"), { target: { value: "5 8 * * *" } });
+    expect(window.location.hash).toBe("#0%205%20*%20*%20*");
+    window.history.replaceState(null, "", "/");
+  });
+
+  it("still loads legacy un-namespaced permalinks", () => {
+    window.location.hash = "#0%2012%20*%20*%20*";
+    render(<App />);
+    expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("0 12 * * *");
+  });
+
+  it("round-trips the reload of an expression that collides with the results anchor", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    fireEvent.change(screen.getByLabelText("Cron expression"), { target: { value: "results" } });
+    expect(window.location.hash).toBe("#results");
+    const hash = window.location.hash;
+    cleanup();
+    window.location.hash = hash;
+    render(<App />);
+    expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("results");
+  });
+
+  it("moves focus to results on skip-link activation without clobbering the permalink", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    window.history.replaceState(null, "", "#0%2012%20*%20*%20*");
+    fireEvent.click(screen.getByRole("link", { name: "Skip to results" }));
+    expect(document.activeElement?.id).toBe("results");
+    expect(window.location.hash).toBe("#0%2012%20*%20*%20*");
+    expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("0 12 * * *");
+    expect(screen.getByRole("table")).toBeTruthy();
+  });
+
+  it("associates the parser error with the input for assistive technology", () => {
+    render(<App initialExpression="@hourly" />);
+    const input = screen.getByLabelText("Cron expression");
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(input.getAttribute("aria-describedby")).toBe("cron-expression-error");
+    expect(document.getElementById("cron-expression-error")?.textContent).toContain(
+      "GitHub Actions does not support",
+    );
+  });
+
+  it("marks valid input as not invalid", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    const input = screen.getByLabelText("Cron expression");
+    expect(input.getAttribute("aria-invalid")).toBe("false");
+    expect(input.getAttribute("aria-describedby")).toBeNull();
+  });
+
+  it("names the results region for assistive technology", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    expect(screen.getByRole("region", { name: "Results" }).id).toBe("results");
+  });
+
+  it("focuses the results region via the skip link even for invalid input", () => {
+    render(<App initialExpression="@hourly" />);
+    fireEvent.click(screen.getByRole("link", { name: "Skip to results" }));
+    expect(document.activeElement?.id).toBe("results");
+    expect(document.activeElement?.textContent).toContain("GitHub Actions does not support");
   });
 
   it("discloses a truncated firing list near the maximum representable date", () => {
