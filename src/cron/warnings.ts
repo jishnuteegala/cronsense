@@ -85,10 +85,9 @@ export const WARNINGS: readonly WarningDefinition[] = [
     gotcha: {
       slug: "uneven-step-reset",
       title: "Uneven `*/N` steps reset at the field boundary",
-      quote:
-        "Cron syntax has five fields separated by a space, and each field represents a unit of time.",
+      quote: "You can use these operators in any of the five fields:",
       explanation:
-        "A step value `*/N` counts from the start of the field's range and resets when the range ends. When `N` does not evenly divide the field's span, the step from the last matching value back to the first is shorter than `N`. For example, `*/7` in the minute field fires at :00, :07, :14, :21, :28, :35, :42, :49, :56, then resets to :00 of the next hour, leaving a 4-minute gap instead of 7. This is arithmetic over the documented step operator; the boundary reset is pending verification in the deterministic edge-case matrix (tracked in ticket #9).",
+        "GitHub documents the `/` step operator for all five fields. A step value `*/N` counts from the start of the field's range and resets when the range ends. When `N` does not evenly divide the field's span, the step from the last matching value back to the first is shorter than `N`. For example, `*/7` in the minute field fires at :00, :07, :14, :21, :28, :35, :42, :49, :56, then resets to :00 of the next hour, leaving a 4-minute gap instead of 7. This is derived arithmetic over the documented step operator; the boundary reset is pending verification in the deterministic edge-case matrix (tracked in ticket #9).",
     },
   },
   {
@@ -151,7 +150,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
       quote:
         "The `schedule` event can be delayed during periods of high loads of GitHub Actions workflow runs. High load times include the start of every hour. If the load is sufficiently high enough, some queued jobs may be dropped. To decrease the chance of delay, schedule your workflow to run at a different time of the hour.",
       explanation:
-        "Scheduled runs are not guaranteed to start on time. GitHub documents that the `schedule` event can be delayed under high load, that high-load times include the start of every hour, and that sufficiently high load can cause queued jobs to be dropped. Expressions that fire at the start of the hour (minute 0) are most exposed. To reduce the chance of delay, schedule the workflow at a different time of the hour. GitHub documents no delay bound; any specific delay figure repeated in community discussions is undocumented lore, not a documented value.",
+        "Scheduled runs are not guaranteed to start on time. GitHub documents that the `schedule` event can be delayed under high load, that high-load times include the start of every hour, and that sufficiently high load can cause queued jobs to be dropped. GitHub identifies the start of every hour as a high-load time, so expressions that fire at minute 0 coincide with it. To reduce the chance of delay, schedule the workflow at a different time of the hour. GitHub documents no delay bound; any specific delay figure repeated in community discussions is undocumented lore, not a documented value.",
     },
     emphasiseWhen: { field: "minute", includes: 0 },
   },

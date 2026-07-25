@@ -3,16 +3,15 @@ import react from "@vitejs/plugin-react";
 import { gotchaPages } from "./src/gotchas/render";
 import { GOTCHA_CSS } from "./src/gotchas/styles";
 import { renderLlmsTxt } from "./src/gotchas/llms";
+import { staticAssets } from "./src/gotchas/emit";
 
 function staticGotchas(): Plugin {
   return {
     name: "cronsense-static-gotchas",
     apply: "build",
     generateBundle() {
-      this.emitFile({ type: "asset", fileName: "llms.txt", source: renderLlmsTxt() });
-      this.emitFile({ type: "asset", fileName: "gotchas/gotcha.css", source: GOTCHA_CSS });
-      for (const page of gotchaPages()) {
-        this.emitFile({ type: "asset", fileName: page.path, source: page.html });
+      for (const asset of staticAssets()) {
+        this.emitFile({ type: "asset", fileName: asset.fileName, source: asset.source });
       }
     },
   };

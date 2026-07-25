@@ -57,7 +57,7 @@ export function renderGotchaPage(warning: WarningDefinition): string {
   </head>
   <body>
     <a class="skip-link" href="#content">Skip to content</a>
-    <main id="content">
+    <main id="content" tabindex="-1">
       <article>
         <p class="crumb"><a href="/">${SITE_NAME}</a> / Gotchas</p>
         <h1>${title}</h1>

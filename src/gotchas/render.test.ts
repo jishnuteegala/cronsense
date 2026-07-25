@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { WARNINGS } from "../cron/warnings";
 import { escapeHtml, gotchaPages, renderGotchaPage, renderInline } from "./render";
 import { renderLlmsTxt } from "./llms";
+import { staticAssets } from "./emit";
 import rootLlmsTxt from "../../llms.txt?raw";
 
 describe("escapeHtml", () => {
@@ -62,9 +63,11 @@ describe("renderGotchaPage", () => {
     }
   });
 
-  it("includes an accessibility skip link", () => {
+  it("includes an accessibility skip link targeting a focusable main", () => {
     for (const warning of WARNINGS) {
-      expect(renderGotchaPage(warning)).toContain('class="skip-link"');
+      const html = renderGotchaPage(warning);
+      expect(html).toContain('class="skip-link" href="#content"');
+      expect(html).toContain('<main id="content" tabindex="-1">');
     }
   });
 
@@ -103,5 +106,22 @@ describe("renderLlmsTxt", () => {
 
   it("matches the committed llms.txt at the repository root", () => {
     expect(rootLlmsTxt).toBe(renderLlmsTxt());
+  });
+});
+
+describe("staticAssets", () => {
+  it("emits llms.txt, the stylesheet, and one index.html per warning", () => {
+    const fileNames = staticAssets().map((asset) => asset.fileName);
+    expect(fileNames).toContain("llms.txt");
+    expect(fileNames).toContain("gotchas/gotcha.css");
+    const pages = fileNames.filter((name) => /^gotchas\/[^/]+\/index\.html$/.test(name));
+    expect(pages).toHaveLength(6);
+    expect(pages).toEqual(WARNINGS.map((warning) => `gotchas/${warning.gotcha.slug}/index.html`));
+  });
+
+  it("carries the rendered source for each emitted asset", () => {
+    for (const asset of staticAssets()) {
+      expect(asset.source.length).toBeGreaterThan(0);
+    }
   });
 });
