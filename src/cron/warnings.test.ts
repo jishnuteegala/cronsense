@@ -104,17 +104,11 @@ describe("warning definitions", () => {
     expect(seen).toContain("high-load-delay-drop");
   });
 
-  it("keeps a quote field on every warning definition, empty only for computed ones", () => {
+  it("gives every renderable warning a non-empty sourced quote", () => {
     for (const warning of WARNINGS) {
       expect(Array.isArray(warning.quotes)).toBe(true);
-    }
-    const computed = ["dom-dow-or-semantics", "uneven-step-reset", "never-fires"];
-    for (const warning of WARNINGS) {
-      if (computed.includes(warning.id)) {
-        expect(warning.quotes).toEqual([]);
-      } else {
-        expect(warning.quotes.length).toBeGreaterThan(0);
-      }
+      if (warning.suppressed) continue;
+      expect(warning.quotes.length).toBeGreaterThan(0);
     }
   });
 

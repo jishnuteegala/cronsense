@@ -56,7 +56,9 @@ export const WARNINGS: readonly WarningDefinition[] = [
     predicate: { kind: "uneven-step" },
     messageKind: "uneven-step",
     message: "{details}.",
-    quotes: [],
+    quotes: [
+      "You can use these operators in any of the five fields: * (any value), , (value list separator), - (range of values), / (step values).",
+    ],
     verifiedOn: VERIFIED_ON,
     sourceUrl: SCHEDULE_URL,
     sourcePaths: ["data/reusables/repositories/actions-scheduled-workflow-example.md"],
@@ -67,7 +69,9 @@ export const WARNINGS: readonly WarningDefinition[] = [
     predicate: { kind: "never-fires" },
     messageKind: "never-fires",
     message: "{reason}",
-    quotes: [],
+    quotes: [
+      "Cron syntax has five fields separated by a space, and each field represents a unit of time: minute (0 - 59), hour (0 - 23), day of the month (1 - 31), month (1 - 12 or JAN-DEC), day of the week (0 - 6 or SUN-SAT).",
+    ],
     verifiedOn: VERIFIED_ON,
     sourceUrl: SCHEDULE_URL,
     sourcePaths: ["data/reusables/repositories/cron.md"],

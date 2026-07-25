@@ -166,6 +166,14 @@ describe("App", () => {
     expect(quote.getAttribute("cite")).toContain("https://docs.github.com/");
   });
 
+  it("surfaces a sourced quote for the computed never-fires and uneven-step warnings", () => {
+    render(<App initialExpression="0 0 30 2 *" />);
+    expect(screen.getByText(/Cron syntax has five fields/).tagName).toBe("BLOCKQUOTE");
+    cleanup();
+    render(<App initialExpression="*/7 * * * *" />);
+    expect(screen.getByText(/You can use these operators/).tagName).toBe("BLOCKQUOTE");
+  });
+
   it("surfaces both high-load quotes verbatim as blockquotes", () => {
     render(<App initialExpression="0 * * * *" />);
     expect(screen.getByText(/some queued jobs may be dropped/).tagName).toBe("BLOCKQUOTE");
