@@ -74,7 +74,9 @@ describe("App", () => {
 
   it("visibly emphasises the high-load caveat at minute zero", () => {
     render(<App initialExpression="0 * * * *" />);
-    expect(document.getElementById("high-load-delay-drop")?.style.fontWeight).toBe("bold");
+    expect(document.getElementById("high-load-delay-drop")?.classList.contains("emphasised")).toBe(
+      true,
+    );
   });
 
   it("renders warning source metadata with a docs link and verification date", () => {

@@ -112,15 +112,9 @@ export function App({
   };
 
   return (
-    <main
-      style={{
-        maxWidth: 720,
-        margin: "2rem auto",
-        fontFamily: "system-ui, sans-serif",
-        padding: "0 1rem",
-      }}
-    >
+    <main className="app">
       <a
+        className="skip-link"
         href="#results"
         onClick={(event) => {
           event.preventDefault();
@@ -130,86 +124,79 @@ export function App({
         Skip to results
       </a>
       <h1>Cronsense</h1>
-      <p>Paste a GitHub Actions cron expression.</p>
-      <label htmlFor="cron-expression">Cron expression</label>
-      <input
-        id="cron-expression"
-        value={input}
-        onChange={(e) => updateInput(e.target.value)}
-        spellCheck={false}
-        aria-invalid={!result.ok}
-        aria-describedby={result.ok ? undefined : "cron-expression-error"}
-        style={{ width: "100%", padding: "0.5rem", fontFamily: "monospace", fontSize: "1rem" }}
-      />
-      <aside
-        aria-label="Contextual note"
-        style={{ borderLeft: "3px solid #666", paddingLeft: "0.75rem" }}
-      >
+      <p className="lede">Paste a GitHub Actions cron expression.</p>
+      <div className="field">
+        <label className="field-label" htmlFor="cron-expression">
+          Cron expression
+        </label>
+        <input
+          id="cron-expression"
+          className="cron-input"
+          value={input}
+          onChange={(e) => updateInput(e.target.value)}
+          spellCheck={false}
+          autoComplete="off"
+          autoCapitalize="off"
+          autoCorrect="off"
+          aria-invalid={!result.ok}
+          aria-describedby={result.ok ? undefined : "cron-expression-error"}
+        />
+      </div>
+      <aside className="note" aria-label="Contextual note">
         {CONTEXTUAL_NOTES.map((note) => (
-          <div key={note.id} style={{ color: "#555" }}>
+          <div key={note.id}>
             {note.quotes.map((quote) => (
-              <blockquote
-                key={quote}
-                cite={note.sourceUrl}
-                style={{ margin: "0.25rem 0", fontStyle: "italic" }}
-              >
+              <blockquote className="quote" key={quote} cite={note.sourceUrl}>
                 {quote}
               </blockquote>
             ))}
             <p>
               {note.message}{" "}
-              <span style={{ fontSize: "0.85rem" }}>
+              <span className="meta">
                 (verified against <a href={note.sourceUrl}>GitHub docs</a> on {note.verifiedOn})
               </span>
             </p>
           </div>
         ))}
       </aside>
-      <section id="results" tabIndex={-1} aria-label="Results">
+      <section className="results" id="results" tabIndex={-1} aria-label="Results">
         {!result.ok && (
-          <p id="cron-expression-error" role="alert" style={{ color: "#b00020" }}>
+          <p className="error" id="cron-expression-error" role="alert">
             {result.error}
           </p>
         )}
         {result.ok && output && (
           <>
-            <p>{output.translation.sentence}</p>
-            <p style={{ fontSize: "0.9rem", color: "#555" }}>{output.translation.timezoneNote}</p>
+            <p className="summary">{output.translation.sentence}</p>
+            <p className="subnote">{output.translation.timezoneNote}</p>
             {output.provisionalNotes.map((note) => (
-              <p key={note} style={{ fontSize: "0.9rem", color: "#8a5a00" }}>
+              <p className="subnote provisional" key={note}>
                 {note}
               </p>
             ))}
             {output.warnings.map((warning) => (
               <article
+                className={[
+                  "warning",
+                  warning.rank === "diagnostic" && "diagnostic",
+                  warning.emphasised && "emphasised",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
                 id={warning.id}
                 key={warning.id}
                 tabIndex={-1}
                 role={warning.rank === "diagnostic" ? "alert" : undefined}
-                style={{
-                  borderLeft: `3px solid ${warning.rank === "diagnostic" ? "#b00020" : "#8a5a00"}`,
-                  color: warning.rank === "diagnostic" ? "#8a0018" : "#664400",
-                  fontWeight: warning.emphasised ? "bold" : "normal",
-                  margin: "1rem 0",
-                  paddingLeft: "0.75rem",
-                }}
               >
                 {warning.quotes.map((quote) => (
-                  <blockquote
-                    key={quote}
-                    cite={warning.sourceUrl}
-                    style={{ margin: "0.25rem 0", fontStyle: "italic" }}
-                  >
+                  <blockquote className="quote" key={quote} cite={warning.sourceUrl}>
                     {quote}
                   </blockquote>
                 ))}
                 {warning.message}{" "}
-                <span style={{ fontSize: "0.85rem", color: "#555" }}>
-                  (verified against{" "}
-                  <a href={warning.sourceUrl} style={{ color: "inherit" }}>
-                    GitHub docs
-                  </a>{" "}
-                  on {warning.verifiedOn})
+                <span className="meta">
+                  (verified against <a href={warning.sourceUrl}>GitHub docs</a> on{" "}
+                  {warning.verifiedOn})
                 </span>
               </article>
             ))}
@@ -221,54 +208,27 @@ export function App({
                     : "Next 10 firings"}
                 </h2>
                 {output.firings.length < 10 && (
-                  <p style={{ fontSize: "0.85rem", color: "#555" }}>
+                  <p className="subnote">
                     Only {output.firings.length} firing{output.firings.length === 1 ? "" : "s"} can
                     be shown: later occurrences fall beyond the maximum date JavaScript can
                     represent.
                   </p>
                 )}
-                <table style={{ borderCollapse: "collapse", width: "100%" }}>
+                <table className="firings">
                   <thead>
                     <tr>
-                      <th
-                        style={{
-                          textAlign: "left",
-                          borderBottom: "1px solid #ccc",
-                          padding: "0.25rem",
-                        }}
-                      >
-                        UTC
-                      </th>
-                      <th
-                        style={{
-                          textAlign: "left",
-                          borderBottom: "1px solid #ccc",
-                          padding: "0.25rem",
-                        }}
-                      >
+                      <th>UTC</th>
+                      <th>
                         Your local time
-                        <span
-                          style={{
-                            display: "block",
-                            fontWeight: "normal",
-                            fontSize: "0.8rem",
-                            color: "#555",
-                          }}
-                        >
-                          {DST_NOTE}
-                        </span>
+                        <span className="col-note">{DST_NOTE}</span>
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     {output.firings.map((firing) => (
                       <tr key={firing.getTime()}>
-                        <td style={{ padding: "0.25rem", fontFamily: "monospace" }}>
-                          {formatUtc(firing)}
-                        </td>
-                        <td style={{ padding: "0.25rem", fontFamily: "monospace" }}>
-                          {formatLocal(firing, timeZone, locale)}
-                        </td>
+                        <td>{formatUtc(firing)}</td>
+                        <td>{formatLocal(firing, timeZone, locale)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -279,7 +239,7 @@ export function App({
         )}
       </section>
       {(!result.ok || !output || output.never !== null) && (
-        <p style={{ fontSize: "0.85rem", color: "#555", marginTop: "1rem" }}>Note: {DST_NOTE}.</p>
+        <p className="subnote">Note: {DST_NOTE}.</p>
       )}
     </main>
   );
