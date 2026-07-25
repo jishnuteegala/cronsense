@@ -71,10 +71,16 @@ export function App({
   useEffect(() => {
     if (!onToolPage) return;
     const onHashChange = () => {
-      const state = parseHash(window.location.hash);
+      const rawHash = window.location.hash;
+      const value = rawHash.startsWith("#") ? rawHash.slice(1) : rawHash;
+      if (value === "") {
+        setInput("");
+        return;
+      }
+      const state = parseHash(rawHash);
       if (!state) return;
       setInput(state.expression);
-      setPendingWarningId(state.warningId);
+      if (state.warningId) setPendingWarningId(state.warningId);
     };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
@@ -140,12 +146,23 @@ export function App({
         style={{ borderLeft: "3px solid #666", paddingLeft: "0.75rem" }}
       >
         {CONTEXTUAL_NOTES.map((note) => (
-          <p key={note.id} style={{ color: "#555" }}>
-            {note.message}{" "}
-            <span style={{ fontSize: "0.85rem" }}>
-              (verified against <a href={note.sourceUrl}>GitHub docs</a> on {note.verifiedOn})
-            </span>
-          </p>
+          <div key={note.id} style={{ color: "#555" }}>
+            {note.quotes.map((quote) => (
+              <blockquote
+                key={quote}
+                cite={note.sourceUrl}
+                style={{ margin: "0.25rem 0", fontStyle: "italic" }}
+              >
+                {quote}
+              </blockquote>
+            ))}
+            <p>
+              {note.message}{" "}
+              <span style={{ fontSize: "0.85rem" }}>
+                (verified against <a href={note.sourceUrl}>GitHub docs</a> on {note.verifiedOn})
+              </span>
+            </p>
+          </div>
         ))}
       </aside>
       <section id="results" tabIndex={-1} aria-label="Results">
@@ -177,6 +194,15 @@ export function App({
                   paddingLeft: "0.75rem",
                 }}
               >
+                {warning.quotes.map((quote) => (
+                  <blockquote
+                    key={quote}
+                    cite={warning.sourceUrl}
+                    style={{ margin: "0.25rem 0", fontStyle: "italic" }}
+                  >
+                    {quote}
+                  </blockquote>
+                ))}
                 {warning.message}{" "}
                 <span style={{ fontSize: "0.85rem", color: "#555" }}>
                   (verified against{" "}
