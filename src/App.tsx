@@ -123,42 +123,54 @@ export function App({
       >
         Skip to results
       </a>
-      <h1>Cronsense</h1>
+      <header className="masthead">
+        <span className="mark" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+            <g stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+              <circle cx="16" cy="16" r="8.5" />
+              <path d="M16 11.5V16l3 2" />
+            </g>
+          </svg>
+        </span>
+        <h1>Cronsense</h1>
+      </header>
       <p className="lede">Paste a GitHub Actions cron expression.</p>
-      <div className="field">
-        <label className="field-label" htmlFor="cron-expression">
-          Cron expression
-        </label>
-        <input
-          id="cron-expression"
-          className="cron-input"
-          value={input}
-          onChange={(e) => updateInput(e.target.value)}
-          spellCheck={false}
-          autoComplete="off"
-          autoCapitalize="off"
-          autoCorrect="off"
-          aria-invalid={!result.ok}
-          aria-describedby={result.ok ? undefined : "cron-expression-error"}
-        />
+      <div className="panel">
+        <div className="field">
+          <label className="field-label" htmlFor="cron-expression">
+            Cron expression
+          </label>
+          <input
+            id="cron-expression"
+            className="cron-input"
+            value={input}
+            onChange={(e) => updateInput(e.target.value)}
+            spellCheck={false}
+            autoComplete="off"
+            autoCapitalize="off"
+            autoCorrect="off"
+            aria-invalid={!result.ok}
+            aria-describedby={result.ok ? undefined : "cron-expression-error"}
+          />
+        </div>
+        <aside className="note" aria-label="Contextual note">
+          {CONTEXTUAL_NOTES.map((note) => (
+            <div key={note.id}>
+              {note.quotes.map((quote) => (
+                <blockquote className="quote" key={quote} cite={note.sourceUrl}>
+                  {quote}
+                </blockquote>
+              ))}
+              <p>
+                {note.message}{" "}
+                <span className="meta">
+                  (verified against <a href={note.sourceUrl}>GitHub docs</a> on {note.verifiedOn})
+                </span>
+              </p>
+            </div>
+          ))}
+        </aside>
       </div>
-      <aside className="note" aria-label="Contextual note">
-        {CONTEXTUAL_NOTES.map((note) => (
-          <div key={note.id}>
-            {note.quotes.map((quote) => (
-              <blockquote className="quote" key={quote} cite={note.sourceUrl}>
-                {quote}
-              </blockquote>
-            ))}
-            <p>
-              {note.message}{" "}
-              <span className="meta">
-                (verified against <a href={note.sourceUrl}>GitHub docs</a> on {note.verifiedOn})
-              </span>
-            </p>
-          </div>
-        ))}
-      </aside>
       <section className="results" id="results" tabIndex={-1} aria-label="Results">
         {!result.ok && (
           <p className="error" id="cron-expression-error" role="alert">

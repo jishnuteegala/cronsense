@@ -8,43 +8,83 @@ body {
   margin: 0;
   color: var(--fg);
   background: var(--bg);
+  background-image: var(--bg-tint);
+  background-attachment: fixed;
   font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 .app {
-  max-width: 720px;
+  max-width: 680px;
   margin: 0 auto;
-  padding: var(--space-6) var(--space-4) 4rem;
+  padding: var(--space-7) var(--space-4) 5rem;
+}
+.masthead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+.mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: var(--radius);
+  background: linear-gradient(150deg, var(--accent), var(--accent-hover));
+  color: var(--accent-contrast);
+  box-shadow: var(--shadow-sm);
+}
+.mark svg {
+  display: block;
 }
 .app h1 {
-  font-size: clamp(1.7rem, 1.3rem + 1.6vw, 2.1rem);
-  line-height: 1.15;
-  letter-spacing: -0.015em;
-  margin: 0 0 var(--space-2);
+  font-size: clamp(1.6rem, 1.3rem + 1.4vw, 2rem);
+  font-weight: 680;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  color: var(--fg-strong);
+  margin: 0;
 }
 .app .lede {
   color: var(--muted);
-  margin: 0 0 var(--space-5);
+  font-size: 1.02rem;
+  margin: 0 0 var(--space-6);
 }
 .app h2 {
-  font-size: 1.15rem;
-  letter-spacing: -0.005em;
-  margin: var(--space-6) 0 var(--space-2);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: var(--space-6) 0 var(--space-3);
 }
 .app a {
   color: var(--accent);
   text-underline-offset: 2px;
+  text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  transition: text-decoration-color 0.15s ease;
 }
 .app a:hover {
-  text-decoration-thickness: 2px;
+  text-decoration-color: currentColor;
 }
 .app code {
   font-family: var(--font-mono);
-  font-size: 0.9em;
-  background: var(--surface);
-  padding: 0.12em 0.36em;
+  font-size: 0.88em;
+  background: var(--surface-2);
+  border: 1px solid var(--rule);
+  padding: 0.1em 0.36em;
   border-radius: var(--radius-sm);
+}
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow);
 }
 .field {
   display: flex;
@@ -53,61 +93,74 @@ body {
 }
 .field-label {
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  color: var(--muted);
 }
 .cron-input {
   width: 100%;
-  min-height: 48px;
+  min-height: 52px;
   padding: var(--space-3) var(--space-4);
   font-family: var(--font-mono);
-  font-size: 1rem;
-  color: var(--fg);
-  background: var(--bg);
-  border: 1px solid var(--rule);
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+  color: var(--fg-strong);
+  background: var(--surface-inset);
+  border: 1px solid var(--rule-strong);
   border-radius: var(--radius);
+  box-shadow: inset 0 1px 2px rgba(16, 24, 40, 0.04);
   transition:
     border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    box-shadow 0.15s ease,
+    background 0.15s ease;
 }
 .cron-input:hover {
-  border-color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--rule-strong));
 }
 .cron-input:focus {
   outline: none;
+  background: var(--surface);
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
 }
 .cron-input[aria-invalid="true"] {
-  border-color: var(--danger-border);
+  border-color: var(--danger-accent);
 }
 .cron-input[aria-invalid="true"]:focus {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger-border) 30%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger-accent) 30%, transparent);
 }
 .note {
-  margin: var(--space-5) 0;
+  margin: var(--space-4) 0 0;
   padding: var(--space-3) var(--space-4);
-  background: var(--surface);
-  border-left: 4px solid var(--rule);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--surface-2);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
   color: var(--muted);
+  font-size: 0.92rem;
 }
 .note p {
   margin: 0;
 }
 .note .quote {
   margin: 0 0 var(--space-2);
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--rule-strong);
   font-style: italic;
   color: var(--fg);
 }
 .note .meta {
-  font-size: 0.85rem;
+  color: var(--faint);
 }
 .results {
-  margin-top: var(--space-5);
+  margin-top: var(--space-6);
 }
 .summary {
-  font-size: 1.1rem;
-  margin: var(--space-4) 0 var(--space-2);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--fg-strong);
+  margin: 0 0 var(--space-2);
 }
 .subnote {
   font-size: 0.9rem;
@@ -119,23 +172,26 @@ body {
 }
 .error {
   margin: var(--space-4) 0;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4);
   background: var(--danger-bg);
   color: var(--danger-fg);
-  border-left: 4px solid var(--danger-border);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border: 1px solid color-mix(in srgb, var(--danger-accent) 30%, transparent);
+  border-left: 3px solid var(--danger-accent);
+  border-radius: var(--radius);
   font-weight: 500;
 }
 .warning {
-  margin: var(--space-4) 0;
-  padding: var(--space-3) var(--space-4);
-  border-left: 4px solid var(--warn-border);
+  margin: var(--space-3) 0;
+  padding: var(--space-4);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--warn-accent);
   background: var(--warn-bg);
   color: var(--warn-fg);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-radius: var(--radius);
 }
 .warning.diagnostic {
-  border-left-color: var(--danger-border);
+  border-color: color-mix(in srgb, var(--danger-accent) 30%, transparent);
+  border-left-color: var(--danger-accent);
   background: var(--danger-bg);
   color: var(--danger-fg);
 }
@@ -144,48 +200,63 @@ body {
 }
 .warning .quote {
   margin: 0 0 var(--space-2);
+  padding-left: var(--space-3);
+  border-left: 2px solid color-mix(in srgb, currentColor 25%, transparent);
   font-style: italic;
 }
 .warning .meta {
   font-size: 0.85rem;
-  color: var(--muted);
+  opacity: 0.85;
 }
 .warning a,
 .note a {
   color: inherit;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
 }
 .firings {
   width: 100%;
-  border-collapse: collapse;
-  margin-top: var(--space-2);
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: var(--space-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  overflow: hidden;
   font-variant-numeric: tabular-nums;
 }
 .firings th {
   text-align: left;
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 2px solid var(--rule);
-  font-size: 0.85rem;
-  letter-spacing: 0.02em;
+  padding: var(--space-3);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--faint);
 }
 .firings th .col-note {
   display: block;
   margin-top: var(--space-1);
+  max-width: 34ch;
   font-weight: 400;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   text-transform: none;
   letter-spacing: 0;
-  color: var(--muted);
+  color: var(--faint);
 }
 .firings td {
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3);
   font-family: var(--font-mono);
-  font-size: 0.9rem;
+  font-size: 0.86rem;
+  color: var(--fg);
   border-bottom: 1px solid var(--rule);
 }
-.firings tbody tr:hover {
-  background: var(--surface);
+.firings td:first-child {
+  color: var(--fg-strong);
+  font-weight: 500;
+}
+.firings tbody tr:hover td {
+  background: var(--surface-inset);
 }
 .firings tbody tr:last-child td {
   border-bottom: none;
@@ -199,14 +270,15 @@ body {
   color: var(--accent-contrast);
   padding: var(--space-2) var(--space-4);
   border-radius: 0 0 var(--radius-sm) 0;
+  box-shadow: var(--shadow);
 }
 .skip-link:focus {
   left: 0;
 }
 :focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 .cron-input:focus-visible {
   outline: none;
