@@ -120,7 +120,30 @@ describe("App", () => {
   it("updates the expression permalink when the input changes", () => {
     render(<App initialExpression="0 12 * * *" />);
     fireEvent.change(screen.getByLabelText("Cron expression"), { target: { value: "5 8 * * *" } });
-    expect(window.location.hash).toBe("#5%208%20*%20*%20*");
+    expect(window.location.hash).toBe("#e=5%208%20*%20*%20*");
+  });
+
+  it("round-trips the namespaced permalink for any input, including empty and reserved words", () => {
+    for (const value of ["", "results", "0 0 30 2", "30 6 * * MON"]) {
+      cleanup();
+      window.history.replaceState(null, "", "/");
+      render(<App initialExpression="0 12 * * *" />);
+      fireEvent.change(screen.getByLabelText("Cron expression"), { target: { value } });
+      const hash = window.location.hash;
+      cleanup();
+      window.location.hash = hash;
+      render(<App />);
+      expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe(value);
+    }
+  });
+
+  it("loads a compound namespaced permalink with a warning anchor", () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    window.location.hash = "#e=*%20*%20*%20*%20*#sub-minimum-interval";
+    render(<App />);
+    expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("* * * * *");
+    expect(document.activeElement?.id).toBe("sub-minimum-interval");
   });
 
   it("gives each rendered warning a composable permalink anchor", () => {
@@ -175,6 +198,12 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Cron expression"), { target: { value: "5 8 * * *" } });
     expect(window.location.hash).toBe("#0%205%20*%20*%20*");
     window.history.replaceState(null, "", "/");
+  });
+
+  it("still loads legacy un-namespaced permalinks", () => {
+    window.location.hash = "#0%2012%20*%20*%20*";
+    render(<App />);
+    expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("0 12 * * *");
   });
 
   it("does not treat a direct /#results load as a cron expression", () => {
