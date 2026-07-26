@@ -24,24 +24,24 @@ colors:
   danger-bg: "#fdeef0"
 typography:
   title:
-    fontFamily: "Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+    fontFamily: "Inter Variable, Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: "clamp(1.6rem, 1.3rem + 1.4vw, 2rem)"
     fontWeight: 680
     lineHeight: 1.1
     letterSpacing: "-0.025em"
   summary:
-    fontFamily: "Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+    fontFamily: "Inter Variable, Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: "1.25rem"
     fontWeight: 600
     lineHeight: 1.35
     letterSpacing: "-0.01em"
   body:
-    fontFamily: "Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+    fontFamily: "Inter Variable, Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.6
   label:
-    fontFamily: "Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+    fontFamily: "Inter Variable, Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: "0.8rem"
     fontWeight: 600
     lineHeight: 1.4
@@ -135,7 +135,7 @@ A restrained near-neutral palette anchored by a single indigo accent, with amber
 
 ## 3. Typography
 
-**Body Font:** Inter (with system-ui, -apple-system, Segoe UI, Roboto, sans-serif)
+**Body Font:** Inter Variable, self-hosted (with Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif)
 **Mono Font:** ui-monospace (with SF Mono, JetBrains Mono, Cascadia Code, Menlo, Consolas)
 
 **Character:** One well-tuned sans carries every prose role; a monospace family carries every machine value. The split is semantic, not decorative: if it's a cron field, a UTC timestamp, or a local time, it's mono; if it's language, it's Inter. Inter runs with `cv11` and `ss01` feature settings enabled.
@@ -152,6 +152,8 @@ A restrained near-neutral palette anchored by a single indigo accent, with amber
 ### Named Rules
 
 **The Mono-Is-A-Value Rule.** Monospace signals "this is machine-exact". Use it only for the cron expression and computed times; never for emphasis or flavour in prose.
+
+**The Self-Hosted Font Rule.** Inter Variable ships as same-origin `woff2` in `public/fonts/`, declared via `@font-face` in the shared token CSS with `font-display: swap`. No font is ever fetched from a third party (no Google Fonts link); the product's "no third-party requests" principle covers fonts, not just scripts. Both the SPA and the static gotcha pages resolve the font from `/fonts/`.
 
 ## 4. Elevation
 
