@@ -159,14 +159,14 @@
     }
   ],
   "narrative": {
-    "northStar": "The Sourced Instrument",
-    "overview": "Cronsense reads like a well-made developer tool that respects the reader's attention: a single quiet column of content on a softly washed surface where a pasted cron expression turns into a plain-English answer and a precise table of firing times. The register is product, not brand; the design serves the task and disappears. The palette is a cool-tinted neutral system anchored by one confident indigo accent, layered so panels lift off the page with hairline borders and soft shadows. Type is Inter throughout, with monospace reserved for the cron input and firing times. Dark mode is designed, not inverted.",
+    "northStar": "The Lab Notebook",
+    "overview": "Cronsense reads like a careful engineer's notebook: a clean sheet, a monospaced entry, a sourced margin note dated to the day it was checked. The interface is quiet on purpose. A single card holds the input and its caveats; the answer arrives below in plain language, then a dense table of exact times. The register is product, not marketing: the design serves a developer mid-task who distrusts hand-wavy answers and wants the times to be right. Depth is subtle: a near-white body carries a faint radial tint, surfaces are true white with hairline rules and low shadows, and the one saturated colour, indigo, appears only on the mark, links, focus, and the active input edge. Both light and dark themes are first-class, driven by prefers-color-scheme, every pair clearing WCAG AA.",
     "keyCharacteristics": [
-      "One quiet content column, max 680px, on a radial background wash.",
-      "Cool-tinted neutrals with a single indigo accent used only for action and state.",
-      "Carded surfaces with hairline borders and layered soft shadows.",
-      "Inter throughout; monospace reserved for cron input and firing times.",
-      "Full light and dark themes, every pair clearing WCAG AA."
+      "One card, one answer, one dense table: reading beats chrome.",
+      "Indigo used on \u226410% of any screen; its rarity is the point.",
+      "Monospace for every machine value (cron field, UTC/local time); sans for prose.",
+      "Sourced margin notes: every caveat quotes the docs and carries a dated verification stamp.",
+      "Flat by default; shadow and color respond only to state."
     ],
     "rules": [
       {

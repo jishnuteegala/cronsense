@@ -2,8 +2,8 @@
 name: Cronsense
 description: The cron checker that tells you when your GitHub Actions workflow will actually fire.
 colors:
-  fg: "#16181d"
-  fg-strong: "#0a0c10"
+  ink: "#16181d"
+  ink-strong: "#0a0c10"
   muted: "#5b616e"
   faint: "#656b78"
   bg: "#f7f8fa"
@@ -23,199 +23,200 @@ colors:
   danger-accent: "#cf3040"
   danger-bg: "#fdeef0"
 typography:
-  display:
+  title:
     fontFamily: "Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: "clamp(1.6rem, 1.3rem + 1.4vw, 2rem)"
     fontWeight: 680
     lineHeight: 1.1
     letterSpacing: "-0.025em"
   summary:
-    fontFamily: "{typography.display.fontFamily}"
+    fontFamily: "Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: "1.25rem"
     fontWeight: 600
     lineHeight: 1.35
     letterSpacing: "-0.01em"
   body:
-    fontFamily: "{typography.display.fontFamily}"
+    fontFamily: "Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.6
   label:
-    fontFamily: "{typography.display.fontFamily}"
+    fontFamily: "Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: "0.8rem"
     fontWeight: 600
+    lineHeight: 1.4
     letterSpacing: "0.06em"
   mono:
     fontFamily: "ui-monospace, SF Mono, JetBrains Mono, Cascadia Code, Menlo, Consolas, monospace"
-    fontSize: "1.05rem"
+    fontSize: "0.86rem"
+    fontWeight: 400
+    lineHeight: 1.6
 rounded:
   sm: "6px"
   md: "10px"
   lg: "16px"
 spacing:
-  1: "0.25rem"
-  2: "0.5rem"
-  3: "0.75rem"
-  4: "1rem"
-  5: "1.5rem"
-  6: "2rem"
-  7: "3rem"
+  s1: "0.25rem"
+  s2: "0.5rem"
+  s3: "0.75rem"
+  s4: "1rem"
+  s5: "1.5rem"
+  s6: "2rem"
+  s7: "3rem"
 components:
-  input:
-    backgroundColor: "{colors.surface-inset}"
-    textColor: "{colors.fg-strong}"
-    typography: "{typography.mono}"
-    rounded: "{rounded.md}"
-    padding: "0.75rem 1rem"
-    height: "52px"
   panel:
     backgroundColor: "{colors.surface}"
     rounded: "{rounded.lg}"
-    padding: "1.5rem"
-  mark:
-    backgroundColor: "{colors.accent}"
-    textColor: "{colors.accent-contrast}"
+    padding: "{spacing.s5}"
+  input:
+    backgroundColor: "{colors.surface-inset}"
+    textColor: "{colors.ink-strong}"
+    typography: "{typography.mono}"
     rounded: "{rounded.md}"
-    size: "40px"
+    padding: "{spacing.s3} {spacing.s4}"
+  note:
+    backgroundColor: "{colors.surface-2}"
+    textColor: "{colors.muted}"
+    rounded: "{rounded.md}"
+    padding: "{spacing.s3} {spacing.s4}"
 ---
 
 # Design System: Cronsense
 
 ## 1. Overview
 
-**Creative North Star: "The Sourced Instrument"**
+**Creative North Star: "The Lab Notebook"**
 
-Cronsense reads like a well-made developer tool that respects the reader's attention. It is a single, quiet column of content on a softly washed surface, where a pasted cron expression turns into a plain-English answer and a precise table of firing times. The register is product, not brand: the design serves the task and then disappears. Nothing shouts, nothing decorates for its own sake, and every caveat is carried in a bordered callout that cites its source.
+Cronsense reads like a careful engineer's notebook: a clean sheet, a monospaced entry, a sourced margin note dated to the day it was checked. The interface is quiet on purpose. A single card holds the input and its caveats; the answer arrives below in plain language, then a dense table of exact times. Nothing competes with the reading. The register is product, not marketing: the design serves a developer mid-task who distrusts hand-wavy answers and wants the times to be right.
 
-The palette is a deliberate cool-tinted neutral system anchored by one confident indigo accent, layered so panels lift off the page with hairline borders and soft shadows rather than heavy chrome. Type is Inter throughout: a tight, high-weight display heading, uppercase micro-labels for sections, and a code-editor treatment for the cron input. Dark mode is designed, not inverted, with warm-cool near-blacks and a softened violet accent.
+Depth is subtle. A near-white body carries a faint radial tint from top-center; surfaces are true white with hairline rules and low, honest shadows. The one saturated color, indigo, appears only on the brand mark, links, primary focus, and the input's active border. It never decorates. Warning and danger states borrow amber and red, but only to distinguish a documented gotcha from a fatal parse error. This system explicitly rejects the generic cron-site look: no ad units, no interstitials, no hero gradients, no stock illustration, no marketing filler around a precise answer.
 
-The system explicitly rejects the generic cron-website look: ad clutter, hero gradients, stock illustration, and any styling that would launder a provisional guess into a confident claim. Confirmed and provisional information stay visually distinct.
+Both light and dark themes are first-class, driven entirely by `prefers-color-scheme`. Every text-and-background pair clears WCAG AA. The tool is meant to disappear into the task.
 
 **Key Characteristics:**
 
-- One quiet content column, max 680px, on a radial background wash.
-- Cool-tinted neutrals with a single indigo accent used only for action and state.
-- Carded surfaces with hairline borders and layered soft shadows.
-- Inter throughout; monospace reserved for cron input and firing times.
-- Full light and dark themes, every pair clearing WCAG AA.
+- One card, one answer, one dense table: reading beats chrome.
+- Indigo used on ≤10% of any screen; its rarity is the point.
+- Monospace for every machine value (cron field, UTC/local time); sans for prose.
+- Sourced margin notes: every caveat quotes the docs and carries a dated verification stamp.
+- Flat by default; shadow and color respond only to state.
 
 ## 2. Colors
 
-A cool-tinted neutral system carrying one indigo accent, with distinct amber and red families for provisional warnings and hard errors.
+A restrained near-neutral palette anchored by a single indigo accent, with amber and red reserved strictly for advisory and fatal states.
 
 ### Primary
 
-- **Indigo Accent** (#4f46e5): The single action-and-state colour. Links, focus rings, the logo mark gradient, the skip link, and the warning accent rail. Softens to #8b8bf7 in dark mode.
-- **Indigo Deep** (#4338ca): Hover and the second stop of the logo mark gradient.
-- **Indigo Soft** (#eef0fe): Reserved tint for accent-soft surfaces.
+- **Signal Indigo** (`#4f46e5`, dark `#8b8bf7`): The one voice. Brand mark gradient, links, the input's focused border, focus rings, and the skip link. Never used as a decorative fill.
+- **Indigo Deep** (`#4338ca`, dark `#a2a2fb`): The gradient partner and hover state for the brand mark and interactive accents.
+- **Indigo Wash** (`#eef0fe`, dark `#1e1f36`): A barely-there soft tint for accent-adjacent surfaces.
 
 ### Neutral
 
-- **Ink** (#16181d): Default body text.
-- **Ink Strong** (#0a0c10): Headings, the result summary, first-column table values, and input text.
-- **Muted** (#5b616e): The lede, labels, secondary notes, and callout body copy.
-- **Faint** (#656b78): Uppercase section labels, table headers, column notes, and metadata; darkened deliberately so muted text still clears AA.
-- **Canvas** (#f7f8fa): The page background, painted over by a radial wash from #ffffff through #f4f6f9 to #eef1f5.
-- **Surface** (#ffffff): Panels, the firings table body, and gotcha article cards.
-- **Surface 2** (#f2f4f7): Inline code, table headers, and the contextual note background.
-- **Surface Inset** (#f7f8fa): The cron input rest state and table row hover.
-- **Rule** (#e5e8ee) and **Rule Strong** (#d3d8e0): Hairline borders and stronger input strokes.
+- **Ink** (`#16181d`, dark `#e6e8ec`): Body text and table data.
+- **Ink Strong** (`#0a0c10`, dark `#f6f7f9`): Headings, the summary sentence, and the value the eye lands on.
+- **Muted** (`#5b616e`, dark `#9aa1ad`): The lede, field labels, subnotes, and secondary prose.
+- **Faint** (`#656b78`, dark `#868d9a`): Uppercase section labels, table headers, verification stamps.
+- **Page** (`#f7f8fa`, dark `#0b0d10`): The body background, overlaid with a top-center radial tint (`--bg-tint`) fixed on scroll.
+- **Surface** (`#ffffff`, dark `#16181d`): The panel and result cards.
+- **Surface 2** (`#f2f4f7`, dark `#1d2027`): Note blocks, table header rows, inline `code`.
+- **Rule** (`#e5e8ee`, dark `#262a31`) / **Rule Strong** (`#d3d8e0`, dark `#333842`): Hairline borders and dividers; the stronger weight edges the input.
 
 ### Tertiary
 
-- **Warn Ink** (#7a4a00) on **Warn Bg** (#fdf6e9) with a **Warn Accent** (#b8791f) rail: provisional warnings and the gotcha gate banner. This family is exclusively for behaviour that is inferred or documented-but-conditional, never confirmed fact.
-- **Danger Ink** (#a3001a) on **Danger Bg** (#fdeef0) with a **Danger Accent** (#cf3040) rail: parse errors and diagnostic warnings such as never-fires.
+- **Caution Amber** (fg `#7a4a00`, accent `#b8791f`, bg `#fdf6e9`; dark fg `#f2c879`): Advisory warnings for documented GitHub Actions behaviours (delay, minimum interval, inactivity pause).
+- **Fault Red** (fg `#a3001a`, accent `#cf3040`, bg `#fdeef0`; dark fg `#ff9aa5`): Parse errors and diagnostic warnings, the difference between "this is a caveat" and "this will not run".
 
 ### Named Rules
 
-**The One Accent Rule.** Indigo is the only chromatic colour that carries action and state. It is never used to decorate. Amber and red appear solely to mark provisional and error information respectively.
+**The One Voice Rule.** Indigo appears on no more than ~10% of any screen: the mark, links, focus, and the active input edge. Everything else is neutral. Its rarity is what makes a focused field or a link legible at a glance.
 
-**The Provisional Colour Rule.** The amber warn family means "not confirmed". Nothing confirmed is ever rendered in amber, and no guess is ever rendered in the neutral body colour as if it were fact.
+**The Meaning-Only Color Rule.** Amber and red are never decorative. Amber means "documented gotcha", red means "fatal or diagnostic". If a state has no meaning, it stays neutral.
 
 ## 3. Typography
 
-**Display Font:** Inter (with system-ui, -apple-system, Segoe UI, Roboto, sans-serif)
-**Body Font:** Inter (same stack)
-**Label Font:** Inter (same stack)
+**Body Font:** Inter (with system-ui, -apple-system, Segoe UI, Roboto, sans-serif)
 **Mono Font:** ui-monospace (with SF Mono, JetBrains Mono, Cascadia Code, Menlo, Consolas)
 
-**Character:** One family carries the entire interface, with `cv11` and `ss01` OpenType features and tight tracking on headings. Monospace is a functional second voice reserved for machine-exact content: the cron input and the firing times.
+**Character:** One well-tuned sans carries every prose role; a monospace family carries every machine value. The split is semantic, not decorative: if it's a cron field, a UTC timestamp, or a local time, it's mono; if it's language, it's Inter. Inter runs with `cv11` and `ss01` feature settings enabled.
 
 ### Hierarchy
 
-- **Display / H1** (680, clamp(1.6rem, 1.3rem + 1.4vw, 2rem), line-height 1.1, tracking -0.025em): The product title only.
-- **Summary** (600, 1.25rem, line-height 1.35, tracking -0.01em): The plain-English translation of the parsed expression, the confident centrepiece of the result.
-- **Body** (400, 1rem, line-height 1.6): Callout copy, notes, and prose; capped near 65-75ch by the 680px column.
-- **Label / H2** (600, 0.8rem, tracking 0.06em, uppercase): Section headings such as "Next 10 firings" and field labels, rendered as muted micro-labels.
-- **Mono** (1.05rem input, 0.86rem table): The cron input reads like a code editor; firing times use tabular numerals for column alignment.
+- **Title** (weight 680, `clamp(1.6rem, 1.3rem + 1.4vw, 2rem)`, line-height 1.1, tracking -0.025em): The "Cronsense" wordmark in the masthead. The only fluid step; it is a wordmark, not body prose.
+- **Summary** (weight 600, 1.25rem, line-height 1.35, tracking -0.01em): The plain-English translation of the expression, the primary answer.
+- **Body** (weight 400, 1rem, line-height 1.6): The lede and running prose. The lede sits at 1.02rem in Muted.
+- **Label** (weight 600, 0.8rem, tracking 0.06em, uppercase): Section headers ("Next 10 firings") and table column heads, in Faint.
+- **Field Label** (weight 600, 0.82rem, tracking 0.02em): The "Cron expression" input label, in Muted.
+- **Mono** (weight 400, 0.86rem in tables / 1.05rem in the input, tabular-nums): The cron input and every time value.
 
 ### Named Rules
 
-**The Machine-Exact Mono Rule.** Monospace is only for content the machine produced exactly: the cron expression and the firing timestamps. Prose and labels never use it.
+**The Mono-Is-A-Value Rule.** Monospace signals "this is machine-exact". Use it only for the cron expression and computed times; never for emphasis or flavour in prose.
 
 ## 4. Elevation
 
-The system is layered, not flat, but restrained. Depth comes from hairline borders combined with soft, wide, low-opacity shadows so that panels and cards lift gently off the radial background wash. Shadows are ambient, establishing figure and ground, never dramatic. Callouts convey status through a background tint plus a 3px left accent rail rather than through elevation.
+Flat by default, with restrained shadows that read as paper on paper rather than floating panels. The system layers with a top-center radial background tint plus true-white surfaces and hairline rules; shadow is the finishing touch on the two cards, not the structure. Dark mode swaps to deeper, softer shadows tuned for a near-black page.
 
 ### Shadow Vocabulary
 
-- **Shadow Small** (`box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05)`): The logo mark and the focused skip link.
-- **Shadow** (`box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06), 0 8px 24px -8px rgba(16, 24, 40, 0.12)`): Panels and gotcha article cards at rest.
-- **Shadow Large** (`box-shadow: 0 4px 8px rgba(16, 24, 40, 0.05), 0 24px 48px -16px rgba(16, 24, 40, 0.18)`): Defined for the most-lifted surfaces. In dark mode all three deepen to pure-black-based values.
+- **Ambient Card** (`box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06), 0 8px 24px -8px rgba(16, 24, 40, 0.12)`): The input panel and gotcha article cards.
+- **Subtle Lift** (`box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05)`): The brand mark and skip link.
+- **Large Lift** (`box-shadow: 0 4px 8px rgba(16, 24, 40, 0.05), 0 24px 48px -16px rgba(16, 24, 40, 0.18)`): Reserved for the largest surfaces; used sparingly.
+- **Inset Field** (`box-shadow: inset 0 1px 2px rgba(16, 24, 40, 0.04)`): The cron input at rest, replaced by a 3px indigo focus ring when active.
 
 ### Named Rules
 
-**The Ambient-Only Rule.** Shadows establish figure and ground; they never signal state. State (hover, focus, invalid) is carried by border colour and the focus ring, not by changing elevation.
+**The Flat-By-Default Rule.** Surfaces are flat at rest. The only reactive elevation is the input's focus ring; everything else is a fixed, quiet shadow that never animates on hover.
 
 ## 5. Components
 
 ### Buttons
 
-The tool page has no button; its single action is typing into the input. The one button-shaped affordance is the skip link: accent-filled (#4f46e5), accent-contrast text, radius clipped to the bottom-right corner (0 0 6px 0), hidden off-canvas until focused.
-
-### Cards / Containers
-
-- **Corner Style:** Large radius (16px) on panels and gotcha article cards.
-- **Background:** Surface white (#ffffff) over the radial canvas wash.
-- **Shadow Strategy:** The ambient Shadow token (see Elevation).
-- **Border:** A single 1px hairline in Rule (#e5e8ee) on all sides. Never a colored side-stripe.
-- **Internal Padding:** 1.5rem on the tool panel, 2rem on gotcha articles.
+No text buttons exist. The single primary affordance is the input itself; the skip link is the only button-shaped element, hidden off-screen until focused, then indigo on `#ffffff` text at `radius-sm`.
 
 ### Inputs / Fields
 
-- **Style:** Monospace, 52px min-height, Surface Inset background (#f7f8fa), 1px Rule Strong stroke (#d3d8e0), 10px radius, with a subtle inset top shadow.
-- **Hover:** Border shifts toward the accent via `color-mix`.
-- **Focus:** Background lifts to pure white, border becomes the accent, and a 3px accent ring (rgba(79,70,229,0.28)) appears.
-- **Error:** `aria-invalid` swaps the border and focus ring to the danger accent (#cf3040).
+- **Style:** Full 1px `rule-strong` border on an inset `surface-inset` background, `radius-md` (10px), monospace at 1.05rem, min-height 52px (≥48px touch target). Inset shadow at rest.
+- **Hover:** Border shifts toward indigo (`color-mix` 45%).
+- **Focus:** Background lifts to pure white, border becomes solid indigo, and a 3px `accent-ring` glow appears. No outline duplication.
+- **Error:** `aria-invalid="true"` turns the border `danger-accent`; on focus the ring recolors to a red mix. The error message renders in the `.error` block below.
 
-### Callouts (Note / Warning / Error)
+### Cards / Containers
 
-The signature component. Each is a bordered card with a 1px hairline, a 3px left accent rail, a background tint, and an optional italic blockquote carrying the sourced quote plus dated verification metadata. The note is neutral (Surface 2), the warning amber (provisional), the diagnostic warning and error red (hard failures). The emphasised variant raises weight to 600.
+- **Panel** (input card): `surface` background, 1px `rule` border, `radius-lg` (16px), `space-5` padding, Ambient Card shadow.
+- **Gotcha article** (deep-dive pages): same recipe at `space-6` padding.
+- **Note** (contextual caveat): `surface-2` background, 1px `rule` border, `radius-md`, holding an italic blockquote (2px `rule-strong` left rule) and a dated source stamp.
 
-### Firings Table
+### Alerts
 
-Rounded 10px bordered container, uppercase muted header on a Surface 2 fill with a hairline rule, tabular-numeral monospace body, comfortable 0.75rem cell padding, Surface Inset row hover, and no border on the last row.
+- **Error** (`.error`): `danger-bg` fill, `danger-fg` text, full border plus a 3px `danger-accent` left edge, `role="alert"`. The sole intentional colored left-edge in the system, a diagnostic marker, not decoration.
+- **Warning** (`.warning`): `warn-bg` fill, `warn-fg` text, 1px `rule` border with a 3px `warn-accent` left edge; the `.diagnostic` variant recolors to red. Each carries a quoted doc excerpt and verification date.
 
-### Navigation
+### Tables (signature component)
 
-Minimal. A masthead pairs a 40px gradient logo mark (indigo, 10px radius, a white clock glyph) with the H1. Gotcha pages add a muted breadcrumb above the heading and a rule-separated back link below.
+- **Firings table:** The densest surface. 1px `rule` border, `radius-md`, `overflow: hidden` for clean corners, `border-collapse: separate`. Header row on `surface-2` with uppercase Faint labels; body cells in mono at 0.86rem with `tabular-nums`. First column (UTC) is Ink Strong and semibold; rows tint to `surface-inset` on hover. This is where the product's precision lives, so alignment and monospaced columns matter most.
+
+### Brand mark
+
+A 40px rounded-square (`radius-md`) with a `150deg` indigo-to-indigo-deep gradient, holding a white stroked clock glyph (circle + hands) at `stroke-width 2.4`, `stroke-linecap: round`. Rendered identically as the PWA icon set.
 
 ## 6. Do's and Don'ts
 
 ### Do:
 
-- **Do** use indigo (#4f46e5) only for action and state: links, focus rings, the logo mark, the skip link, and the warning accent rail.
-- **Do** carry every caveat in a bordered callout with the exact sourced quote, the dated verification stamp, and the primary-source link.
-- **Do** reserve monospace for the cron input and firing times; everything else is Inter.
-- **Do** keep depth ambient: hairline border plus a soft wide shadow, and convey state through border and focus ring.
-- **Do** hold every text and background pair at WCAG AA (4.5:1 body); the faint neutral was darkened specifically to clear it.
-- **Do** honour `prefers-color-scheme` and `prefers-reduced-motion`, and keep the input touch target at 52px.
+- **Do** keep indigo to ≤10% of any screen: mark, links, focus, active input edge only.
+- **Do** set every cron field and time value in monospace with `tabular-nums`; set all prose in Inter.
+- **Do** pair every caveat with the exact doc quote, a dated verification stamp, and a link to the primary GitHub documentation.
+- **Do** keep card radii at 16px (`radius-lg`) and control radii at 10px (`radius-md`); tags/small chips may use 6px.
+- **Do** distinguish confirmed from provisional: provisional subnotes take `warn-fg`, never the neutral body color.
+- **Do** support light and dark equally through `prefers-color-scheme`, and honour `prefers-reduced-motion`.
 
 ### Don't:
 
-- **Don't** render provisional behaviour in the neutral body colour; provisional is the amber warn family, and confirmed is never amber.
-- **Don't** use a `border-left` greater than the 3px callout rail as decoration, and never a colored side-stripe on cards.
-- **Don't** pair a 1px border with a wide drop shadow as decoration on the same element, or round cards past 16px.
-- **Don't** add gradient text, glassmorphism, decorative motion, or hero gradients; this is a tool, not a marketing page.
-- **Don't** introduce ads, analytics, or third-party requests; the tool stays static and self-contained.
-- **Don't** assert community lore such as the "~15 minute" delay figure; if it is not sourced, it does not appear.
+- **Don't** clutter the page with ad units, interstitials, hero gradients, or stock illustration; this is the exact generic-cron-site look the product rejects.
+- **Don't** add marketing filler around a precise answer; density of real information beats decoration.
+- **Don't** assert undocumented behaviour as fact, in copy or in styling; community lore (the "~15 minute" delay figure) stays absent.
+- **Don't** use indigo, amber, or red as decoration; color here always carries meaning (accent, caution, fault).
+- **Don't** introduce a colored `border-left` greater than the two semantic 3px alert edges; no side-stripe accents on ordinary cards.
+- **Don't** pair a 1px border with a wide (≥16px blur) drop shadow as decoration, and don't round cards past 16px.
+- **Don't** animate elevation or add motion that doesn't convey state; transitions stay in the 150ms range and serve feedback only.
