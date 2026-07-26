@@ -217,6 +217,6 @@ A 40px rounded-square (`radius-md`) with a `150deg` indigo-to-indigo-deep gradie
 - **Don't** add marketing filler around a precise answer; density of real information beats decoration.
 - **Don't** assert undocumented behaviour as fact, in copy or in styling; community lore (the "~15 minute" delay figure) stays absent.
 - **Don't** use indigo, amber, or red as decoration; color here always carries meaning (accent, caution, fault).
-- **Don't** introduce a colored `border-left` greater than the two semantic 3px alert edges; no side-stripe accents on ordinary cards.
+- **Don't** use colored side-stripe borders (`border-left`/`border-right` accents) anywhere; alerts carry state through a tinted full border plus background, quote indents use a 2px neutral rule only.
 - **Don't** pair a 1px border with a wide (≥16px blur) drop shadow as decoration, and don't round cards past 16px.
 - **Don't** animate elevation or add motion that doesn't convey state; transitions stay in the 150ms range and serve feedback only.

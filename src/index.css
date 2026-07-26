@@ -175,23 +175,20 @@ body {
   padding: var(--space-4);
   background: var(--danger-bg);
   color: var(--danger-fg);
-  border: 1px solid color-mix(in srgb, var(--danger-accent) 30%, transparent);
-  border-left: 3px solid var(--danger-accent);
+  border: 1px solid color-mix(in srgb, var(--danger-accent) 45%, transparent);
   border-radius: var(--radius);
   font-weight: 500;
 }
 .warning {
   margin: var(--space-3) 0;
   padding: var(--space-4);
-  border: 1px solid var(--rule);
-  border-left: 3px solid var(--warn-accent);
+  border: 1px solid color-mix(in srgb, var(--warn-accent) 45%, transparent);
   background: var(--warn-bg);
   color: var(--warn-fg);
   border-radius: var(--radius);
 }
 .warning.diagnostic {
-  border-color: color-mix(in srgb, var(--danger-accent) 30%, transparent);
-  border-left-color: var(--danger-accent);
+  border-color: color-mix(in srgb, var(--danger-accent) 45%, transparent);
   background: var(--danger-bg);
   color: var(--danger-fg);
 }

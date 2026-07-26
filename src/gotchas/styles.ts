@@ -69,9 +69,9 @@ blockquote {
   padding: var(--space-4);
   background: var(--surface-2);
   border: 1px solid var(--rule);
-  border-left: 3px solid var(--accent);
   border-radius: var(--radius);
   color: var(--fg);
+  font-style: italic;
 }
 blockquote p {
   margin: 0;
@@ -102,8 +102,7 @@ blockquote code {
   padding: var(--space-4);
   background: var(--warn-bg);
   color: var(--warn-fg);
-  border: 1px solid var(--rule);
-  border-left: 3px solid var(--warn-accent);
+  border: 1px solid color-mix(in srgb, var(--warn-accent) 45%, transparent);
   border-radius: var(--radius);
 }
 .gate strong {
