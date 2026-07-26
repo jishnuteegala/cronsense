@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-26T00:00:00.000Z",
+  "title": "Design System: Cronsense",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "Indigo Accent",
+        "canonical": "#4f46e5",
+        "darkValue": "#8b8bf7",
+        "tonalRamp": [
+          "#1e1b4b",
+          "#312a8a",
+          "#3730b0",
+          "#4338ca",
+          "#4f46e5",
+          "#7c74f0",
+          "#a5a1f7",
+          "#eef0fe"
+        ]
+      },
+      "bg": {
+        "role": "neutral",
+        "displayName": "Canvas",
+        "canonical": "#f7f8fa",
+        "darkValue": "#0b0d10",
+        "tonalRamp": [
+          "#0b0d10",
+          "#16181d",
+          "#1d2027",
+          "#3a3f49",
+          "#656b78",
+          "#aeb4be",
+          "#e5e8ee",
+          "#f7f8fa"
+        ]
+      },
+      "warn-accent": {
+        "role": "tertiary",
+        "displayName": "Warn Accent",
+        "canonical": "#b8791f",
+        "tonalRamp": [
+          "#3a2607",
+          "#5c3c0f",
+          "#7a4a00",
+          "#98631a",
+          "#b8791f",
+          "#d99a2b",
+          "#eac079",
+          "#fdf6e9"
+        ]
+      },
+      "danger-accent": {
+        "role": "tertiary",
+        "displayName": "Danger Accent",
+        "canonical": "#cf3040",
+        "tonalRamp": [
+          "#3a0009",
+          "#6b0011",
+          "#a3001a",
+          "#c11e30",
+          "#cf3040",
+          "#e0566a",
+          "#f2a0ac",
+          "#fdeef0"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The product title only." },
+      "summary": {
+        "displayName": "Summary",
+        "purpose": "The plain-English translation of the parsed expression."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase micro-labels for sections and field labels."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Machine-exact content only: the cron input and firing times."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-sm",
+        "value": "0 1px 2px rgba(16, 24, 40, 0.05)",
+        "purpose": "The logo mark and the focused skip link."
+      },
+      {
+        "name": "shadow",
+        "value": "0 1px 3px rgba(16, 24, 40, 0.06), 0 8px 24px -8px rgba(16, 24, 40, 0.12)",
+        "purpose": "Panels and gotcha article cards at rest."
+      },
+      {
+        "name": "shadow-lg",
+        "value": "0 4px 8px rgba(16, 24, 40, 0.05), 0 24px 48px -16px rgba(16, 24, 40, 0.18)",
+        "purpose": "The most-lifted surfaces."
+      }
+    ],
+    "motion": [
+      {
+        "name": "transition-chrome",
+        "value": "0.15s ease",
+        "purpose": "Interactive chrome: input border, focus ring, link underline."
+      }
+    ],
+    "breakpoints": [{ "name": "column", "value": "680px" }]
+  },
+  "components": [
+    {
+      "name": "Cron Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "The single action of the tool: a code-editor-style field for the cron expression.",
+      "html": "<input class=\"ds-cron-input\" value=\"*/15 9-17 * * MON-FRI\" spellcheck=\"false\" aria-label=\"Cron expression\" />",
+      "css": ".ds-cron-input { width: 100%; min-height: 52px; padding: 0.75rem 1rem; font-family: var(--font-mono); font-size: 1.05rem; letter-spacing: 0.01em; color: var(--fg-strong); background: var(--surface-inset); border: 1px solid var(--rule-strong); border-radius: var(--radius); box-shadow: inset 0 1px 2px rgba(16,24,40,0.04); transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease; } .ds-cron-input:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--rule-strong)); } .ds-cron-input:focus-visible { outline: none; background: var(--surface); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); }"
+    },
+    {
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "The carded surface that holds the input and contextual note.",
+      "html": "<div class=\"ds-panel\">Panel</div>",
+      "css": ".ds-panel { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: 0 1px 3px rgba(16,24,40,0.06), 0 8px 24px -8px rgba(16,24,40,0.12); }"
+    },
+    {
+      "name": "Warning Callout",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Provisional warning: amber card with a 3px accent rail and a sourced blockquote.",
+      "html": "<article class=\"ds-warning\"><blockquote class=\"ds-quote\">The schedule event can be delayed during periods of high load.</blockquote>Scheduled runs can be delayed or dropped under high load.</article>",
+      "css": ".ds-warning { margin: 0.75rem 0; padding: 1rem; border: 1px solid var(--rule); border-left: 3px solid var(--warn-accent); background: var(--warn-bg); color: var(--warn-fg); border-radius: var(--radius); } .ds-warning .ds-quote { margin: 0 0 0.5rem; padding-left: 0.75rem; border-left: 2px solid color-mix(in srgb, currentColor 25%, transparent); font-style: italic; }"
+    },
+    {
+      "name": "Error Callout",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Hard parse error: red card with a 3px danger rail.",
+      "html": "<p class=\"ds-error\" role=\"alert\">@hourly is not supported by GitHub Actions.</p>",
+      "css": ".ds-error { margin: 1rem 0; padding: 1rem; background: var(--danger-bg); color: var(--danger-fg); border: 1px solid color-mix(in srgb, var(--danger-accent) 30%, transparent); border-left: 3px solid var(--danger-accent); border-radius: var(--radius); font-weight: 500; }"
+    },
+    {
+      "name": "Firings Table",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Rounded bordered table of the next firing times with tabular numerals.",
+      "html": "<table class=\"ds-firings\"><thead><tr><th>UTC</th><th>Your local time</th></tr></thead><tbody><tr><td>2026-07-27 09:00 UTC</td><td>Jul 27, 10:00 BST</td></tr></tbody></table>",
+      "css": ".ds-firings { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--rule); border-radius: var(--radius); overflow: hidden; font-variant-numeric: tabular-nums; } .ds-firings th { text-align: left; padding: 0.75rem; background: var(--surface-2); border-bottom: 1px solid var(--rule); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); } .ds-firings td { padding: 0.75rem; font-family: var(--font-mono); font-size: 0.86rem; color: var(--fg); } .ds-firings tbody tr:hover td { background: var(--surface-inset); }"
+    },
+    {
+      "name": "Logo Mark",
+      "kind": "custom",
+      "refersTo": "mark",
+      "description": "The masthead brand mark: a gradient indigo tile with a white clock glyph.",
+      "html": "<span class=\"ds-mark\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 32 32\" fill=\"none\"><g stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\"><circle cx=\"16\" cy=\"16\" r=\"8.5\"/><path d=\"M16 11.5V16l3 2\"/></g></svg></span>",
+      "css": ".ds-mark { display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--radius); background: linear-gradient(150deg, var(--accent), var(--accent-hover)); color: var(--accent-contrast); box-shadow: 0 1px 2px rgba(16,24,40,0.05); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Sourced Instrument",
+    "overview": "Cronsense reads like a well-made developer tool that respects the reader's attention: a single quiet column of content on a softly washed surface where a pasted cron expression turns into a plain-English answer and a precise table of firing times. The register is product, not brand; the design serves the task and disappears. The palette is a cool-tinted neutral system anchored by one confident indigo accent, layered so panels lift off the page with hairline borders and soft shadows. Type is Inter throughout, with monospace reserved for the cron input and firing times. Dark mode is designed, not inverted.",
+    "keyCharacteristics": [
+      "One quiet content column, max 680px, on a radial background wash.",
+      "Cool-tinted neutrals with a single indigo accent used only for action and state.",
+      "Carded surfaces with hairline borders and layered soft shadows.",
+      "Inter throughout; monospace reserved for cron input and firing times.",
+      "Full light and dark themes, every pair clearing WCAG AA."
+    ],
+    "rules": [
+      {
+        "name": "The One Accent Rule",
+        "body": "Indigo is the only chromatic colour that carries action and state. It is never used to decorate. Amber and red appear solely to mark provisional and error information respectively.",
+        "section": "colors"
+      },
+      {
+        "name": "The Provisional Colour Rule",
+        "body": "The amber warn family means 'not confirmed'. Nothing confirmed is ever rendered in amber, and no guess is ever rendered in the neutral body colour as if it were fact.",
+        "section": "colors"
+      },
+      {
+        "name": "The Machine-Exact Mono Rule",
+        "body": "Monospace is only for content the machine produced exactly: the cron expression and the firing timestamps. Prose and labels never use it.",
+        "section": "typography"
+      },
+      {
+        "name": "The Ambient-Only Rule",
+        "body": "Shadows establish figure and ground; they never signal state. State is carried by border colour and the focus ring, not by changing elevation.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use indigo (#4f46e5) only for action and state: links, focus rings, the logo mark, the skip link, and the warning accent rail.",
+      "Do carry every caveat in a bordered callout with the exact sourced quote, the dated verification stamp, and the primary-source link.",
+      "Do reserve monospace for the cron input and firing times; everything else is Inter.",
+      "Do keep depth ambient: hairline border plus a soft wide shadow, and convey state through border and focus ring.",
+      "Do hold every text and background pair at WCAG AA (4.5:1 body); the faint neutral was darkened specifically to clear it.",
+      "Do honour prefers-color-scheme and prefers-reduced-motion, and keep the input touch target at 52px."
+    ],
+    "donts": [
+      "Don't render provisional behaviour in the neutral body colour; provisional is the amber warn family, and confirmed is never amber.",
+      "Don't use a border-left greater than the 3px callout rail as decoration, and never a colored side-stripe on cards.",
+      "Don't pair a 1px border with a wide drop shadow as decoration on the same element, or round cards past 16px.",
+      "Don't add gradient text, glassmorphism, decorative motion, or hero gradients; this is a tool, not a marketing page.",
+      "Don't introduce ads, analytics, or third-party requests; the tool stays static and self-contained.",
+      "Don't assert community lore such as the '~15 minute' delay figure; if it is not sourced, it does not appear."
+    ]
+  }
+}
