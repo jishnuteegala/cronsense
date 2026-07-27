@@ -142,8 +142,9 @@ A restrained near-neutral palette anchored by a single indigo accent, with amber
 
 ### Hierarchy
 
-- **Title** (weight 680, `clamp(1.6rem, 1.3rem + 1.4vw, 2rem)`, line-height 1.1, tracking -0.025em): The "Cronsense" wordmark in the masthead. The only fluid step; it is a wordmark, not body prose.
-- **Summary** (weight 600, 1.25rem, line-height 1.35, tracking -0.01em): The plain-English translation of the expression, the primary answer.
+- **Title** (weight 700, `clamp(1.6rem, 1.3rem + 1.4vw, 2rem)`, line-height 1.1, tracking -0.035em): The "Cronsense" wordmark in the masthead. The only fluid step; it is a wordmark, not body prose.
+- **Summary** (weight 680, `clamp(1.5rem, 1.25rem + 1.2vw, 1.85rem)`, line-height 1.2, tracking -0.02em, `text-wrap: balance`): The plain-English translation of the expression, and the lead of the results block. It is amplified to read first, ahead of the input; the answer leads, the tool recedes.
+- **Next-firing time** (mono, weight 500, `clamp(1.35rem, 1.15rem + 1vw, 1.7rem)`, tracking -0.01em, tabular-nums): The single computed time the reader lands on. The focal payload of the results.
 - **Body** (weight 400, 1rem, line-height 1.6): The lede and running prose. The lede sits at 1.02rem in Muted.
 - **Label** (weight 600, 0.8rem, tracking 0.06em, uppercase): Section headers ("Next 10 firings") and table column heads, in Faint.
 - **Field Label** (weight 600, 0.82rem, tracking 0.02em): The "Cron expression" input label, in Muted.
@@ -168,7 +169,7 @@ Flat by default, with restrained shadows that read as paper on paper rather than
 
 ### Named Rules
 
-**The Flat-By-Default Rule.** Surfaces are flat at rest. The only reactive elevation is the input's focus ring; everything else is a fixed, quiet shadow that never animates on hover.
+**The Flat-By-Default Rule.** Surfaces are flat at rest. The only reactive elevation is the input's focus ring; everything else is a fixed, quiet shadow that never animates on hover. The one motion in the system is the next-firing relative time's rise-and-fade on value change, which conveys state, not decoration, and is disabled under `prefers-reduced-motion`.
 
 ## 5. Components
 
@@ -194,9 +195,18 @@ No text buttons exist. The single primary affordance is the input itself; the sk
 - **Error** (`.error`): `danger-bg` fill, `danger-fg` text, full border plus a 3px `danger-accent` left edge, `role="alert"`. The sole intentional colored left-edge in the system, a diagnostic marker, not decoration.
 - **Warning** (`.warning`): `warn-bg` fill, `warn-fg` text, 1px `rule` border with a 3px `warn-accent` left edge; the `.diagnostic` variant recolors to red. Each carries a quoted doc excerpt and verification date.
 
+### Next firing (focal element)
+
+The one answer a developer debugging a schedule arrives for, promoted to the lead of the results. A borderless typographic statement (no card, no box), separated from the summary by a hairline `rule` top border:
+
+- **Label** (`.next-label`): "Next firing" in `accent` (indigo), 0.72rem, weight 600, tracking 0.08em, uppercase. Indigo earns its place here as a state indicator, the one firing that is next, not decoration; it stays inside the ≤10% One Voice budget.
+- **Time** (`.next-time`): the next UTC firing in mono at the Next-firing display step (above), Ink Strong.
+- **Relative** (`.next-rel`): a plain-language "in 3 hours" in Muted, recomputed each minute against the live clock. On update it plays a 0.4s rise-and-fade (`ease-out-quart`), keyed off the text so it only animates when the value actually changes. Disabled under `prefers-reduced-motion`. This is the system's one moment of state-conveying motion.
+
 ### Tables (signature component)
 
 - **Firings table:** The densest surface. 1px `rule` border, `radius-md`, `overflow: hidden` for clean corners, `border-collapse: separate`. Header row on `surface-2` with uppercase Faint labels; body cells in mono at 0.86rem with `tabular-nums`. First column (UTC) is Ink Strong and semibold; rows tint to `surface-inset` on hover. This is where the product's precision lives, so alignment and monospaced columns matter most.
+- **The next row** (`tr.is-next`): the first (soonest) firing is marked, giving the table a point of view relative to _now_. Its cells take an `accent-soft` wash and Ink Strong text, and the UTC cell carries a small solid-indigo `next` chip (`accent` fill, `accent-contrast` text, `radius-sm`, uppercase). No side-stripe; the tint plus chip carry the state. Hover deepens the wash slightly rather than replacing it.
 
 ### Brand mark
 
@@ -206,7 +216,7 @@ A 40px rounded-square (`radius-md`) with a `150deg` indigo-to-indigo-deep gradie
 
 ### Do:
 
-- **Do** keep indigo to ≤10% of any screen: mark, links, focus, active input edge only.
+- **Do** keep indigo to ≤10% of any screen: mark, links, focus, active input edge, the "Next firing" label, and the `next` row chip only.
 - **Do** set every cron field and time value in monospace with `tabular-nums`; set all prose in Inter.
 - **Do** pair every caveat with the exact doc quote, a dated verification stamp, and a link to the primary GitHub documentation.
 - **Do** keep card radii at 16px (`radius-lg`) and control radii at 10px (`radius-md`); tags/small chips may use 6px.

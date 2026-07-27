@@ -26,6 +26,23 @@ export function formatLocal(date: Date, timeZone?: string, locale?: string): str
   });
 }
 
+export function formatRelative(from: Date, to: Date): string {
+  const minutes = Math.round((to.getTime() - from.getTime()) / 60000);
+  if (minutes <= 0) return "now";
+  const units: [number, string][] = [
+    [60 * 24, "day"],
+    [60, "hour"],
+    [1, "minute"],
+  ];
+  for (const [size, name] of units) {
+    if (minutes >= size) {
+      const value = Math.floor(minutes / size);
+      return `in ${value} ${name}${value === 1 ? "" : "s"}`;
+    }
+  }
+  return "in 1 minute";
+}
+
 function focusWarning(warningId: string) {
   const element = document.getElementById(warningId);
   if (!element) return;
@@ -212,6 +229,21 @@ export function App({
                 </span>
               </article>
             ))}
+            {!output.never &&
+              output.firings[0] &&
+              (() => {
+                const next = output.firings[0];
+                const relative = formatRelative(new Date(nowMinute * 60000), next);
+                return (
+                  <p className="next-firing">
+                    <span className="next-label">Next firing</span>
+                    <span className="next-time">{formatUtc(next)}</span>
+                    <span className="next-rel" key={relative}>
+                      {relative}
+                    </span>
+                  </p>
+                );
+              })()}
             {!output.never && (
               <>
                 <h2>
@@ -237,9 +269,12 @@ export function App({
                     </tr>
                   </thead>
                   <tbody>
-                    {output.firings.map((firing) => (
-                      <tr key={firing.getTime()}>
-                        <td>{formatUtc(firing)}</td>
+                    {output.firings.map((firing, index) => (
+                      <tr className={index === 0 ? "is-next" : undefined} key={firing.getTime()}>
+                        <td>
+                          {formatUtc(firing)}
+                          {index === 0 && <span className="next-chip">next</span>}
+                        </td>
                         <td>{formatLocal(firing, timeZone, locale)}</td>
                       </tr>
                     ))}

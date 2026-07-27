@@ -43,9 +43,9 @@ body {
 }
 .app h1 {
   font-size: clamp(1.6rem, 1.3rem + 1.4vw, 2rem);
-  font-weight: 680;
+  font-weight: 700;
   line-height: 1.1;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.035em;
   color: var(--fg-strong);
   margin: 0;
 }
@@ -155,10 +155,11 @@ body {
   margin-top: var(--space-6);
 }
 .summary {
-  font-size: 1.25rem;
-  font-weight: 600;
-  line-height: 1.35;
-  letter-spacing: -0.01em;
+  font-size: clamp(1.5rem, 1.25rem + 1.2vw, 1.85rem);
+  font-weight: 680;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
   color: var(--fg-strong);
   margin: 0 0 var(--space-2);
 }
@@ -169,6 +170,45 @@ body {
 }
 .subnote.provisional {
   color: var(--warn-fg);
+}
+.next-firing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+  margin: var(--space-5) 0 0;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--rule);
+}
+.next-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.next-time {
+  font-family: var(--font-mono);
+  font-size: clamp(1.35rem, 1.15rem + 1vw, 1.7rem);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--fg-strong);
+}
+.next-rel {
+  font-size: 0.95rem;
+  color: var(--muted);
+  animation: next-rel-tick 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes next-rel-tick {
+  from {
+    opacity: 0;
+    transform: translateY(0.35em);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .error {
   margin: var(--space-4) 0;
@@ -252,8 +292,32 @@ body {
   color: var(--fg-strong);
   font-weight: 500;
 }
+.firings tr.is-next td {
+  background: var(--accent-soft);
+  color: var(--fg-strong);
+}
+.firings tr.is-next td:first-child {
+  font-weight: 600;
+}
+.next-chip {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 0.05rem 0.4rem;
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border-radius: var(--radius-sm);
+}
 .firings tbody tr:hover td {
   background: var(--surface-inset);
+}
+.firings tbody tr.is-next:hover td {
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface-inset));
 }
 .firings tbody tr:last-child td {
   border-bottom: none;
