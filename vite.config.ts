@@ -1,5 +1,6 @@
 import { defineConfig, type Plugin } from "vitest/config";
 import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
 import { gotchaPages } from "./src/gotchas/render";
 import { GOTCHA_CSS } from "./src/gotchas/styles";
 import { renderLlmsTxt } from "./src/gotchas/llms";
@@ -50,7 +51,36 @@ function serveGotchas(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), staticGotchas(), serveGotchas()],
+  plugins: [
+    react(),
+    staticGotchas(),
+    serveGotchas(),
+    VitePWA({
+      registerType: "autoUpdate",
+      injectRegister: "auto",
+      includeAssets: ["apple-touch-icon.png"],
+      manifest: {
+        name: "Cronsense",
+        short_name: "Cronsense",
+        description:
+          "The cron checker that tells you when your GitHub Actions workflow will actually fire.",
+        start_url: "/",
+        display: "standalone",
+        theme_color: "#4f46e5",
+        background_color: "#f7f8fa",
+        icons: [
+          { src: "pwa-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "pwa-512x512.png", sizes: "512x512", type: "image/png" },
+          {
+            src: "maskable-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ],
+      },
+    }),
+  ],
   test: {
     environment: "happy-dom",
   },
