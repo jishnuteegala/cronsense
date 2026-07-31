@@ -71,15 +71,15 @@ describe("renderGotchaPage", () => {
     }
   });
 
-  it("states the gated/pending status honestly on the DOM/DOW page", () => {
+  it("states the empirically confirmed DOM/DOW status honestly", () => {
     const warning = WARNINGS.find((candidate) => candidate.id === "dom-dow-or-semantics");
-    expect(warning?.empiricalGate).toBeDefined();
     const html = renderGotchaPage(warning!);
-    expect(html).toContain("empirically gated");
-    expect(html).toContain("undocumented by GitHub");
+    expect(html).toContain("empirically confirmed");
+    expect(html).toContain("2026-07-27");
+    expect(html).toContain("GitHub does not document");
     expect(html).toContain("POSIX");
-    expect(html).toContain(warning!.empiricalGate!.verificationRepo);
-    expect(html).toContain("in progress");
+    expect(html).toContain("cronsense-verification");
+    expect(html).not.toContain("pending verification");
   });
 
   it("never introduces the undocumented 15-minute figure", () => {

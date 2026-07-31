@@ -17,7 +17,7 @@ describe("warning definitions", () => {
   it("holds all six sourced caveats as typed declarative data", () => {
     expect(WARNINGS).toHaveLength(6);
     for (const warning of WARNINGS) {
-      expect(warning.verifiedOn).toBe("2026-07-24");
+      expect(warning.verifiedOn).toMatch(/^2026-07-(24|31)$/);
       expect(warning.sourceUrl).toMatch(/^https:\/\/docs\.github\.com\//);
       expect(warning.sourcePaths.every((path) => path.endsWith(".md"))).toBe(true);
       expect(typeof warning.predicate.kind).toBe("string");
@@ -107,19 +107,16 @@ describe("warning definitions", () => {
   it("gives every renderable warning a non-empty sourced quote", () => {
     for (const warning of WARNINGS) {
       expect(Array.isArray(warning.quotes)).toBe(true);
-      if (warning.suppressed) continue;
       expect(warning.quotes.length).toBeGreaterThan(0);
     }
   });
 
-  it("suppresses the empirically gated DOM/DOW warning", () => {
-    expect(warningIds("0 0 1 * MON")).not.toContain("dom-dow-or-semantics");
-    expect(
-      WARNINGS.find((warning) => warning.id === "dom-dow-or-semantics")?.empiricalGate,
-    ).toEqual({
-      sourceTicket: 9,
-      verificationRepo: "cronsense-verification",
-    });
+  it("shows the empirically confirmed DOM/DOW warning", () => {
+    const warning = WARNINGS.find((candidate) => candidate.id === "dom-dow-or-semantics");
+    expect(warningIds("0 0 1 * MON")).toContain("dom-dow-or-semantics");
+    expect(warning?.verifiedOn).toBe("2026-07-31");
+    expect(warning?.message).toContain("empirically confirmed");
+    expect(warning?.message).toContain("2026-07-27");
   });
 
   it("only considers both non-wildcard-origin day fields for DOM/DOW semantics", () => {

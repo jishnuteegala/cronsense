@@ -87,10 +87,7 @@ function activate(warning: WarningDefinition, ast: CronAst): ActiveWarning {
 
 export function evaluateWarnings(ast: CronAst): ActiveWarning[] {
   return WARNINGS.filter(
-    (warning) =>
-      warning.rank !== "contextual" &&
-      !warning.suppressed &&
-      matchesWarningPredicate(warning.predicate, ast),
+    (warning) => warning.rank !== "contextual" && matchesWarningPredicate(warning.predicate, ast),
   ).map((warning) => activate(warning, ast));
 }
 

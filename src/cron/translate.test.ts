@@ -65,18 +65,18 @@ describe("translate", () => {
     );
   });
 
-  it("DOM/DOW both restricted spells out OR with the verification caveat", () => {
+  it("DOM/DOW both restricted spells out empirically confirmed OR semantics", () => {
     const text = sentence("0 0 15 * MON");
     expect(text).toContain("on day-of-month 15, or on Monday");
     expect(text).toContain("either matching day fires");
-    expect(text).toContain("awaiting empirical verification");
+    expect(text).toContain("empirically confirmed on 2026-07-27");
   });
 
-  it("wildcard-origin DOM with restricted DOW spells out intersection with the Vixie caveat", () => {
+  it("wildcard-origin DOM with restricted DOW spells out the documented caveat", () => {
     const text = sentence("0 0 */2 * MON");
     expect(text).toContain("that is also Monday");
     expect(text).toContain("per Vixie cron precedent");
-    expect(text).toContain("awaiting empirical verification");
+    expect(text).toContain("GitHub does not document this wildcard-origin behaviour");
   });
 
   it("stepped wildcard months name the starting month", () => {

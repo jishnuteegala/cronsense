@@ -16,7 +16,7 @@ fully client-side: no accounts, no analytics, no third-party requests.
 
 ## Gotcha pages
 
-- [/gotchas/dom-dow-or-semantics](/gotchas/dom-dow-or-semantics): Day-of-month and day-of-week combine with OR (pending verification) (empirically gated, pending verification)
+- [/gotchas/dom-dow-or-semantics](/gotchas/dom-dow-or-semantics): Day-of-month and day-of-week combine with OR
 - [/gotchas/uneven-step-reset](/gotchas/uneven-step-reset): Uneven */N steps reset at the field boundary
 - [/gotchas/never-fires](/gotchas/never-fires): This expression will never fire
 - [/gotchas/sub-minimum-interval](/gotchas/sub-minimum-interval): Firing more often than every 5 minutes
@@ -26,4 +26,4 @@ fully client-side: no accounts, no analytics, no third-party requests.
 ## Notes
 
 - GitHub documents no delay bound. The "~15 minutes" figure is community lore and appears nowhere in Cronsense.
-- Day-of-month/day-of-week combined-field semantics are undocumented by GitHub; that gotcha is gated on empirical verification.
+- Day-of-month/day-of-week combined-field semantics are undocumented by GitHub; OR behaviour was empirically confirmed on 2026-07-27 in the Cronsense verification repository, consistent with the linked POSIX specification.

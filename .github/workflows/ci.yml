@@ -2,24 +2,33 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run lint
-      - run: pnpm run format
-      - run: pnpm run typecheck
-      - run: pnpm run test
-      - run: pnpm run build
+    uses: jishnuteegala/.github/.github/workflows/app-ci.yml@v1
+    with:
+      post-check: |
+        pnpm run build
+        pnpm run check:privacy
+        test -f dist/index.html
+        test -f dist/design-system/index.html
+        test -f dist/llms.txt
+        test -f dist/_headers
+        test -f dist/gotchas/dom-dow-or-semantics/index.html
+        test -f dist/gotchas/uneven-step-reset/index.html
+        test -f dist/gotchas/never-fires/index.html
+        test -f dist/gotchas/sub-minimum-interval/index.html
+        test -f dist/gotchas/high-load-delay-drop/index.html
+        test -f dist/gotchas/inactivity-pause/index.html
+        SOURCE_DATE_EPOCH=315532800 python -X utf8 scripts/package_release.py snapshot
+        (cd artifact && sha256sum --check SHA256SUMS)

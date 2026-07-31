@@ -259,10 +259,10 @@ export function firesMoreOftenThanEveryFiveMinutes(ast: CronAst): boolean {
 }
 
 export const DOM_DOW_PROVISIONAL_NOTE =
-  "This expression restricts both day-of-month and day-of-week. GitHub does not document how these combine; the firing times below assume the POSIX/Vixie OR union (a day matching either field fires) and are provisional until empirically verified against GitHub Actions via the verification repo (ticket #9), at which point this may change.";
+  "This expression restricts both day-of-month and day-of-week. GitHub does not document how these combine, but Cronsense verification empirically confirmed POSIX OR behaviour on 2026-07-27: a day matching either field fires.";
 
 export const DOM_DOW_INTERSECTION_PROVISIONAL_NOTE =
-  'This expression combines a wildcard-origin day field ("*" or "*/N") with the other day field. Following Vixie cron source precedent, wildcard-origin fields retain wildcard status and the two day fields intersect (a day must match both). GitHub does not document this behaviour; the firing times below are provisional until empirically verified against GitHub Actions via the verification repo (ticket #9), at which point this may change.';
+  'This expression combines a wildcard-origin day field ("*" or "*/N") with the other day field. Following Vixie cron source precedent, wildcard-origin fields retain wildcard status and the two day fields intersect (a day must match both). GitHub does not document this wildcard-origin behaviour.';
 
 export function domDowProvisionalNote(ast: CronAst): string | null {
   if (!isRestricted(ast.dayOfMonth) || !isRestricted(ast.dayOfWeek)) {

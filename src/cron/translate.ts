@@ -124,9 +124,9 @@ function dayPhrase(ast: CronAst): string {
   );
   if (domRestricted && dowRestricted) {
     if (union) {
-      return `on ${domPart}, or on ${dowPart} (either matching day fires; awaiting empirical verification of GHA's combined day-of-month/day-of-week behaviour)`;
+      return `on ${domPart}, or on ${dowPart} (either matching day fires; OR behaviour was empirically confirmed on 2026-07-27)`;
     }
-    return `on ${domPart} that is also ${dowPart} (wildcard-origin day fields intersect, per Vixie cron precedent; awaiting empirical verification of GHA's combined day-of-month/day-of-week behaviour)`;
+    return `on ${domPart} that is also ${dowPart} (wildcard-origin day fields intersect, per Vixie cron precedent; GitHub does not document this wildcard-origin behaviour)`;
   }
   if (domRestricted) {
     return `on ${domPart}`;

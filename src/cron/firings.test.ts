@@ -195,7 +195,7 @@ describe("leap years", () => {
   });
 });
 
-describe("DOM/DOW OR semantics (provisional, awaiting empirical verification)", () => {
+describe("DOM/DOW OR semantics (empirically confirmed)", () => {
   it("fires on union when both restricted", () => {
     const firings = nextFirings(ast("0 0 15 * MON"), new Date(Date.UTC(2026, 4, 31, 23, 59)), 5);
     expect(iso(firings)).toEqual([
