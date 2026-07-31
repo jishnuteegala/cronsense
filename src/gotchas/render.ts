@@ -1,4 +1,4 @@
-import { WARNINGS, type WarningDefinition } from "../cron/warnings";
+import { VERIFICATION_URL, WARNINGS, type WarningDefinition } from "../cron/warnings";
 
 const SITE_NAME = "Cronsense";
 const TAGLINE =
@@ -23,6 +23,13 @@ export function renderInline(text: string): string {
     /`([^`]+)`/g,
     (_match, code: string) => `<code>${code}</code>`,
   );
+}
+
+function provenanceStamp(warning: WarningDefinition): string {
+  if (warning.provenance === "empirical") {
+    return `Empirically confirmed via <a href="${VERIFICATION_URL}">cronsense-verification</a> on ${escapeHtml(warning.verifiedOn)}.`;
+  }
+  return `Verified against GitHub docs on ${escapeHtml(warning.verifiedOn)}.`;
 }
 
 function sourcePaths(warning: WarningDefinition): string {
@@ -65,7 +72,7 @@ ${sourcePaths(warning)}        <h2>Source</h2>
           Primary source:
           <a href="${url}">${url}</a>
         </p>
-        <p class="stamp">Verified against GitHub docs on ${escapeHtml(warning.verifiedOn)}.</p>
+        <p class="stamp">${provenanceStamp(warning)}</p>
         <p class="back"><a href="/">${TAGLINE}</a></p>
       </article>
     </main>

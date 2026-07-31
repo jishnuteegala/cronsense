@@ -16,6 +16,7 @@ export interface ActiveWarning {
   sourceUrl: string;
   sourcePaths: readonly string[];
   rank: WarningDefinition["rank"];
+  provenance: WarningDefinition["provenance"];
   emphasised: boolean;
 }
 
@@ -79,6 +80,7 @@ function activate(warning: WarningDefinition, ast: CronAst): ActiveWarning {
     sourceUrl: warning.sourceUrl,
     sourcePaths: warning.sourcePaths,
     rank: warning.rank,
+    provenance: warning.provenance,
     emphasised:
       warning.emphasiseWhen !== undefined &&
       expandField(ast[warning.emphasiseWhen.field]).has(warning.emphasiseWhen.includes),

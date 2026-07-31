@@ -32,12 +32,15 @@ export interface WarningDefinition {
   sourceUrl: string;
   sourcePaths: readonly string[];
   rank: "diagnostic" | "informational" | "contextual";
+  provenance: "docs" | "empirical";
   gotcha: GotchaContent;
   emphasiseWhen?: { field: "minute"; includes: number };
 }
 
 const SCHEDULE_URL =
   "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule";
+export const VERIFICATION_URL =
+  "https://github.com/jishnuteegala/cronsense-verification/blob/main/VERIFICATION.md";
 const VERIFIED_ON = "2026-07-24";
 
 export const WARNINGS: readonly WarningDefinition[] = [
@@ -51,12 +54,13 @@ export const WARNINGS: readonly WarningDefinition[] = [
       "Use POSIX cron syntax to schedule workflows to run at specific times.",
       "Empirical observation: https://github.com/jishnuteegala/cronsense-verification/blob/main/VERIFICATION.md",
     ],
-    verifiedOn: "2026-07-31",
+    verifiedOn: "2026-07-27",
     sourceUrl: SCHEDULE_URL,
     sourcePaths: [
       "content/actions/reference/workflows-and-actions/events-that-trigger-workflows.md",
     ],
     rank: "diagnostic",
+    provenance: "empirical",
     gotcha: {
       slug: "dom-dow-or-semantics",
       title: "Day-of-month and day-of-week combine with OR",
@@ -81,6 +85,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
     sourceUrl: SCHEDULE_URL,
     sourcePaths: ["data/reusables/repositories/actions-scheduled-workflow-example.md"],
     rank: "diagnostic",
+    provenance: "docs",
     gotcha: {
       slug: "uneven-step-reset",
       title: "Uneven `*/N` steps reset at the field boundary",
@@ -102,6 +107,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
     sourceUrl: SCHEDULE_URL,
     sourcePaths: ["data/reusables/repositories/cron.md"],
     rank: "diagnostic",
+    provenance: "docs",
     gotcha: {
       slug: "never-fires",
       title: "This expression will never fire",
@@ -122,6 +128,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
     sourceUrl: SCHEDULE_URL,
     sourcePaths: ["data/reusables/repositories/actions-scheduled-workflow-example.md"],
     rank: "diagnostic",
+    provenance: "docs",
     gotcha: {
       slug: "sub-minimum-interval",
       title: "Firing more often than every 5 minutes",
@@ -143,6 +150,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
     sourceUrl: SCHEDULE_URL,
     sourcePaths: ["data/reusables/actions/schedule-delay.md"],
     rank: "informational",
+    provenance: "docs",
     gotcha: {
       slug: "high-load-delay-drop",
       title: "Scheduled runs can be delayed or dropped under high load",
@@ -169,6 +177,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
       "data/reusables/actions/scheduled-workflows-disabled.md",
     ],
     rank: "contextual",
+    provenance: "docs",
     gotcha: {
       slug: "inactivity-pause",
       title:

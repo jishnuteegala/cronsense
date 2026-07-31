@@ -17,7 +17,7 @@ describe("warning definitions", () => {
   it("holds all six sourced caveats as typed declarative data", () => {
     expect(WARNINGS).toHaveLength(6);
     for (const warning of WARNINGS) {
-      expect(warning.verifiedOn).toMatch(/^2026-07-(24|31)$/);
+      expect(warning.verifiedOn).toMatch(/^2026-07-(24|27)$/);
       expect(warning.sourceUrl).toMatch(/^https:\/\/docs\.github\.com\//);
       expect(warning.sourcePaths.every((path) => path.endsWith(".md"))).toBe(true);
       expect(typeof warning.predicate.kind).toBe("string");
@@ -114,7 +114,8 @@ describe("warning definitions", () => {
   it("shows the empirically confirmed DOM/DOW warning", () => {
     const warning = WARNINGS.find((candidate) => candidate.id === "dom-dow-or-semantics");
     expect(warningIds("0 0 1 * MON")).toContain("dom-dow-or-semantics");
-    expect(warning?.verifiedOn).toBe("2026-07-31");
+    expect(warning?.verifiedOn).toBe("2026-07-27");
+    expect(warning?.provenance).toBe("empirical");
     expect(warning?.message).toContain("empirically confirmed");
     expect(warning?.message).toContain("2026-07-27");
   });

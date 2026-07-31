@@ -125,7 +125,7 @@ li {
   border-radius: 0 0 var(--radius-sm) 0;
   box-shadow: var(--shadow);
 }
-.skip-link:focus {
+.skip-link:focus-visible {
   left: 0;
 }
 :focus-visible {

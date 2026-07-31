@@ -3,6 +3,7 @@ import { neverFiresReason, nextFirings } from "./cron/firings";
 import { parseCron } from "./cron/parse";
 import { translate } from "./cron/translate";
 import { CONTEXTUAL_NOTES, evaluateWarnings } from "./cron/warning-engine";
+import { VERIFICATION_URL } from "./cron/warnings";
 import { expressionHash, isToolPage, parseHash } from "./hash";
 
 export const DST_NOTE =
@@ -132,15 +133,15 @@ export function App({
     <>
       <a
         className="skip-link"
-        href="#results"
+        href="#main-content"
         onClick={(event) => {
           event.preventDefault();
-          document.getElementById("results")?.focus();
+          document.getElementById("main-content")?.focus();
         }}
       >
         Skip to main content
       </a>
-      <main className="app" id="main-content">
+      <main className="app" id="main-content" tabIndex={-1}>
         <header className="masthead">
           <span className="mark" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
@@ -225,8 +226,18 @@ export function App({
                   ))}
                   {warning.message}{" "}
                   <span className="meta">
-                    (verified against <a href={warning.sourceUrl}>GitHub docs</a> on{" "}
-                    {warning.verifiedOn})
+                    {warning.provenance === "empirical" ? (
+                      <>
+                        (empirically confirmed via{" "}
+                        <a href={VERIFICATION_URL}>cronsense-verification</a> on{" "}
+                        {warning.verifiedOn})
+                      </>
+                    ) : (
+                      <>
+                        (verified against <a href={warning.sourceUrl}>GitHub docs</a> on{" "}
+                        {warning.verifiedOn})
+                      </>
+                    )}
                   </span>
                 </article>
               ))}

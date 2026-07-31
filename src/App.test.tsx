@@ -278,11 +278,11 @@ describe("App", () => {
     expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("results");
   });
 
-  it("moves focus to results on skip-link activation without clobbering the permalink", () => {
+  it("moves focus to main content on skip-link activation without clobbering the permalink", () => {
     render(<App initialExpression="0 12 * * *" />);
     window.history.replaceState(null, "", "#0%2012%20*%20*%20*");
     fireEvent.click(screen.getByRole("link", { name: "Skip to main content" }));
-    expect(document.activeElement?.id).toBe("results");
+    expect(document.activeElement?.id).toBe("main-content");
     expect(window.location.hash).toBe("#0%2012%20*%20*%20*");
     expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("0 12 * * *");
     expect(screen.getByRole("table")).toBeTruthy();
@@ -310,11 +310,10 @@ describe("App", () => {
     expect(screen.getByRole("region", { name: "Results" }).id).toBe("results");
   });
 
-  it("focuses the results region via the skip link even for invalid input", () => {
+  it("focuses the main content region via the skip link even for invalid input", () => {
     render(<App initialExpression="@hourly" />);
     fireEvent.click(screen.getByRole("link", { name: "Skip to main content" }));
-    expect(document.activeElement?.id).toBe("results");
-    expect(document.activeElement?.textContent).toContain("GitHub Actions does not support");
+    expect(document.activeElement?.id).toBe("main-content");
   });
 
   it("discloses a truncated firing list near the maximum representable date", () => {
