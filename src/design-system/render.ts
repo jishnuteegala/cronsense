@@ -19,7 +19,9 @@ code { padding: 0.1em 0.36em; border: 1px solid var(--rule); border-radius: var(
 .primitive { padding: var(--space-4); border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); }
 .input { width: 100%; box-sizing: border-box; padding: var(--space-3) var(--space-4); border: 1px solid var(--rule-strong); border-radius: var(--radius); color: var(--fg-strong); background: var(--surface-inset); font: 1rem var(--font-mono); }
 .notice { padding: var(--space-4); border: 1px solid var(--warn-border); border-radius: var(--radius); color: var(--warn-fg); background: var(--warn-bg); }
-.site-footer { border-top: 1px solid var(--rule); color: var(--muted); }
+.site-footer { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin-top: var(--space-2); padding-top: var(--space-4); padding-bottom: var(--space-6); border-top: 1px solid var(--rule); color: var(--muted); font-size: 0.9rem; }
+.site-footer a { color: var(--muted); text-decoration: none; }
+.site-footer a:hover { color: var(--fg); text-decoration: underline; }
 `;
 
 const swatches = [

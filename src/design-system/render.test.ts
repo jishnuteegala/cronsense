@@ -24,4 +24,8 @@ describe("renderDesignSystem", () => {
     expect(html).toContain("https://jishnuteegala.com/privacy");
     expect(html).toContain("https://github.com/jishnuteegala/cronsense");
   });
+
+  it("lays out the footer links with spacing, matching the app footer", () => {
+    expect(html).toMatch(/\.site-footer\s*\{[^}]*display:\s*flex[^}]*gap:[^}]*\}/);
+  });
 });
