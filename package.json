@@ -12,6 +12,7 @@
     "format:write": "oxfmt .",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
+    "check:privacy": "node scripts/check-privacy.mjs",
     "check": "pnpm run lint && pnpm run format && pnpm run typecheck && pnpm run test"
   },
   "dependencies": {

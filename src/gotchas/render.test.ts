@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { WARNINGS } from "../cron/warnings";
+import { VERIFICATION_URL, WARNINGS } from "../cron/warnings";
 import { escapeHtml, gotchaPages, renderGotchaPage, renderInline } from "./render";
 import { renderLlmsTxt } from "./llms";
 import { staticAssets } from "./emit";
@@ -48,7 +48,11 @@ describe("renderGotchaPage", () => {
       const html = renderGotchaPage(warning);
       expect(html).toContain(renderInline(warning.gotcha.quote));
       expect(html).toContain(`href="${escapeHtml(warning.sourceUrl)}"`);
-      expect(html).toContain(`Verified against GitHub docs on ${warning.verifiedOn}`);
+      const stamp =
+        warning.provenance === "empirical"
+          ? `Empirically confirmed via <a href="${VERIFICATION_URL}">cronsense-verification</a> on ${warning.verifiedOn}`
+          : `Verified against GitHub docs on ${warning.verifiedOn}`;
+      expect(html).toContain(stamp);
       for (const path of warning.sourcePaths) {
         expect(html).toContain(escapeHtml(path));
       }
@@ -71,15 +75,15 @@ describe("renderGotchaPage", () => {
     }
   });
 
-  it("states the gated/pending status honestly on the DOM/DOW page", () => {
+  it("states the empirically confirmed DOM/DOW status honestly", () => {
     const warning = WARNINGS.find((candidate) => candidate.id === "dom-dow-or-semantics");
-    expect(warning?.empiricalGate).toBeDefined();
     const html = renderGotchaPage(warning!);
-    expect(html).toContain("empirically gated");
-    expect(html).toContain("undocumented by GitHub");
+    expect(html).toContain("empirically confirmed");
+    expect(html).toContain("2026-07-27");
+    expect(html).toContain("GitHub does not document");
     expect(html).toContain("POSIX");
-    expect(html).toContain(warning!.empiricalGate!.verificationRepo);
-    expect(html).toContain("in progress");
+    expect(html).toContain("cronsense-verification");
+    expect(html).not.toContain("pending verification");
   });
 
   it("never introduces the undocumented 15-minute figure", () => {

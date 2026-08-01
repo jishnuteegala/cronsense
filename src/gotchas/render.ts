@@ -1,4 +1,4 @@
-import { WARNINGS, type WarningDefinition } from "../cron/warnings";
+import { VERIFICATION_URL, WARNINGS, type WarningDefinition } from "../cron/warnings";
 
 const SITE_NAME = "Cronsense";
 const TAGLINE =
@@ -25,11 +25,11 @@ export function renderInline(text: string): string {
   );
 }
 
-function gateBanner(warning: WarningDefinition): string {
-  if (warning.empiricalGate === undefined) return "";
-  const repo = escapeHtml(warning.empiricalGate.verificationRepo);
-  const ticket = warning.empiricalGate.sourceTicket;
-  return `        <p class="gate" role="note"><strong>Status: empirically gated.</strong> This behaviour is undocumented by GitHub and inferred from the linked POSIX specification. It is pending empirical verification and does not appear as a live warning until confirmed. The observation window is in progress, tracked in ticket #${ticket} and the ${repo} repository.</p>\n`;
+function provenanceStamp(warning: WarningDefinition): string {
+  if (warning.provenance === "empirical") {
+    return `Empirically confirmed via <a href="${VERIFICATION_URL}">cronsense-verification</a> on ${escapeHtml(warning.verifiedOn)}.`;
+  }
+  return `Verified against GitHub docs on ${escapeHtml(warning.verifiedOn)}.`;
 }
 
 function sourcePaths(warning: WarningDefinition): string {
@@ -63,7 +63,7 @@ export function renderGotchaPage(warning: WarningDefinition): string {
       <article>
         <p class="crumb"><a href="/">${SITE_NAME}</a> / Gotchas</p>
         <h1>${title}</h1>
-${gateBanner(warning)}        <h2>What GitHub documents</h2>
+        <h2>What GitHub documents</h2>
         <blockquote><p>${renderInline(gotcha.quote)}</p></blockquote>
         <h2>Why it matters</h2>
         <p>${renderInline(gotcha.explanation)}</p>
@@ -72,7 +72,7 @@ ${sourcePaths(warning)}        <h2>Source</h2>
           Primary source:
           <a href="${url}">${url}</a>
         </p>
-        <p class="stamp">Verified against GitHub docs on ${escapeHtml(warning.verifiedOn)}.</p>
+        <p class="stamp">${provenanceStamp(warning)}</p>
         <p class="back"><a href="/">${TAGLINE}</a></p>
       </article>
     </main>

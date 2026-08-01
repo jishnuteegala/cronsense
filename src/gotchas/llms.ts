@@ -1,11 +1,10 @@
 import { WARNINGS } from "../cron/warnings";
 
 export function renderLlmsTxt(): string {
-  const pages = WARNINGS.map((warning) => {
-    const status =
-      warning.empiricalGate === undefined ? "" : " (empirically gated, pending verification)";
-    return `- [/gotchas/${warning.gotcha.slug}](/gotchas/${warning.gotcha.slug}): ${warning.gotcha.title.replaceAll("`", "")}${status}`;
-  }).join("\n");
+  const pages = WARNINGS.map(
+    (warning) =>
+      `- [/gotchas/${warning.gotcha.slug}](/gotchas/${warning.gotcha.slug}): ${warning.gotcha.title.replaceAll("`", "")}`,
+  ).join("\n");
 
   return `# Cronsense
 
@@ -30,6 +29,6 @@ ${pages}
 ## Notes
 
 - GitHub documents no delay bound. The "~15 minutes" figure is community lore and appears nowhere in Cronsense.
-- Day-of-month/day-of-week combined-field semantics are undocumented by GitHub; that gotcha is gated on empirical verification.
+- Day-of-month/day-of-week combined-field semantics are undocumented by GitHub; OR behaviour was empirically confirmed on 2026-07-27 in the Cronsense verification repository, consistent with the linked POSIX specification.
 `;
 }

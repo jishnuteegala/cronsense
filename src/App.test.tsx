@@ -18,6 +18,17 @@ describe("App", () => {
     expect(screen.getAllByRole("row").length).toBe(11);
   });
 
+  it("renders the site footer", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    expect(screen.getByText(/Jishnu Teegala/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Privacy" }).getAttribute("href")).toBe(
+      "https://jishnuteegala.com/privacy",
+    );
+    expect(screen.getByRole("link", { name: "Source" }).getAttribute("href")).toBe(
+      "https://github.com/jishnuteegala/cronsense",
+    );
+  });
+
   it("renders the single DST note inside the local-time column header", () => {
     render(<App initialExpression="0 12 * * *" />);
     const localHeader = screen.getByRole("columnheader", { name: new RegExp("Your local time") });
@@ -102,9 +113,12 @@ describe("App", () => {
     expect(screen.getByText(/awaits GHA-validator arbitration/)).toBeTruthy();
   });
 
-  it("suppresses the empirically gated DOM/DOW warning", () => {
+  it("shows the empirically confirmed DOM/DOW warning", () => {
     render(<App initialExpression="0 0 15 * 1" />);
-    expect(screen.queryByText(/POSIX\/Vixie OR union/)).toBeNull();
+    expect(
+      screen.getByText(/Cronsense verification empirically confirmed OR behaviour/),
+    ).toBeTruthy();
+    expect(screen.getAllByText(/2026-07-27/).length).toBeGreaterThan(0);
   });
 
   it("does not expose provisional DOM/DOW caveat text", () => {
@@ -264,11 +278,11 @@ describe("App", () => {
     expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("results");
   });
 
-  it("moves focus to results on skip-link activation without clobbering the permalink", () => {
+  it("moves focus to main content on skip-link activation without clobbering the permalink", () => {
     render(<App initialExpression="0 12 * * *" />);
     window.history.replaceState(null, "", "#0%2012%20*%20*%20*");
-    fireEvent.click(screen.getByRole("link", { name: "Skip to results" }));
-    expect(document.activeElement?.id).toBe("results");
+    fireEvent.click(screen.getByRole("link", { name: "Skip to main content" }));
+    expect(document.activeElement?.id).toBe("main-content");
     expect(window.location.hash).toBe("#0%2012%20*%20*%20*");
     expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("0 12 * * *");
     expect(screen.getByRole("table")).toBeTruthy();
@@ -296,11 +310,10 @@ describe("App", () => {
     expect(screen.getByRole("region", { name: "Results" }).id).toBe("results");
   });
 
-  it("focuses the results region via the skip link even for invalid input", () => {
+  it("focuses the main content region via the skip link even for invalid input", () => {
     render(<App initialExpression="@hourly" />);
-    fireEvent.click(screen.getByRole("link", { name: "Skip to results" }));
-    expect(document.activeElement?.id).toBe("results");
-    expect(document.activeElement?.textContent).toContain("GitHub Actions does not support");
+    fireEvent.click(screen.getByRole("link", { name: "Skip to main content" }));
+    expect(document.activeElement?.id).toBe("main-content");
   });
 
   it("discloses a truncated firing list near the maximum representable date", () => {

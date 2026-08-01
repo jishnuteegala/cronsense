@@ -32,14 +32,15 @@ export interface WarningDefinition {
   sourceUrl: string;
   sourcePaths: readonly string[];
   rank: "diagnostic" | "informational" | "contextual";
+  provenance: "docs" | "empirical";
   gotcha: GotchaContent;
-  suppressed?: boolean;
-  empiricalGate?: { sourceTicket: number; verificationRepo: string };
   emphasiseWhen?: { field: "minute"; includes: number };
 }
 
 const SCHEDULE_URL =
   "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule";
+export const VERIFICATION_URL =
+  "https://github.com/jishnuteegala/cronsense-verification/blob/main/VERIFICATION.md";
 const VERIFIED_ON = "2026-07-24";
 
 export const WARNINGS: readonly WarningDefinition[] = [
@@ -48,23 +49,25 @@ export const WARNINGS: readonly WarningDefinition[] = [
     predicate: { kind: "both-restricted", fields: ["dayOfMonth", "dayOfWeek"] },
     messageKind: "static",
     message:
-      "Empirical verification is required before this warning is shown. GitHub does not document how restricted day-of-month and day-of-week fields combine; the linked POSIX crontab specification implies OR semantics.",
-    quotes: [],
-    verifiedOn: VERIFIED_ON,
+      "GitHub does not document this combination. Cronsense verification empirically confirmed OR behaviour on 2026-07-27: a Monday outside the restricted day-of-month range fired, consistent with the POSIX crontab specification linked by the docs.",
+    quotes: [
+      "Use POSIX cron syntax to schedule workflows to run at specific times.",
+      "Empirical observation: https://github.com/jishnuteegala/cronsense-verification/blob/main/VERIFICATION.md",
+    ],
+    verifiedOn: "2026-07-27",
     sourceUrl: SCHEDULE_URL,
     sourcePaths: [
       "content/actions/reference/workflows-and-actions/events-that-trigger-workflows.md",
     ],
     rank: "diagnostic",
+    provenance: "empirical",
     gotcha: {
       slug: "dom-dow-or-semantics",
-      title: "Day-of-month and day-of-week combine with OR (pending verification)",
+      title: "Day-of-month and day-of-week combine with OR",
       quote: "Use POSIX cron syntax to schedule workflows to run at specific times.",
       explanation:
-        "When both the day-of-month and day-of-week fields are restricted (neither is `*`), how they combine decides which days fire. GitHub does not document whether the fields combine with OR or AND. The docs only link to the POSIX crontab specification, which specifies OR when both fields are restricted, so a day matching either field would fire. This is an inference from the linked POSIX spec, not a documented GitHub behaviour. This warning is empirically gated: it does not appear in the tool until the verification repository confirms GitHub's actual behaviour. The empirical observation window is in progress, tracked in ticket #9 and the cronsense-verification repository; until confirmed, treat the OR reading as a POSIX inference only.",
+        "When both the day-of-month and day-of-week fields are restricted (neither is `*`), GitHub does not document whether they combine with OR or AND. The docs link to the POSIX crontab specification, which specifies OR. Cronsense verification empirically confirmed that behaviour on 2026-07-27: `0 12 1-7 * MON` fired on a Monday whose day-of-month was outside 1-7. Read the recorded observation in https://github.com/jishnuteegala/cronsense-verification/blob/main/VERIFICATION.md. This confirms GitHub behaviour while leaving clear that GitHub itself does not document the combination.",
     },
-    suppressed: true,
-    empiricalGate: { sourceTicket: 9, verificationRepo: "cronsense-verification" },
   },
   {
     id: "uneven-step-reset",
@@ -82,12 +85,13 @@ export const WARNINGS: readonly WarningDefinition[] = [
     sourceUrl: SCHEDULE_URL,
     sourcePaths: ["data/reusables/repositories/actions-scheduled-workflow-example.md"],
     rank: "diagnostic",
+    provenance: "docs",
     gotcha: {
       slug: "uneven-step-reset",
       title: "Uneven `*/N` steps reset at the field boundary",
       quote: "You can use these operators in any of the five fields:",
       explanation:
-        "GitHub documents the `/` step operator for all five fields. A step value `*/N` counts from the start of the field's range and resets when the range ends. When `N` does not evenly divide the field's span, the step from the last matching value back to the first is shorter than `N`. For example, `*/7` in the minute field fires at :00, :07, :14, :21, :28, :35, :42, :49, :56, then resets to :00 of the next hour, leaving a 4-minute gap instead of 7. This is derived arithmetic over the documented step operator; the boundary reset is pending verification in the deterministic edge-case matrix (tracked in ticket #9).",
+        "GitHub documents the `/` step operator for all five fields. A step value `*/N` counts from the start of the field's range and resets when the range ends. When `N` does not evenly divide the field's span, the step from the last matching value back to the first is shorter than `N`. For example, `*/7` in the minute field fires at :00, :07, :14, :21, :28, :35, :42, :49, :56, then resets to :00 of the next hour, leaving a 4-minute gap instead of 7. The deterministic edge-case matrix observed this reset; its firing set was a correct superset of the predicted set. GitHub does not separately document the boundary-reset detail.",
     },
   },
   {
@@ -103,6 +107,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
     sourceUrl: SCHEDULE_URL,
     sourcePaths: ["data/reusables/repositories/cron.md"],
     rank: "diagnostic",
+    provenance: "docs",
     gotcha: {
       slug: "never-fires",
       title: "This expression will never fire",
@@ -123,12 +128,13 @@ export const WARNINGS: readonly WarningDefinition[] = [
     sourceUrl: SCHEDULE_URL,
     sourcePaths: ["data/reusables/repositories/actions-scheduled-workflow-example.md"],
     rank: "diagnostic",
+    provenance: "docs",
     gotcha: {
       slug: "sub-minimum-interval",
       title: "Firing more often than every 5 minutes",
       quote: "The shortest interval you can run scheduled workflows is once every 5 minutes.",
       explanation:
-        "This expression's shortest gap between consecutive firings is under 5 minutes. GitHub documents the 5-minute minimum but does not document what happens to an expression that asks for a shorter interval: whether it is rejected, coerced, or throttled. Cronsense reports only the documented minimum and does not invent an outcome. The verification repository establishes the actual behaviour, and this wording is updated to the observed result, marked as empirical, once known.",
+        "This expression's shortest gap between consecutive firings is under 5 minutes. GitHub documents the 5-minute minimum but does not document what happens to an expression that asks for a shorter interval: whether it is rejected, coerced, or throttled. The verification matrix observed the deterministic edge cases and high-load skips; Cronsense still does not invent a general undocumented outcome for every expression.",
     },
   },
   {
@@ -144,13 +150,14 @@ export const WARNINGS: readonly WarningDefinition[] = [
     sourceUrl: SCHEDULE_URL,
     sourcePaths: ["data/reusables/actions/schedule-delay.md"],
     rank: "informational",
+    provenance: "docs",
     gotcha: {
       slug: "high-load-delay-drop",
       title: "Scheduled runs can be delayed or dropped under high load",
       quote:
         "The `schedule` event can be delayed during periods of high loads of GitHub Actions workflow runs. High load times include the start of every hour. If the load is sufficiently high enough, some queued jobs may be dropped. To decrease the chance of delay, schedule your workflow to run at a different time of the hour.",
       explanation:
-        "Scheduled runs are not guaranteed to start on time. GitHub documents that the `schedule` event can be delayed under high load, that high-load times include the start of every hour, and that sufficiently high load can cause queued jobs to be dropped. GitHub identifies the start of every hour as a high-load time, so expressions that fire at minute 0 coincide with it. To reduce the chance of delay, schedule the workflow at a different time of the hour. GitHub documents no delay bound; any specific delay figure repeated in community discussions is undocumented lore, not a documented value.",
+        "Scheduled runs are not guaranteed to start on time. GitHub documents that the `schedule` event can be delayed under high load, that high-load times include the start of every hour, and that sufficiently high load can cause queued jobs to be dropped. GitHub identifies the start of every hour as a high-load time, so expressions that fire at minute 0 coincide with it. During the 2026-07-24 to 2026-07-31 observation window, a `*/5` control delivered about 4.6% of its nominal runs. To reduce the chance of delay, schedule the workflow at a different time of the hour. GitHub documents no delay bound; any specific delay figure repeated in community discussions is undocumented lore, not a documented value.",
     },
     emphasiseWhen: { field: "minute", includes: 0 },
   },
@@ -170,6 +177,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
       "data/reusables/actions/scheduled-workflows-disabled.md",
     ],
     rank: "contextual",
+    provenance: "docs",
     gotcha: {
       slug: "inactivity-pause",
       title:

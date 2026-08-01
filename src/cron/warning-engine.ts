@@ -16,6 +16,7 @@ export interface ActiveWarning {
   sourceUrl: string;
   sourcePaths: readonly string[];
   rank: WarningDefinition["rank"];
+  provenance: WarningDefinition["provenance"];
   emphasised: boolean;
 }
 
@@ -79,6 +80,7 @@ function activate(warning: WarningDefinition, ast: CronAst): ActiveWarning {
     sourceUrl: warning.sourceUrl,
     sourcePaths: warning.sourcePaths,
     rank: warning.rank,
+    provenance: warning.provenance,
     emphasised:
       warning.emphasiseWhen !== undefined &&
       expandField(ast[warning.emphasiseWhen.field]).has(warning.emphasiseWhen.includes),
@@ -87,10 +89,7 @@ function activate(warning: WarningDefinition, ast: CronAst): ActiveWarning {
 
 export function evaluateWarnings(ast: CronAst): ActiveWarning[] {
   return WARNINGS.filter(
-    (warning) =>
-      warning.rank !== "contextual" &&
-      !warning.suppressed &&
-      matchesWarningPredicate(warning.predicate, ast),
+    (warning) => warning.rank !== "contextual" && matchesWarningPredicate(warning.predicate, ast),
   ).map((warning) => activate(warning, ast));
 }
 

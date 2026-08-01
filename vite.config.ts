@@ -5,6 +5,7 @@ import { gotchaPages } from "./src/gotchas/render";
 import { GOTCHA_CSS } from "./src/gotchas/styles";
 import { renderLlmsTxt } from "./src/gotchas/llms";
 import { staticAssets } from "./src/gotchas/emit";
+import { renderDesignSystem } from "./src/design-system/render";
 
 function staticGotchas(): Plugin {
   return {
@@ -14,6 +15,11 @@ function staticGotchas(): Plugin {
       for (const asset of staticAssets()) {
         this.emitFile({ type: "asset", fileName: asset.fileName, source: asset.source });
       }
+      this.emitFile({
+        type: "asset",
+        fileName: "design-system/index.html",
+        source: renderDesignSystem(),
+      });
     },
   };
 }
@@ -28,6 +34,11 @@ function serveGotchas(): Plugin {
         if (url === "/llms.txt") {
           res.setHeader("Content-Type", "text/plain; charset=utf-8");
           res.end(renderLlmsTxt());
+          return;
+        }
+        if (url === "/design-system" || url === "/design-system/") {
+          res.setHeader("Content-Type", "text/html; charset=utf-8");
+          res.end(renderDesignSystem());
           return;
         }
         if (url === "/gotchas/gotcha.css") {
