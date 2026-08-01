@@ -77,6 +77,15 @@ Or use git integration with build command `pnpm build` and output directory `dis
 pnpm dlx vercel deploy dist --prod
 ```
 
+**Netlify**
+
+```sh
+pnpm dlx netlify-cli deploy --dir dist --prod
+```
+
+Or drag-and-drop the `dist` folder onto the Netlify dashboard's deploy area.
+Netlify reads the bundled `_headers` file too and applies the security headers.
+
 **GitHub Pages**
 
 ```sh
