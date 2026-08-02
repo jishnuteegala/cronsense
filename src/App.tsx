@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { neverFiresReason, nextFirings } from "./cron/firings";
 import { parseCron } from "./cron/parse";
 import { translate } from "./cron/translate";
 import { CONTEXTUAL_NOTES, evaluateWarnings } from "./cron/warning-engine";
 import { VERIFICATION_URL } from "./cron/warnings";
 import { expressionHash, isToolPage, parseHash } from "./hash";
+import { scanWorkflow } from "./workflow-scan";
 
 export const DST_NOTE =
   "scheduled times are computed in UTC; local times shift when your timezone changes for DST";
@@ -67,6 +68,7 @@ export function App({
   );
   const [pendingWarningId, setPendingWarningId] = useState(initialHash?.warningId ?? null);
   const [now, setNow] = useState(() => new Date());
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
     const scheduleNextMinute = () => {
@@ -103,6 +105,7 @@ export function App({
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, [onToolPage]);
+  const scan = useMemo(() => scanWorkflow(input), [input]);
   const result = useMemo(() => parseCron(input), [input]);
   const nowMinute = Math.floor(now.getTime() / 60000);
   const output = useMemo(() => {
@@ -124,9 +127,23 @@ export function App({
     setPendingWarningId(null);
   }, [pendingWarningId]);
 
+  useEffect(() => {
+    const element = inputRef.current;
+    if (!element) return;
+    element.style.height = "auto";
+    element.style.height = `${element.scrollHeight}px`;
+  }, [input]);
+
   const updateInput = (value: string) => {
     setInput(value);
-    if (onToolPage) window.history.replaceState(null, "", expressionHash(value));
+    if (onToolPage && scanWorkflow(value).kind === "cron") {
+      window.history.replaceState(null, "", expressionHash(value));
+    }
+  };
+
+  const selectCron = (value: string) => {
+    setInput(value);
+    if (onToolPage) window.location.hash = expressionHash(value);
   };
 
   return (
@@ -159,7 +176,8 @@ export function App({
             <label className="field-label" htmlFor="cron-expression">
               Cron expression
             </label>
-            <input
+            <textarea
+              ref={inputRef}
               id="cron-expression"
               className="cron-input"
               value={input}
@@ -168,8 +186,13 @@ export function App({
               autoComplete="off"
               autoCapitalize="off"
               autoCorrect="off"
-              aria-invalid={!result.ok}
-              aria-describedby={result.ok ? undefined : "cron-expression-error"}
+              rows={1}
+              aria-invalid={scan.kind === "error" || scan.kind === "none" || !result.ok}
+              aria-describedby={
+                scan.kind === "error" || scan.kind === "none" || !result.ok
+                  ? "cron-expression-error"
+                  : undefined
+              }
             />
           </div>
           <aside className="note" aria-label="Contextual note">
@@ -191,12 +214,52 @@ export function App({
           </aside>
         </div>
         <section className="results" id="results" tabIndex={-1} aria-label="Results">
-          {!result.ok && (
+          {scan.kind === "error" && (
+            <p className="error" id="cron-expression-error" role="alert">
+              Unable to parse workflow YAML: {scan.error}
+            </p>
+          )}
+          {scan.kind === "none" && (
+            <p className="error" id="cron-expression-error" role="alert">
+              This workflow has no <code>on.schedule</code> triggers.
+            </p>
+          )}
+          {scan.kind === "scan" && (
+            <>
+              <p className="scan-summary">
+                {scan.crons.length} parsed, {scan.unparseable.length} unparseable
+              </p>
+              <p className="subnote">
+                Extracts <code>on.schedule</code> crons; does not lint workflows.
+              </p>
+              <div className="scan-cards" aria-label="Workflow schedule crons">
+                {scan.crons.map((cron, index) => (
+                  <button
+                    className="scan-card"
+                    key={`${cron.value}-${index}`}
+                    onClick={() => selectCron(cron.value)}
+                  >
+                    <code>{cron.value}</code>
+                    <span>{cron.summary}</span>
+                    {cron.duplicateOf && <small>duplicate of #{cron.duplicateOf}</small>}
+                  </button>
+                ))}
+                {scan.unparseable.map((cron, index) => (
+                  <article className="scan-card unparseable" key={`${cron.raw}-${index}`}>
+                    <strong>Can't evaluate</strong>
+                    <code>{cron.raw}</code>
+                    <span>{cron.reason}</span>
+                  </article>
+                ))}
+              </div>
+            </>
+          )}
+          {scan.kind === "cron" && !result.ok && (
             <p className="error" id="cron-expression-error" role="alert">
               {result.error}
             </p>
           )}
-          {result.ok && output && (
+          {scan.kind === "cron" && result.ok && output && (
             <>
               <p className="summary">{output.translation.sentence}</p>
               <p className="subnote">{output.translation.timezoneNote}</p>
@@ -297,7 +360,7 @@ export function App({
             </>
           )}
         </section>
-        {(!result.ok || !output || output.never !== null) && (
+        {(scan.kind !== "cron" || !result.ok || !output || output.never !== null) && (
           <p className="subnote">Note: {DST_NOTE}.</p>
         )}
       </main>

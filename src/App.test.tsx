@@ -139,6 +139,52 @@ describe("App", () => {
     expect(window.location.hash).toBe("#5%208%20*%20*%20*");
   });
 
+  it("renders workflow scan cards and opens a selected cron with its permalink", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    fireEvent.change(screen.getByLabelText("Cron expression"), {
+      target: {
+        value: `on:
+  schedule:
+    - cron: "0 12 * * *"
+    - cron: "30 6 * * MON"`,
+      },
+    });
+    expect(screen.getByText("2 parsed, 0 unparseable")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /30 6 \* \* MON/ })).toBeTruthy();
+    expect(window.location.hash).not.toContain("on%3A");
+    fireEvent.click(screen.getByRole("button", { name: /30 6 \* \* MON/ }));
+    expect(window.location.hash).toBe("#30%206%20*%20*%20MON");
+    expect(screen.getByText("At 06:30 UTC, on Monday.")).toBeTruthy();
+  });
+
+  it("renders a targeted no-schedule message and one malformed-YAML error", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    const input = screen.getByLabelText("Cron expression");
+    fireEvent.change(input, { target: { value: "on:\n  push:" } });
+    expect(screen.getByRole("alert").textContent).toContain("no on.schedule triggers");
+    fireEvent.change(input, { target: { value: "on:\n  schedule: [" } });
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+    expect(screen.getByRole("alert").textContent).toContain("Unable to parse workflow YAML");
+  });
+
+  it("renders duplicate and non-literal workflow entries without skipping either", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    fireEvent.change(screen.getByLabelText("Cron expression"), {
+      target: {
+        value: `on:
+  schedule:
+    - cron: "0 12 * * *"
+    - cron: "0 12 * * *"
+    - cron: "\${{ github.event.schedule }}"`,
+      },
+    });
+    expect(screen.getByText("2 parsed, 1 unparseable")).toBeTruthy();
+    expect(screen.getByText("duplicate of #1")).toBeTruthy();
+    expect(screen.getByText("Can't evaluate")).toBeTruthy();
+    expect(screen.getByText("${{ github.event.schedule }}")).toBeTruthy();
+    expect(screen.getByText(/does not lint workflows/i)).toBeTruthy();
+  });
+
   it("writes the spec permalink format with no prefix", () => {
     render(<App initialExpression="0 12 * * *" />);
     fireEvent.change(screen.getByLabelText("Cron expression"), { target: { value: "0 0 * * *" } });

@@ -16,6 +16,11 @@ GitHub-Actions-specific caveats a generic cron tool misses. Every caveat is quot
 from GitHub's documentation, dated, and linked to its primary source. The tool runs
 fully client-side: no accounts, no analytics, no third-party requests.
 
+Pasting a GitHub Actions workflow YAML file extracts literal \`on.schedule\` cron
+entries into a list. Each entry opens the normal single-expression view; workflow
+scan results are not encoded in URLs. The scan extracts \`on.schedule\` crons and
+does not lint workflows.
+
 ## URL scheme
 
 - \`/\`: the interactive tool. Expression permalinks use the URL hash: \`/#<encoded-expression>\`.
