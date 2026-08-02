@@ -13,18 +13,29 @@ export interface UnparseableWorkflowCron {
   reason: string;
 }
 
+export type WorkflowScanEntry =
+  | { kind: "cron"; cron: WorkflowCron }
+  | { kind: "unparseable"; cron: UnparseableWorkflowCron };
+
 export type WorkflowScan =
   | { kind: "cron" }
   | { kind: "none" }
+  | { kind: "schedule-not-list" }
   | { kind: "error"; error: string }
-  | { kind: "scan"; crons: WorkflowCron[]; unparseable: UnparseableWorkflowCron[] };
+  | {
+      kind: "scan";
+      crons: WorkflowCron[];
+      unparseable: UnparseableWorkflowCron[];
+      entries: WorkflowScanEntry[];
+    };
 
 function rawValue(value: unknown): string {
   return typeof value === "string" ? value : (JSON.stringify(value) ?? String(value));
 }
 
 export function scanWorkflow(input: string): WorkflowScan {
-  if (parseCron(input.trim()).ok || !input.includes("\n")) return { kind: "cron" };
+  const normalizedInput = input.trim();
+  if (parseCron(normalizedInput).ok || !normalizedInput.includes("\n")) return { kind: "cron" };
 
   const [document] = parseAllDocuments(input, { version: "1.2" });
   if (!document) return { kind: "cron" };
@@ -38,33 +49,61 @@ export function scanWorkflow(input: string): WorkflowScan {
     on && typeof on === "object" && !Array.isArray(on)
       ? (on as Record<string, unknown>).schedule
       : undefined;
-  if (!Array.isArray(schedule)) return { kind: "none" };
+  if (schedule !== undefined && !Array.isArray(schedule)) return { kind: "schedule-not-list" };
+  if (!schedule || schedule.length === 0) return { kind: "none" };
 
   const crons: WorkflowCron[] = [];
   const unparseable: UnparseableWorkflowCron[] = [];
+  const entries: WorkflowScanEntry[] = [];
   const seen = new Map<string, number>();
-  for (const entry of schedule) {
-    const value =
-      entry && typeof entry === "object" && !Array.isArray(entry)
-        ? (entry as Record<string, unknown>).cron
-        : undefined;
-    if (typeof value !== "string" || value.includes("${{")) {
-      unparseable.push({
+  for (const [index, entry] of schedule.entries()) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry) || !("cron" in entry)) {
+      const cron = {
+        raw: rawValue(entry),
+        reason: "Schedule entry has no cron key.",
+      };
+      unparseable.push(cron);
+      entries.push({ kind: "unparseable", cron });
+      continue;
+    }
+    const value = (entry as Record<string, unknown>).cron;
+    if (typeof value !== "string") {
+      const cron = {
         raw: rawValue(value),
-        reason: "Can't evaluate `${{ }}` expressions or non-literal cron values.",
-      });
+        reason: "Cron value must be a literal string.",
+      };
+      unparseable.push(cron);
+      entries.push({ kind: "unparseable", cron });
+      continue;
+    }
+    if (value.includes("${{")) {
+      const cron = {
+        raw: value,
+        reason: "Can't evaluate `${{ }}` expressions.",
+      };
+      unparseable.push(cron);
+      entries.push({ kind: "unparseable", cron });
       continue;
     }
     const parsed = parseCron(value);
+    if (!parsed.ok) {
+      const cron = {
+        raw: value,
+        reason: "Invalid GitHub Actions cron expression.",
+      };
+      unparseable.push(cron);
+      entries.push({ kind: "unparseable", cron });
+      continue;
+    }
     const duplicateOf = seen.get(value) ?? null;
-    if (!seen.has(value)) seen.set(value, crons.length + 1);
-    crons.push({
+    if (!seen.has(value)) seen.set(value, index + 1);
+    const cron = {
       value,
-      summary: parsed.ok
-        ? translate(parsed.ast).sentence
-        : "Invalid GitHub Actions cron expression.",
+      summary: translate(parsed.ast).sentence,
       duplicateOf,
-    });
+    };
+    crons.push(cron);
+    entries.push({ kind: "cron", cron });
   }
-  return { kind: "scan", crons, unparseable };
+  return { kind: "scan", crons, unparseable, entries };
 }

@@ -15,7 +15,7 @@ importers:
         specifier: ^19.2.8
         version: 19.2.8(react@19.2.8)
       yaml:
-        specifier: 2.8.2
+        specifier: ^2.8.2
         version: 2.8.2
     devDependencies:
       '@testing-library/dom':

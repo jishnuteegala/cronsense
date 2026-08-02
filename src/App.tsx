@@ -69,6 +69,10 @@ export function App({
   const [pendingWarningId, setPendingWarningId] = useState(initialHash?.warningId ?? null);
   const [now, setNow] = useState(() => new Date());
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const currentInput = useRef(input);
+  currentInput.current = input;
+  const previousInput = useRef(input);
+  const hashNavigation = useRef<string | null>(null);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
     const scheduleNextMinute = () => {
@@ -99,6 +103,7 @@ export function App({
       }
       const state = parseHash(rawHash);
       if (!state) return;
+      hashNavigation.current = state.expression === currentInput.current ? null : rawHash;
       setInput(state.expression);
       if (state.warningId) setPendingWarningId(state.warningId);
     };
@@ -128,17 +133,35 @@ export function App({
   }, [pendingWarningId]);
 
   useEffect(() => {
-    const element = inputRef.current;
-    if (!element) return;
-    element.style.height = "auto";
-    element.style.height = `${element.scrollHeight}px`;
+    const resizeInput = () => {
+      const element = inputRef.current;
+      if (!element) return;
+      element.style.height = "auto";
+      element.style.height = `${element.scrollHeight}px`;
+    };
+    resizeInput();
+    window.addEventListener("resize", resizeInput);
+    return () => window.removeEventListener("resize", resizeInput);
   }, [input]);
+
+  useEffect(() => {
+    if (!onToolPage || previousInput.current === input) return;
+    previousInput.current = input;
+    const navigatedHash = hashNavigation.current;
+    hashNavigation.current = null;
+    if (scan.kind === "cron") {
+      window.history.replaceState(null, "", navigatedHash ?? expressionHash(input));
+    }
+  }, [input, onToolPage, scan]);
+
+  const inputIsInvalid =
+    scan.kind === "error" ||
+    scan.kind === "none" ||
+    scan.kind === "schedule-not-list" ||
+    (scan.kind === "cron" && !result.ok);
 
   const updateInput = (value: string) => {
     setInput(value);
-    if (onToolPage && scanWorkflow(value).kind === "cron") {
-      window.history.replaceState(null, "", expressionHash(value));
-    }
   };
 
   const selectCron = (value: string) => {
@@ -187,12 +210,8 @@ export function App({
               autoCapitalize="off"
               autoCorrect="off"
               rows={1}
-              aria-invalid={scan.kind === "error" || scan.kind === "none" || !result.ok}
-              aria-describedby={
-                scan.kind === "error" || scan.kind === "none" || !result.ok
-                  ? "cron-expression-error"
-                  : undefined
-              }
+              aria-invalid={inputIsInvalid}
+              aria-describedby={inputIsInvalid ? "cron-expression-error" : undefined}
             />
           </div>
           <aside className="note" aria-label="Contextual note">
@@ -224,34 +243,47 @@ export function App({
               This workflow has no <code>on.schedule</code> triggers.
             </p>
           )}
+          {scan.kind === "schedule-not-list" && (
+            <p className="error" id="cron-expression-error" role="alert">
+              This workflow&apos;s <code>on.schedule</code> is not a list.
+            </p>
+          )}
+          {(scan.kind === "scan" ||
+            scan.kind === "error" ||
+            scan.kind === "none" ||
+            scan.kind === "schedule-not-list") && (
+            <p className="subnote">
+              Extracts <code>on.schedule</code> crons; does not lint workflows.
+            </p>
+          )}
           {scan.kind === "scan" && (
             <>
               <p className="scan-summary">
                 {scan.crons.length} parsed, {scan.unparseable.length} unparseable
               </p>
-              <p className="subnote">
-                Extracts <code>on.schedule</code> crons; does not lint workflows.
-              </p>
-              <div className="scan-cards" aria-label="Workflow schedule crons">
-                {scan.crons.map((cron, index) => (
-                  <button
-                    className="scan-card"
-                    key={`${cron.value}-${index}`}
-                    onClick={() => selectCron(cron.value)}
-                  >
-                    <code>{cron.value}</code>
-                    <span>{cron.summary}</span>
-                    {cron.duplicateOf && <small>duplicate of #{cron.duplicateOf}</small>}
-                  </button>
-                ))}
-                {scan.unparseable.map((cron, index) => (
-                  <article className="scan-card unparseable" key={`${cron.raw}-${index}`}>
-                    <strong>Can't evaluate</strong>
-                    <code>{cron.raw}</code>
-                    <span>{cron.reason}</span>
-                  </article>
-                ))}
-              </div>
+              <ul className="scan-cards" aria-label="Workflow schedule crons" role={"list"}>
+                {scan.entries.map((entry, index) =>
+                  entry.kind === "cron" ? (
+                    <li key={`${entry.cron.value}-${index}`}>
+                      <button className="scan-card" onClick={() => selectCron(entry.cron.value)}>
+                        <code>{entry.cron.value}</code>
+                        <span>{entry.cron.summary}</span>
+                        {entry.cron.duplicateOf && (
+                          <small>duplicate of #{entry.cron.duplicateOf}</small>
+                        )}
+                      </button>
+                    </li>
+                  ) : (
+                    <li key={`${entry.cron.raw}-${index}`}>
+                      <article className="scan-card unparseable">
+                        <strong>Can't evaluate</strong>
+                        <code>{entry.cron.raw}</code>
+                        <span>{entry.cron.reason}</span>
+                      </article>
+                    </li>
+                  ),
+                )}
+              </ul>
             </>
           )}
           {scan.kind === "cron" && !result.ok && (
