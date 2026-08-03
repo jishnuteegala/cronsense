@@ -111,6 +111,8 @@ body {
   background: var(--surface-inset);
   border: 1px solid var(--rule-strong);
   border-radius: var(--radius);
+  resize: none;
+  overflow: hidden;
   box-shadow: inset 0 1px 2px rgba(16, 24, 40, 0.04);
   transition:
     border-color 0.15s ease,
@@ -221,6 +223,54 @@ body {
   border: 1px solid color-mix(in srgb, var(--danger-accent) 45%, transparent);
   border-radius: var(--radius);
   font-weight: 500;
+}
+.scan-summary {
+  margin: 0 0 var(--space-2);
+  color: var(--fg-strong);
+  font-weight: 600;
+}
+.scan-cards {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: 0;
+  list-style: none;
+}
+.scan-card {
+  display: grid;
+  width: 100%;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+}
+button.scan-card {
+  cursor: pointer;
+}
+button.scan-card:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.scan-card code {
+  width: fit-content;
+  color: var(--fg-strong);
+}
+.scan-card small {
+  width: fit-content;
+  padding: 0.05rem 0.4rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-weight: 600;
+}
+.scan-card.unparseable {
+  border-color: color-mix(in srgb, var(--warn-accent) 45%, transparent);
+  background: var(--warn-bg);
+  color: var(--warn-fg);
 }
 .warning {
   margin: var(--space-3) 0;

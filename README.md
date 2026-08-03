@@ -12,7 +12,7 @@ If you searched "why didn't my scheduled workflow run", "GitHub Actions cron not
 - "The shortest interval you can run scheduled workflows is once every 5 minutes."
 - "GitHub Actions does not support the non-standard syntax `@yearly`, `@monthly`, `@weekly`, `@daily`, `@hourly`, and `@reboot`."
 
-Paste a cron expression, get a plain-English translation and the next 10 firing times in UTC alongside your browser-local time.
+Paste a cron expression, or a GitHub Actions workflow YAML file to extract its `on.schedule` crons. Each extracted literal cron can be opened in the checker for a plain-English translation and the next 10 firing times in UTC alongside your browser-local time. The workflow scan extracts `on.schedule` crons; it does not lint workflows.
 
 ## What it does
 

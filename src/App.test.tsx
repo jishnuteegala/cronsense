@@ -139,6 +139,124 @@ describe("App", () => {
     expect(window.location.hash).toBe("#5%208%20*%20*%20*");
   });
 
+  it("preserves a warning anchor when navigating to a compound permalink", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    act(() => {
+      window.location.hash = "#0%20*%20*%20*%20*#high-load-delay-drop";
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(window.location.hash).toBe("#0%20*%20*%20*%20*#high-load-delay-drop");
+  });
+
+  it("does not retain a warning anchor after same-expression hash navigation and typing", () => {
+    render(<App initialExpression="* * * * *" />);
+    act(() => {
+      window.location.hash = "#*%20*%20*%20*%20*#high-load-delay-drop";
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+      window.location.hash = "#*%20*%20*%20*%20*#sub-minimum-interval";
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    fireEvent.change(screen.getByLabelText("Cron expression"), {
+      target: { value: "*/2 * * * *" },
+    });
+    expect(window.location.hash).toBe("#*%2F2%20*%20*%20*%20*");
+  });
+
+  it("renders workflow scan cards and opens a selected cron with its permalink", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    fireEvent.change(screen.getByLabelText("Cron expression"), {
+      target: {
+        value: `on:
+  schedule:
+    - cron: "0 12 * * *"
+    - cron: "30 6 * * MON"`,
+      },
+    });
+    expect(screen.getByText("2 parsed, 0 unparseable")).toBeTruthy();
+    expect(screen.getByRole("list", { name: "Workflow schedule crons" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /30 6 \* \* MON/ })).toBeTruthy();
+    expect(window.location.hash).not.toContain("on%3A");
+    fireEvent.click(screen.getByRole("button", { name: /30 6 \* \* MON/ }));
+    expect(window.location.hash).toBe("#30%206%20*%20*%20MON");
+    expect(screen.getByText("At 06:30 UTC, on Monday.")).toBeTruthy();
+  });
+
+  it("does not mark a valid workflow scan as an input error", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    fireEvent.change(screen.getByLabelText("Cron expression"), {
+      target: {
+        value: `on:
+  schedule:
+    - cron: "0 12 * * *"`,
+      },
+    });
+    const input = screen.getByLabelText("Cron expression");
+    expect(input.getAttribute("aria-invalid")).toBe("false");
+    expect(input.getAttribute("aria-describedby")).toBeNull();
+  });
+
+  it("renders a targeted no-schedule message and one malformed-YAML error", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    const input = screen.getByLabelText("Cron expression");
+    fireEvent.change(input, { target: { value: "on:\n  push:" } });
+    expect(screen.getByRole("alert").textContent).toContain("no on.schedule triggers");
+    fireEvent.change(input, { target: { value: "on:\n  schedule: [" } });
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+    expect(screen.getByRole("alert").textContent).toContain("Unable to parse workflow YAML");
+  });
+
+  it("reports a non-list workflow schedule distinctly", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    fireEvent.change(screen.getByLabelText("Cron expression"), {
+      target: { value: "on:\n  schedule:\n    cron: '0 12 * * *'" },
+    });
+    expect(screen.getByRole("alert").textContent).toContain("on.schedule");
+    expect(screen.getByRole("alert").textContent).toContain("not a list");
+  });
+
+  it("renders duplicate and non-literal workflow entries without skipping either", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    fireEvent.change(screen.getByLabelText("Cron expression"), {
+      target: {
+        value: `on:
+  schedule:
+    - cron: "0 12 * * *"
+    - cron: "0 12 * * *"
+    - cron: "\${{ github.event.schedule }}"`,
+      },
+    });
+    expect(screen.getByText("2 parsed, 1 unparseable")).toBeTruthy();
+    expect(screen.getByText("duplicate of #1")).toBeTruthy();
+    expect(screen.getByText("Can't evaluate")).toBeTruthy();
+    expect(screen.getByText("${{ github.event.schedule }}")).toBeTruthy();
+    expect(screen.getByText(/does not lint workflows/i)).toBeTruthy();
+  });
+
+  it("renders invalid and missing cron entries as unparseable in schedule order", () => {
+    render(<App initialExpression="0 12 * * *" />);
+    fireEvent.change(screen.getByLabelText("Cron expression"), {
+      target: {
+        value: `on:
+  schedule:
+    - cron: "0 12 * * *"
+    - name: missing cron
+    - cron: "99 99 * * *"
+    - cron: "0 12 * * *"`,
+      },
+    });
+    expect(screen.getByText("2 parsed, 2 unparseable")).toBeTruthy();
+    expect(screen.getByText("Schedule entry has no cron key.")).toBeTruthy();
+    expect(screen.getByText("Invalid GitHub Actions cron expression.")).toBeTruthy();
+    expect(screen.getByText("duplicate of #1")).toBeTruthy();
+    const cards = Array.from(document.querySelectorAll(".scan-card"));
+    expect(cards.map((card) => card.textContent)).toEqual([
+      expect.stringContaining("0 12 * * *"),
+      expect.stringContaining('{"name":"missing cron"}'),
+      expect.stringContaining("99 99 * * *"),
+      expect.stringContaining("0 12 * * *"),
+    ]);
+  });
+
   it("writes the spec permalink format with no prefix", () => {
     render(<App initialExpression="0 12 * * *" />);
     fireEvent.change(screen.getByLabelText("Cron expression"), { target: { value: "0 0 * * *" } });
