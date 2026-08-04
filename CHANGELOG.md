@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/jishnuteegala/cronsense/compare/v0.1.0...v0.1.1) (2026-08-04)
+
+
+### Features
+
+* record docs, build, and ci commits in changelogs ([#25](https://github.com/jishnuteegala/cronsense/issues/25)) ([898d194](https://github.com/jishnuteegala/cronsense/commit/898d19497b3e055d07cd88361ea3bf9ceb18e6a3))
+
 ## 0.1.0 (2026-08-03)
 
 
