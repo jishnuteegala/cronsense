@@ -72,12 +72,12 @@ describe("parseCron acceptance", () => {
     expect(ast.dayOfWeek.terms).toEqual([{ kind: "value", value: 0 }]);
   });
 
-  it("accepts name tokens in ranges (provisional pending GHA-validator arbitration)", () => {
+  it("accepts name tokens in ranges (provisional, no validator verdict)", () => {
     const ast = expectOk("0 9 * * MON-FRI");
     expect(ast.dayOfWeek.terms).toEqual([{ kind: "range", from: 1, to: 5, step: 1 }]);
   });
 
-  it("accepts name tokens in steps (provisional pending GHA-validator arbitration)", () => {
+  it("accepts name tokens in steps (provisional, no validator verdict)", () => {
     const ast = expectOk("0 0 1 JAN/2 *");
     expect(ast.month.terms).toEqual([{ kind: "range", from: 1, to: 12, step: 2 }]);
   });
@@ -110,14 +110,21 @@ describe("parseCron rejection", () => {
     },
   );
 
+  it("stamps only the empirically confirmed @hourly rejection", () => {
+    expect(expectError("@hourly")).toContain(
+      "@hourly rejection confirmed empirically on 2026-07-24",
+    );
+    expect(expectError("@daily")).not.toContain("confirmed empirically");
+  });
+
   it("rejects unknown @-shortcuts", () => {
     expect(expectError("@fortnightly")).toContain("@-shortcuts");
   });
 
-  it("rejects a sixth (seconds) field as presumed-rejected", () => {
+  it("rejects a sixth (seconds) field as confirmed-rejected", () => {
     const error = expectError("0 * * * * *");
     expect(error).toContain("seconds");
-    expect(error).toContain("presumed rejected");
+    expect(error).toContain("rejection confirmed empirically on 2026-07-24");
   });
 
   it("rejects too few fields", () => {
@@ -125,10 +132,10 @@ describe("parseCron rejection", () => {
   });
 
   it.each(["0 0 L * *", "0 0 15W * *", "0 0 * * 5#3"])(
-    "rejects L/W/# tokens as presumed-rejected: %s",
+    "rejects L/W/# tokens as confirmed-rejected: %s",
     (input) => {
       const error = expectError(input);
-      expect(error).toContain("presumed rejected");
+      expect(error).toContain("rejection confirmed empirically on 2026-07-24");
     },
   );
 
@@ -136,15 +143,15 @@ describe("parseCron rejection", () => {
     "rejects L/W tokens in step and range positions: %s",
     (input) => {
       const error = expectError(input);
-      expect(error).toContain("presumed rejected");
+      expect(error).toContain("rejection confirmed empirically on 2026-07-24");
     },
   );
 
   it.each(["0 0 1LW * *", "0 0 WL * *", "0 0 L5 * *"])(
-    "rejects compound L/W forms as presumed-rejected: %s",
+    "rejects compound L/W forms as confirmed-rejected: %s",
     (input) => {
       const error = expectError(input);
-      expect(error).toContain("presumed rejected");
+      expect(error).toContain("rejection confirmed empirically on 2026-07-24");
     },
   );
 
@@ -159,10 +166,10 @@ describe("parseCron rejection", () => {
     "0 0 * * LWED",
     "0 0 1 JULL *",
     "0 0 1 JULW *",
-  ])("rejects L/W affixed onto name tokens as presumed-rejected: %s", (input) => {
+  ])("rejects L/W affixed onto name tokens as confirmed-rejected: %s", (input) => {
     const error = expectError(input);
     expect(error).toContain("L/W");
-    expect(error).toContain("presumed rejected");
+    expect(error).toContain("rejection confirmed empirically on 2026-07-24");
   });
 
   it("still accepts names containing L or W letters like JUL and WED", () => {
@@ -187,8 +194,10 @@ describe("parseCron rejection", () => {
     },
   );
 
-  it("rejects the ? token", () => {
-    expect(expectError("0 0 ? * *")).toContain("not part of GitHub Actions cron syntax");
+  it("rejects the ? token as still unprobed", () => {
+    const error = expectError("0 0 ? * *");
+    expect(error).toContain("not part of GitHub Actions cron syntax");
+    expect(error).toContain("presumed rejected");
   });
 
   it("rejects out-of-range minute", () => {
@@ -256,7 +265,7 @@ describe("provisional notes", () => {
     const result = parseCron("0 9 * * MON-FRI");
     if (!result.ok) throw new Error(result.error);
     expect(result.provisionalNotes).toHaveLength(1);
-    expect(result.provisionalNotes[0]).toContain("awaits GHA-validator arbitration");
+    expect(result.provisionalNotes[0]).toContain("no validator verdict");
   });
 
   it("flags name tokens in steps", () => {

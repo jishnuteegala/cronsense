@@ -50,10 +50,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
     messageKind: "static",
     message:
       "GitHub does not document this combination. Cronsense verification empirically confirmed OR behaviour on 2026-07-27: a Monday outside the restricted day-of-month range fired, consistent with the POSIX crontab specification linked by the docs.",
-    quotes: [
-      "Use POSIX cron syntax to schedule workflows to run at specific times.",
-      "Empirical observation: https://github.com/jishnuteegala/cronsense-verification/blob/main/VERIFICATION.md",
-    ],
+    quotes: ["Use POSIX cron syntax to schedule workflows to run at specific times."],
     verifiedOn: "2026-07-27",
     sourceUrl: SCHEDULE_URL,
     sourcePaths: [
@@ -66,7 +63,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
       title: "Day-of-month and day-of-week combine with OR",
       quote: "Use POSIX cron syntax to schedule workflows to run at specific times.",
       explanation:
-        "When both the day-of-month and day-of-week fields are restricted (neither is `*`), GitHub does not document whether they combine with OR or AND. The docs link to the POSIX crontab specification, which specifies OR. Cronsense verification empirically confirmed that behaviour on 2026-07-27: `0 12 1-7 * MON` fired on a Monday whose day-of-month was outside 1-7. Read the recorded observation in https://github.com/jishnuteegala/cronsense-verification/blob/main/VERIFICATION.md. This confirms GitHub behaviour while leaving clear that GitHub itself does not document the combination.",
+        "When both the day-of-month and day-of-week fields are restricted (neither is `*`), GitHub does not document whether they combine with OR or AND. The docs link to the POSIX crontab specification, which specifies OR. Cronsense verification empirically confirmed that behaviour on 2026-07-27: `0 12 1-7 * MON` fired on a Monday whose day-of-month was outside 1-7. GitHub itself still does not document the combination. The confirmation is empirical.",
     },
   },
   {
@@ -91,7 +88,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
       title: "Uneven `*/N` steps reset at the field boundary",
       quote: "You can use these operators in any of the five fields:",
       explanation:
-        "GitHub documents the `/` step operator for all five fields. A step value `*/N` counts from the start of the field's range and resets when the range ends. When `N` does not evenly divide the field's span, the step from the last matching value back to the first is shorter than `N`. For example, `*/7` in the minute field fires at :00, :07, :14, :21, :28, :35, :42, :49, :56, then resets to :00 of the next hour, leaving a 4-minute gap instead of 7. The deterministic edge-case matrix observed this reset; its firing set was a correct superset of the predicted set. GitHub does not separately document the boundary-reset detail.",
+        "GitHub documents the `/` step operator for all five fields. A step value `*/N` counts from the start of the field's range and resets when the range ends. When `N` does not evenly divide the field's span, the step from the last matching value back to the first is shorter than `N`. For example, `*/7` in the minute field fires at :00, :07, :14, :21, :28, :35, :42, :49, :56, then resets to :00 of the next hour, leaving a 4-minute gap instead of 7. The deterministic edge-case matrix observed this reset. Its firing set was a correct superset of the predicted set. GitHub does not separately document the boundary-reset detail.",
     },
   },
   {
@@ -122,7 +119,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
     predicate: { kind: "sub-minimum-interval" },
     messageKind: "static",
     message:
-      "This expression fires more often than the documented minimum interval; the docs do not say what happens to such an expression.",
+      "This expression fires more often than the documented minimum interval. The docs do not say what happens to such an expression.",
     quotes: ["The shortest interval you can run scheduled workflows is once every 5 minutes."],
     verifiedOn: VERIFIED_ON,
     sourceUrl: SCHEDULE_URL,
@@ -134,7 +131,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
       title: "Firing more often than every 5 minutes",
       quote: "The shortest interval you can run scheduled workflows is once every 5 minutes.",
       explanation:
-        "This expression's shortest gap between consecutive firings is under 5 minutes. GitHub documents the 5-minute minimum but does not document what happens to an expression that asks for a shorter interval: whether it is rejected, coerced, or throttled. The verification matrix observed the deterministic edge cases and high-load skips; Cronsense still does not invent a general undocumented outcome for every expression.",
+        "This expression's shortest gap between consecutive firings is under 5 minutes. GitHub documents the 5-minute minimum but does not document what happens to an expression that asks for a shorter interval: whether it is rejected, coerced, or throttled. The verification matrix observed the deterministic edge cases and high-load skips, but no general outcome for sub-5-minute intervals. Cronsense reports the gap rather than inventing one.",
     },
   },
   {
@@ -157,7 +154,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
       quote:
         "The `schedule` event can be delayed during periods of high loads of GitHub Actions workflow runs. High load times include the start of every hour. If the load is sufficiently high enough, some queued jobs may be dropped. To decrease the chance of delay, schedule your workflow to run at a different time of the hour.",
       explanation:
-        "Scheduled runs are not guaranteed to start on time. GitHub documents that the `schedule` event can be delayed under high load, that high-load times include the start of every hour, and that sufficiently high load can cause queued jobs to be dropped. GitHub identifies the start of every hour as a high-load time, so expressions that fire at minute 0 coincide with it. During the 2026-07-24 to 2026-07-31 observation window, a `*/5` control delivered about 4.6% of its nominal runs. To reduce the chance of delay, schedule the workflow at a different time of the hour. GitHub documents no delay bound; any specific delay figure repeated in community discussions is undocumented lore, not a documented value.",
+        "Scheduled runs are not guaranteed to start on time. GitHub documents that the `schedule` event can be delayed under high load and that sufficiently high load can drop queued jobs, naming the start of every hour as a high-load time. Expressions that fire at minute 0 coincide with it. During the 2026-07-24 to 2026-07-31 observation window, a `*/5` control delivered about 4.6% of its nominal runs. To reduce the chance of delay, schedule the workflow at a different time of the hour. GitHub documents no delay bound. Any specific delay figure repeated in community discussions is undocumented lore, not a documented value.",
     },
     emphasiseWhen: { field: "minute", includes: 0 },
   },
@@ -166,7 +163,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
     predicate: { kind: "always" },
     messageKind: "static",
     message:
-      "This applies to public repositories; GitHub does not document an equivalent 60-day pause for private repositories.",
+      "This applies to public repositories. GitHub does not document an equivalent 60-day pause for private repositories.",
     quotes: [
       "In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days.",
     ],
@@ -185,7 +182,7 @@ export const WARNINGS: readonly WarningDefinition[] = [
       quote:
         "In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days.",
       explanation:
-        "In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days. This is documented for public repositories only; GitHub does not document an equivalent 60-day pause for private repositories, so Cronsense does not claim one. This is a contextual note about repository state, not a diagnosis of the expression itself.",
+        "In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days. This is documented for public repositories only. GitHub does not document an equivalent 60-day pause for private repositories, so Cronsense does not claim one. This is a contextual note about repository state, not a diagnosis of the expression itself.",
     },
   },
 ];

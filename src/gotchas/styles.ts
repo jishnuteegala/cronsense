@@ -97,6 +97,40 @@ blockquote code {
   padding-top: var(--space-5);
   border-top: 1px solid var(--rule);
 }
+.index-list {
+  list-style: none;
+  padding-left: 0;
+}
+.index-list li {
+  margin: var(--space-4) 0;
+}
+.index-list li > a {
+  font-weight: 600;
+}
+.item-note {
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.site-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  max-width: 680px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-4) var(--space-6);
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.site-footer a {
+  color: var(--muted);
+  text-decoration: none;
+}
+.site-footer a:hover {
+  color: var(--fg);
+  text-decoration: underline;
+}
 .gate {
   margin: var(--space-4) 0;
   padding: var(--space-4);

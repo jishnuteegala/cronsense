@@ -26,15 +26,15 @@ typography:
   title:
     fontFamily: "Inter Variable, Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: "clamp(1.6rem, 1.3rem + 1.4vw, 2rem)"
-    fontWeight: 680
+    fontWeight: 700
     lineHeight: 1.1
-    letterSpacing: "-0.025em"
+    letterSpacing: "-0.035em"
   summary:
     fontFamily: "Inter Variable, Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
-    fontSize: "1.25rem"
-    fontWeight: 600
-    lineHeight: 1.35
-    letterSpacing: "-0.01em"
+    fontSize: "clamp(1.5rem, 1.25rem + 1.2vw, 1.85rem)"
+    fontWeight: 680
+    lineHeight: 1.2
+    letterSpacing: "-0.02em"
   body:
     fontFamily: "Inter Variable, Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: "1rem"
@@ -175,7 +175,7 @@ Flat by default, with restrained shadows that read as paper on paper rather than
 
 ### Buttons
 
-No text buttons exist. The single primary affordance is the input itself; the skip link is the only button-shaped element, hidden off-screen until focused, then indigo on `#ffffff` text at `radius-sm`.
+No text buttons exist. The single primary affordance is the input itself; the skip link is the only button-shaped element, hidden off-screen until focused, then indigo on `accent-contrast` text at `radius-sm`.
 
 ### Inputs / Fields
 
@@ -192,8 +192,8 @@ No text buttons exist. The single primary affordance is the input itself; the sk
 
 ### Alerts
 
-- **Error** (`.error`): `danger-bg` fill, `danger-fg` text, full border plus a 3px `danger-accent` left edge, `role="alert"`. The sole intentional colored left-edge in the system, a diagnostic marker, not decoration.
-- **Warning** (`.warning`): `warn-bg` fill, `warn-fg` text, 1px `rule` border with a 3px `warn-accent` left edge; the `.diagnostic` variant recolors to red. Each carries a quoted doc excerpt and verification date.
+- **Error** (`.error`): `danger-bg` fill, `danger-fg` text, a uniform 1px `danger-accent`-mix border, `role="alert"`. State comes from the tinted fill plus border, not decoration.
+- **Warning** (`.warning`): `warn-bg` fill, `warn-fg` text, a uniform 1px `warn-accent`-mix border; the `.diagnostic` variant recolors to the danger tokens. Each carries a quoted doc excerpt and verification date.
 
 ### Next firing (focal element)
 

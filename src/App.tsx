@@ -154,11 +154,13 @@ export function App({
     }
   }, [input, onToolPage, scan]);
 
+  const inputIsEmpty = input.trim() === "";
   const inputIsInvalid =
-    scan.kind === "error" ||
-    scan.kind === "none" ||
-    scan.kind === "schedule-not-list" ||
-    (scan.kind === "cron" && !result.ok);
+    !inputIsEmpty &&
+    (scan.kind === "error" ||
+      scan.kind === "none" ||
+      scan.kind === "schedule-not-list" ||
+      (scan.kind === "cron" && !result.ok));
 
   const updateInput = (value: string) => {
     setInput(value);
@@ -193,7 +195,9 @@ export function App({
           </span>
           <h1>Cronsense</h1>
         </header>
-        <p className="lede">Paste a GitHub Actions cron expression.</p>
+        <p className="lede">
+          Paste a GitHub Actions cron expression, or a workflow YAML file to extract its schedule.
+        </p>
         <div className="panel">
           <div className="field">
             <label className="field-label" htmlFor="cron-expression">
@@ -286,7 +290,7 @@ export function App({
               </ul>
             </>
           )}
-          {scan.kind === "cron" && !result.ok && (
+          {scan.kind === "cron" && !result.ok && !inputIsEmpty && (
             <p className="error" id="cron-expression-error" role="alert">
               {result.error}
             </p>
