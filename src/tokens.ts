@@ -21,7 +21,6 @@ export const TOKENS_CSS = `@font-face {
   --muted: #5b616e;
   --faint: #656b78;
   --bg: #f7f8fa;
-  --bg-tint: radial-gradient(120% 120% at 50% 0%, #ffffff 0%, #f4f6f9 60%, #eef1f5 100%);
   --surface: #ffffff;
   --surface-2: #f2f4f7;
   --surface-inset: #f7f8fa;
@@ -51,9 +50,6 @@ export const TOKENS_CSS = `@font-face {
   --space-7: 3rem;
   --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
-  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
-  --shadow: 0 1px 3px rgba(16, 24, 40, 0.06), 0 8px 24px -8px rgba(16, 24, 40, 0.12);
-  --shadow-lg: 0 4px 8px rgba(16, 24, 40, 0.05), 0 24px 48px -16px rgba(16, 24, 40, 0.18);
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -62,7 +58,6 @@ export const TOKENS_CSS = `@font-face {
     --muted: #9aa1ad;
     --faint: #868d9a;
     --bg: #0b0d10;
-    --bg-tint: radial-gradient(120% 120% at 50% 0%, #16191f 0%, #101216 55%, #0b0d10 100%);
     --surface: #16181d;
     --surface-2: #1d2027;
     --surface-inset: #101216;
@@ -80,9 +75,6 @@ export const TOKENS_CSS = `@font-face {
     --danger-fg: #ff9aa5;
     --danger-bg: #211316;
     --danger-accent: #e0566a;
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 8px 24px -8px rgba(0, 0, 0, 0.6);
-    --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.4), 0 24px 48px -16px rgba(0, 0, 0, 0.7);
   }
 }
 `;

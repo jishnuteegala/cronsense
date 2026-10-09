@@ -137,8 +137,8 @@ ${head(`Gotchas - ${SITE_NAME}`, description, "/gotchas/")}
         <h1>GitHub Actions cron gotchas</h1>
         <p>
           A generic cron checker will not warn you about any of these ${WARNINGS.length} caveats.
-          Each page is static, JavaScript-free, dated, and sourced. Each page also exists as
-          Markdown at <code>/gotchas/&lt;slug&gt;.md</code>.
+          Each page is static, dated, and sourced; a Markdown variant lives at
+          <code>/gotchas/&lt;slug&gt;.md</code>.
         </p>
         <ul class="index-list">
 ${items}

@@ -7,25 +7,22 @@ body {
   margin: 0;
   color: var(--fg);
   background: var(--bg);
-  background-image: var(--bg-tint);
-  background-attachment: fixed;
   font-family: var(--font-sans);
   font-feature-settings: "cv11", "ss01";
-  line-height: 1.6;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 main {
-  max-width: 680px;
+  max-width: 640px;
   margin: 0 auto;
-  padding: var(--space-7) var(--space-4) 5rem;
+  padding: var(--space-6) var(--space-4) 4rem;
 }
 article {
   background: var(--surface);
   border: 1px solid var(--rule);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
-  box-shadow: var(--shadow);
 }
 h1 {
   font-size: clamp(1.5rem, 1.2rem + 1.4vw, 1.9rem);
@@ -116,12 +113,12 @@ blockquote code {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2) var(--space-4);
-  max-width: 680px;
+  max-width: 640px;
   margin: 0 auto;
   padding: var(--space-4) var(--space-4) var(--space-6);
   border-top: 1px solid var(--rule);
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 .site-footer a {
   color: var(--muted);
@@ -157,7 +154,6 @@ li {
   color: var(--accent-contrast);
   padding: var(--space-2) var(--space-4);
   border-radius: 0 0 var(--radius-sm) 0;
-  box-shadow: var(--shadow);
 }
 .skip-link:focus-visible {
   left: 0;

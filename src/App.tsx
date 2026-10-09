@@ -195,47 +195,44 @@ export function App({
           </span>
           <h1>Cronsense</h1>
         </header>
-        <p className="lede">
-          Paste a GitHub Actions cron expression, or a workflow YAML file to extract its schedule.
-        </p>
-        <div className="panel">
-          <div className="field">
+        <div className="field">
+          <div className="field-head">
             <label className="field-label" htmlFor="cron-expression">
               Cron expression
             </label>
-            <textarea
-              ref={inputRef}
-              id="cron-expression"
-              className="cron-input"
-              value={input}
-              onChange={(e) => updateInput(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-              autoCapitalize="off"
-              autoCorrect="off"
-              rows={1}
-              aria-invalid={inputIsInvalid}
-              aria-describedby={inputIsInvalid ? "cron-expression-error" : undefined}
-            />
+            <span className="field-hint">or a workflow file</span>
           </div>
-          <aside className="note" aria-label="Contextual note">
-            {CONTEXTUAL_NOTES.map((note) => (
-              <div key={note.id}>
-                {note.quotes.map((quote) => (
-                  <blockquote className="quote" key={quote} cite={note.sourceUrl}>
-                    {quote}
-                  </blockquote>
-                ))}
-                <p>
-                  {note.message}{" "}
-                  <span className="meta">
-                    (verified against <a href={note.sourceUrl}>GitHub docs</a> on {note.verifiedOn})
-                  </span>
-                </p>
-              </div>
-            ))}
-          </aside>
+          <textarea
+            ref={inputRef}
+            id="cron-expression"
+            className="cron-input"
+            value={input}
+            onChange={(e) => updateInput(e.target.value)}
+            spellCheck={false}
+            autoComplete="off"
+            autoCapitalize="off"
+            autoCorrect="off"
+            rows={1}
+            aria-invalid={inputIsInvalid}
+            aria-describedby={inputIsInvalid ? "cron-expression-error" : undefined}
+          />
         </div>
+        <aside className="note" aria-label="Contextual note">
+          {CONTEXTUAL_NOTES.map((note) => (
+            <div key={note.id}>
+              {note.quotes.map((quote) => (
+                <blockquote className="quote" key={quote} cite={note.sourceUrl}>
+                  {quote}
+                </blockquote>
+              ))}
+              <p className="meta">
+                verified against <a href={note.sourceUrl}>GitHub docs</a> on {note.verifiedOn}
+                {" - "}
+                <a href={`/gotchas/${note.gotcha.slug}/`}>details</a>
+              </p>
+            </div>
+          ))}
+        </aside>
         <section className="results" id="results" tabIndex={-1} aria-label="Results">
           {scan.kind === "error" && (
             <p className="error" id="cron-expression-error" role="alert">
