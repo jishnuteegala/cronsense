@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  DOM_DOW_INTERSECTION_PROVISIONAL_NOTE,
-  DOM_DOW_PROVISIONAL_NOTE,
   canEverFire,
-  domDowProvisionalNote,
   expandField,
   firesMoreOftenThanEveryFiveMinutes,
   minimumIntervalMinutes,
@@ -274,22 +271,6 @@ describe("sparse schedules beyond a 9-year gap", () => {
   it("finds the next firing when the gap alone exceeds 9 years", () => {
     const firings = nextFirings(ast("0 0 */31 2 MON"), new Date(Date.UTC(2027, 1, 2)), 1);
     expect(iso(firings)).toEqual(["2038-02-01T00:00Z"]);
-  });
-});
-
-describe("domDowProvisionalNote", () => {
-  it("returns the OR-union note when neither day field is wildcard-origin", () => {
-    expect(domDowProvisionalNote(ast("0 0 15 * MON"))).toBe(DOM_DOW_PROVISIONAL_NOTE);
-  });
-
-  it("returns the intersection note when a day field is wildcard-origin", () => {
-    expect(domDowProvisionalNote(ast("0 0 */2 * MON"))).toBe(DOM_DOW_INTERSECTION_PROVISIONAL_NOTE);
-  });
-
-  it("returns null when only one day field is restricted", () => {
-    expect(domDowProvisionalNote(ast("0 0 15 * *"))).toBeNull();
-    expect(domDowProvisionalNote(ast("0 0 * * MON"))).toBeNull();
-    expect(domDowProvisionalNote(ast("0 0 * * *"))).toBeNull();
   });
 });
 

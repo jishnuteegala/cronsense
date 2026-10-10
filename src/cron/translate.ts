@@ -1,5 +1,5 @@
 import type { CronAst, FieldAst, FieldTerm } from "./parse";
-import { hasWildcardOrigin, isRestricted } from "./parse";
+import { dayCombination, isRestricted } from "./parse";
 
 export const TIMEZONE_KEY_NOTE =
   "If this workflow uses the `timezone` key on its schedule, GitHub Actions evaluates the schedule in that timezone and these UTC-based firing times do not apply.";
@@ -113,25 +113,23 @@ function timePhrase(ast: CronAst): string {
 }
 
 function dayPhrase(ast: CronAst): string {
-  const domRestricted = isRestricted(ast.dayOfMonth);
-  const dowRestricted = isRestricted(ast.dayOfWeek);
-  const union = !hasWildcardOrigin(ast.dayOfMonth) && !hasWildcardOrigin(ast.dayOfWeek);
+  const combination = dayCombination(ast);
   const domPart = describeField(ast.dayOfMonth, (t) =>
     describeNumericTerm(t, "day-of-month", 1, 31),
   );
   const dowPart = describeField(ast.dayOfWeek, (t) =>
     describeLabeledTerm(t, dowLabel, "every day of the week", "weekday", 0, 6),
   );
-  if (domRestricted && dowRestricted) {
-    if (union) {
-      return `on ${domPart}, or on ${dowPart} (either matching day fires; OR behaviour was empirically confirmed on 2026-07-27)`;
-    }
+  if (combination === "union") {
+    return `on ${domPart}, or on ${dowPart} (either matching day fires; OR behaviour was empirically confirmed on 2026-07-27)`;
+  }
+  if (combination === "intersection") {
     return `on ${domPart} that is also ${dowPart} (wildcard-origin day fields intersect, per Vixie cron precedent; GitHub does not document this wildcard-origin behaviour)`;
   }
-  if (domRestricted) {
+  if (isRestricted(ast.dayOfMonth)) {
     return `on ${domPart}`;
   }
-  if (dowRestricted) {
+  if (isRestricted(ast.dayOfWeek)) {
     return `on ${dowPart}`;
   }
   return "";

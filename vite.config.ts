@@ -1,7 +1,7 @@
 import { defineConfig, type Plugin } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
-import { gotchaPages } from "./src/gotchas/render";
+import { gotchaMarkdown, gotchaPages, renderGotchasIndex } from "./src/gotchas/render";
 import { GOTCHA_CSS } from "./src/gotchas/styles";
 import { renderLlmsTxt } from "./src/gotchas/llms";
 import { staticAssets } from "./src/gotchas/emit";
@@ -44,6 +44,18 @@ function serveGotchas(): Plugin {
         if (url === "/gotchas/gotcha.css") {
           res.setHeader("Content-Type", "text/css; charset=utf-8");
           res.end(GOTCHA_CSS);
+          return;
+        }
+        if (url === "/gotchas" || url === "/gotchas/") {
+          res.setHeader("Content-Type", "text/html; charset=utf-8");
+          res.end(renderGotchasIndex());
+          return;
+        }
+        const markdown = url.match(/^\/gotchas\/([^/]+)\.md$/);
+        const markdownPage = markdown && gotchaMarkdown().find((page) => page.slug === markdown[1]);
+        if (markdownPage) {
+          res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+          res.end(markdownPage.markdown);
           return;
         }
         const page = gotchaPages().find(

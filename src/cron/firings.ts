@@ -1,5 +1,5 @@
-import type { CronAst, FieldAst, FieldName } from "./parse";
-import { FIELD_RANGES, hasWildcardOrigin, isRestricted } from "./parse";
+import type { CronAst, DayCombination, FieldAst } from "./parse";
+import { FIELD_RANGES, dayCombination } from "./parse";
 
 export function expandField(field: FieldAst): Set<number> {
   const { min, max } = FIELD_RANGES[field.field];
@@ -26,10 +26,7 @@ export interface ExpandedCron {
   daysOfMonth: Set<number>;
   months: Set<number>;
   daysOfWeek: Set<number>;
-  domRestricted: boolean;
-  dowRestricted: boolean;
-  domWildcardOrigin: boolean;
-  dowWildcardOrigin: boolean;
+  dayCombination: DayCombination;
 }
 
 export function expandCron(ast: CronAst): ExpandedCron {
@@ -39,15 +36,8 @@ export function expandCron(ast: CronAst): ExpandedCron {
     daysOfMonth: expandField(ast.dayOfMonth),
     months: expandField(ast.month),
     daysOfWeek: expandField(ast.dayOfWeek),
-    domRestricted: isRestricted(ast.dayOfMonth),
-    dowRestricted: isRestricted(ast.dayOfWeek),
-    domWildcardOrigin: hasWildcardOrigin(ast.dayOfMonth),
-    dowWildcardOrigin: hasWildcardOrigin(ast.dayOfWeek),
+    dayCombination: dayCombination(ast),
   };
-}
-
-export function usesDayUnion(ast: CronAst): boolean {
-  return !hasWildcardOrigin(ast.dayOfMonth) && !hasWildcardOrigin(ast.dayOfWeek);
 }
 
 function dayMatches(expanded: ExpandedCron, date: Date): boolean {
@@ -55,7 +45,7 @@ function dayMatches(expanded: ExpandedCron, date: Date): boolean {
   const dow = date.getUTCDay();
   const domMatch = expanded.daysOfMonth.has(dom);
   const dowMatch = expanded.daysOfWeek.has(dow);
-  if (!expanded.domWildcardOrigin && !expanded.dowWildcardOrigin) {
+  if (expanded.dayCombination === "union") {
     return domMatch || dowMatch;
   }
   return domMatch && dowMatch;
@@ -110,12 +100,11 @@ function domFitsSomeMonth(expanded: ExpandedCron): boolean {
   });
 }
 
-export function canEverFire(ast: CronAst): boolean {
-  const expanded = expandCron(ast);
+export function canEverFire(ast: CronAst, expanded: ExpandedCron = expandCron(ast)): boolean {
   if (expanded.minutes.size === 0 || expanded.hours.size === 0 || expanded.months.size === 0) {
     return false;
   }
-  if (usesDayUnion(ast)) {
+  if (expanded.dayCombination === "union") {
     return (
       (expanded.daysOfMonth.size > 0 && domFitsSomeMonth(expanded)) || expanded.daysOfWeek.size > 0
     );
@@ -125,9 +114,11 @@ export function canEverFire(ast: CronAst): boolean {
   return domFitsSomeMonth(expanded);
 }
 
-export function neverFiresReason(ast: CronAst): string | null {
-  if (canEverFire(ast)) return null;
-  const expanded = expandCron(ast);
+export function neverFiresReason(
+  ast: CronAst,
+  expanded: ExpandedCron = expandCron(ast),
+): string | null {
+  if (canEverFire(ast, expanded)) return null;
   if (expanded.daysOfMonth.size > 0 && !domFitsSomeMonth(expanded)) {
     const months = [...expanded.months].sort((a, b) => a - b);
     const days = [...expanded.daysOfMonth].sort((a, b) => a - b);
@@ -136,12 +127,16 @@ export function neverFiresReason(ast: CronAst): string | null {
   return "this expression will never fire: the field constraints admit no date";
 }
 
-export function nextFirings(ast: CronAst, from: Date, count: number): Date[] {
-  const expanded = expandCron(ast);
+export function nextFirings(
+  ast: CronAst,
+  from: Date,
+  count: number,
+  expanded: ExpandedCron = expandCron(ast),
+): Date[] {
   const results: Date[] = [];
   if (!Number.isSafeInteger(count) || count <= 0) return results;
   if (Number.isNaN(from.getTime())) return results;
-  if (!canEverFire(ast)) return results;
+  if (!canEverFire(ast, expanded)) return results;
   const sortedMinutes = [...expanded.minutes].sort((a, b) => a - b);
   const sortedHours = [...expanded.hours].sort((a, b) => a - b);
   const start = utcDate(
@@ -209,9 +204,11 @@ function minWithinDayGap(times: number[]): number {
   return min;
 }
 
-export function minimumIntervalMinutes(ast: CronAst): number | null {
-  if (!canEverFire(ast)) return null;
-  const expanded = expandCron(ast);
+export function minimumIntervalMinutes(
+  ast: CronAst,
+  expanded: ExpandedCron = expandCron(ast),
+): number | null {
+  if (!canEverFire(ast, expanded)) return null;
   const times = sortedDayTimes(expanded);
   const firstTime = times[0];
   const lastTime = times[times.length - 1];
@@ -245,36 +242,17 @@ export function minimumIntervalMinutes(ast: CronAst): number | null {
 // Fast predicate for the sub-minimum-interval warning: avoids the full
 // Gregorian-cycle day scan on the render path whenever the answer is
 // decidable from within-day gaps alone.
-export function firesMoreOftenThanEveryFiveMinutes(ast: CronAst): boolean {
-  if (!canEverFire(ast)) return false;
-  const expanded = expandCron(ast);
+export function firesMoreOftenThanEveryFiveMinutes(
+  ast: CronAst,
+  expanded: ExpandedCron = expandCron(ast),
+): boolean {
+  if (!canEverFire(ast, expanded)) return false;
   const times = sortedDayTimes(expanded);
   const firstTime = times[0];
   const lastTime = times[times.length - 1];
   if (firstTime === undefined || lastTime === undefined) return false;
   if (minWithinDayGap(times) < 5) return true;
   if (1440 - (lastTime - firstTime) >= 5) return false;
-  const min = minimumIntervalMinutes(ast);
+  const min = minimumIntervalMinutes(ast, expanded);
   return min !== null && min < 5;
-}
-
-export const DOM_DOW_PROVISIONAL_NOTE =
-  "This expression restricts both day-of-month and day-of-week. GitHub does not document how these combine, but Cronsense verification empirically confirmed POSIX OR behaviour on 2026-07-27: a day matching either field fires.";
-
-export const DOM_DOW_INTERSECTION_PROVISIONAL_NOTE =
-  'This expression combines a wildcard-origin day field ("*" or "*/N") with the other day field. Following Vixie cron source precedent, wildcard-origin fields retain wildcard status and the two day fields intersect (a day must match both). GitHub does not document this wildcard-origin behaviour.';
-
-export function domDowProvisionalNote(ast: CronAst): string | null {
-  if (!isRestricted(ast.dayOfMonth) || !isRestricted(ast.dayOfWeek)) {
-    return null;
-  }
-  return usesDayUnion(ast) ? DOM_DOW_PROVISIONAL_NOTE : DOM_DOW_INTERSECTION_PROVISIONAL_NOTE;
-}
-
-export function restrictedFields(ast: CronAst): FieldName[] {
-  const fields: FieldName[] = [];
-  for (const field of [ast.minute, ast.hour, ast.dayOfMonth, ast.month, ast.dayOfWeek]) {
-    if (isRestricted(field)) fields.push(field.field);
-  }
-  return fields;
 }

@@ -16,17 +16,18 @@ does not lint workflows.
 ## URL scheme
 
 - `/`: the interactive tool. Expression permalinks use the URL hash: `/#<encoded-expression>`.
-- `/gotchas/<slug>`: pre-rendered, static, JavaScript-free explanation pages, one per caveat. These are the stable citable URLs for agents and crawlers.
+- `/gotchas/`: index of the gotcha pages.
+- `/gotchas/<slug>/`: pre-rendered, static, JavaScript-free explanation pages, one per caveat. These are the stable citable URLs for agents and crawlers. A Markdown variant of each page lives at `/gotchas/<slug>.md`.
 - `/llms.txt`: this file.
 
 ## Gotcha pages
 
-- [/gotchas/dom-dow-or-semantics](/gotchas/dom-dow-or-semantics): Day-of-month and day-of-week combine with OR
-- [/gotchas/uneven-step-reset](/gotchas/uneven-step-reset): Uneven */N steps reset at the field boundary
-- [/gotchas/never-fires](/gotchas/never-fires): This expression will never fire
-- [/gotchas/sub-minimum-interval](/gotchas/sub-minimum-interval): Firing more often than every 5 minutes
-- [/gotchas/high-load-delay-drop](/gotchas/high-load-delay-drop): Scheduled runs can be delayed or dropped under high load
-- [/gotchas/inactivity-pause](/gotchas/inactivity-pause): In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days
+- [/gotchas/dom-dow-or-semantics/](/gotchas/dom-dow-or-semantics/): Day-of-month and day-of-week combine with OR
+- [/gotchas/uneven-step-reset/](/gotchas/uneven-step-reset/): Uneven */N steps reset at the field boundary
+- [/gotchas/never-fires/](/gotchas/never-fires/): This expression will never fire
+- [/gotchas/sub-minimum-interval/](/gotchas/sub-minimum-interval/): Firing more often than every 5 minutes
+- [/gotchas/high-load-delay-drop/](/gotchas/high-load-delay-drop/): Scheduled runs can be delayed or dropped under high load
+- [/gotchas/inactivity-pause/](/gotchas/inactivity-pause/): In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days
 
 ## Notes
 
