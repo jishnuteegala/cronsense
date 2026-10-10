@@ -1,5 +1,4 @@
-export const DST_NOTE =
-  "scheduled times are computed in UTC; local times shift when your timezone changes for DST";
+export const DST_NOTE = "local times shift with DST";
 
 export function formatUtc(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
