@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import { analyze, type Analysis } from "./cron/analyze";
 import { parseCron, type ParseResult } from "./cron/parse";
 import { CONTEXTUAL_NOTES, type ActiveWarning } from "./cron/warning-engine";
+import { VERIFICATION_URL } from "./cron/warnings";
 import { DST_NOTE, formatLocal, formatRelative, formatUtc } from "./format";
 import { expressionHash, isToolPage, parseHash } from "./hash";
 import { scanWorkflow, type WorkflowScan } from "./workflow-scan";
@@ -21,6 +22,10 @@ function readHashExpression(): { expression: string; warningId: string | null } 
   return parseHash(window.location.hash);
 }
 
+function currentMinute(): Date {
+  return new Date(Math.floor(Date.now() / 60000) * 60000);
+}
+
 function WarningCard({ warning }: { warning: ActiveWarning }) {
   return (
     <div
@@ -38,9 +43,14 @@ function WarningCard({ warning }: { warning: ActiveWarning }) {
           </blockquote>
         ))}
         <p className="warning-verified">
-          {warning.provenance === "empirical"
-            ? `empirically confirmed via cronsense-verification on ${warning.verifiedOn}`
-            : `verified against GitHub docs on ${warning.verifiedOn}`}
+          {warning.provenance === "empirical" ? (
+            <>
+              empirically confirmed via <a href={VERIFICATION_URL}>cronsense-verification</a> on{" "}
+              {warning.verifiedOn}
+            </>
+          ) : (
+            `verified against GitHub docs on ${warning.verifiedOn}`
+          )}
         </p>
       </details>
       <p className="warning-meta">
@@ -69,7 +79,9 @@ function Firings({
       <p className="next-firing">
         Next firing <strong>{formatUtc(first)}</strong> · {formatRelative(now, first)}
       </p>
-      <h2>Next {analysis.firings.length} firings</h2>
+      <h2>
+        Next {analysis.firings.length} firing{analysis.firings.length === 1 ? "" : "s"}
+      </h2>
       <table>
         <thead>
           <tr>
@@ -151,14 +163,14 @@ export function App({ initialExpression, timeZone, locale }: AppProps) {
   const [anchor, setAnchor] = useState<string | null>(() =>
     initialExpression === undefined ? (readHashExpression()?.warningId ?? null) : null,
   );
-  const [now, setNow] = useState(() => new Date());
+  const [now, setNow] = useState(currentMinute);
 
   useEffect(() => {
     let timer = 0;
     const arm = () => {
       timer = window.setTimeout(
         () => {
-          setNow(new Date());
+          setNow(currentMinute());
           arm();
         },
         60000 - (Date.now() % 60000),
@@ -166,7 +178,7 @@ export function App({ initialExpression, timeZone, locale }: AppProps) {
     };
     arm();
     const onVisible = () => {
-      if (!document.hidden) setNow(new Date());
+      if (!document.hidden) setNow(currentMinute());
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => {
@@ -178,9 +190,16 @@ export function App({ initialExpression, timeZone, locale }: AppProps) {
   useEffect(() => {
     const onHash = () => {
       if (!isToolPage(window.location.pathname)) return;
-      const state = parseHash(window.location.hash);
-      setInput(state?.expression ?? "");
-      setAnchor(state?.warningId ?? null);
+      const raw = window.location.hash;
+      if (raw === "" || raw === "#") {
+        setInput("");
+        setAnchor(null);
+        return;
+      }
+      const state = parseHash(raw);
+      if (state === null) return;
+      setInput(state.expression);
+      setAnchor(state.warningId);
     };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
@@ -206,11 +225,11 @@ export function App({ initialExpression, timeZone, locale }: AppProps) {
     setInput(value);
     setAnchor(null);
     if (!isToolPage(window.location.pathname)) return;
-    if (scanWorkflow(value).kind !== "cron") return;
+    if (value.includes("\n") && scanWorkflow(value).kind !== "cron") return;
     window.history.replaceState(
       null,
       "",
-      value === "" ? window.location.pathname : expressionHash(value),
+      value === "" ? window.location.pathname + window.location.search : expressionHash(value),
     );
   };
 
@@ -222,14 +241,16 @@ export function App({ initialExpression, timeZone, locale }: AppProps) {
   const hasInput = input.trim() !== "";
   const inputError =
     (scan.kind === "cron" && parsed && !parsed.ok && hasInput) || scan.kind === "error";
-  const notes: string[] =
-    scan.kind === "cron" && hasInput
-      ? [
+  const inputAlert = inputError || scan.kind === "none" || scan.kind === "schedule-not-list";
+  const notes: string[] = !hasInput
+    ? []
+    : [
+        ...new Set([
           ...(analysis?.provisionalNotes ?? []),
           ...(analysis === null ? [] : [analysis.translation.timezoneNote]),
           ...(analysis !== null && analysis.firings.length > 0 ? [] : [DST_NOTE]),
-        ]
-      : [];
+        ]),
+      ];
 
   return (
     <>
@@ -255,10 +276,10 @@ export function App({ initialExpression, timeZone, locale }: AppProps) {
           spellCheck={false}
           autoComplete="off"
           aria-invalid={inputError}
-          aria-describedby={inputError ? ERROR_ID : undefined}
+          aria-describedby={inputAlert ? ERROR_ID : undefined}
         />
         {hasInput && (
-          <aside className="context-note">
+          <aside className="context-note" aria-label="Contextual note">
             {CONTEXTUAL_NOTES.map((note) => (
               <p key={note.id}>
                 {note.quotes[0]} · verified {note.verifiedOn} ·{" "}
@@ -274,12 +295,12 @@ export function App({ initialExpression, timeZone, locale }: AppProps) {
             </div>
           )}
           {scan.kind === "none" && (
-            <div role="alert" className="error">
+            <div role="alert" id={ERROR_ID} className="error">
               this workflow has no on.schedule triggers
             </div>
           )}
           {scan.kind === "schedule-not-list" && (
-            <div role="alert" className="error">
+            <div role="alert" id={ERROR_ID} className="error">
               on.schedule is present but not a list; expected a list of cron entries
             </div>
           )}
@@ -304,8 +325,8 @@ export function App({ initialExpression, timeZone, locale }: AppProps) {
                 {notes.length} note{notes.length === 1 ? "" : "s"}
               </summary>
               <ul>
-                {notes.map((note) => (
-                  <li key={note}>{note}</li>
+                {notes.map((note, index) => (
+                  <li key={index}>{note}</li>
                 ))}
               </ul>
             </details>
