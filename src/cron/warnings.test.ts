@@ -121,7 +121,7 @@ describe("warning definitions", () => {
   });
 
   it("only considers both non-wildcard-origin day fields for DOM/DOW semantics", () => {
-    const predicate = { kind: "both-restricted", fields: ["dayOfMonth", "dayOfWeek"] } as const;
+    const predicate = { kind: "day-union" } as const;
     expect(matchesWarningPredicate(predicate, ast("0 0 1 * MON"))).toBe(true);
     expect(matchesWarningPredicate(predicate, ast("0 0 */2 * 1"))).toBe(false);
     expect(matchesWarningPredicate(predicate, ast("0 0 1 * */2"))).toBe(false);

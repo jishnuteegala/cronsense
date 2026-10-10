@@ -21,7 +21,6 @@ export const TOKENS_CSS = `@font-face {
   --muted: #5b616e;
   --faint: #656b78;
   --bg: #f7f8fa;
-  --bg-tint: radial-gradient(120% 120% at 50% 0%, #ffffff 0%, #f4f6f9 60%, #eef1f5 100%);
   --surface: #ffffff;
   --surface-2: #f2f4f7;
   --surface-inset: #f7f8fa;
@@ -32,13 +31,11 @@ export const TOKENS_CSS = `@font-face {
   --accent-contrast: #ffffff;
   --rule: #e5e8ee;
   --rule-strong: #d3d8e0;
-  --quote-bg: #f5f6f9;
   --warn-fg: #7a4a00;
   --warn-border: #d99a2b;
   --warn-bg: #fdf6e9;
   --warn-accent: #b8791f;
   --danger-fg: #a3001a;
-  --danger-border: #e0566a;
   --danger-bg: #fdeef0;
   --danger-accent: #cf3040;
   --radius-lg: 16px;
@@ -53,9 +50,6 @@ export const TOKENS_CSS = `@font-face {
   --space-7: 3rem;
   --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
-  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
-  --shadow: 0 1px 3px rgba(16, 24, 40, 0.06), 0 8px 24px -8px rgba(16, 24, 40, 0.12);
-  --shadow-lg: 0 4px 8px rgba(16, 24, 40, 0.05), 0 24px 48px -16px rgba(16, 24, 40, 0.18);
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -64,7 +58,6 @@ export const TOKENS_CSS = `@font-face {
     --muted: #9aa1ad;
     --faint: #868d9a;
     --bg: #0b0d10;
-    --bg-tint: radial-gradient(120% 120% at 50% 0%, #16191f 0%, #101216 55%, #0b0d10 100%);
     --surface: #16181d;
     --surface-2: #1d2027;
     --surface-inset: #101216;
@@ -75,18 +68,13 @@ export const TOKENS_CSS = `@font-face {
     --accent-contrast: #0a0b16;
     --rule: #262a31;
     --rule-strong: #333842;
-    --quote-bg: #14161b;
     --warn-fg: #f2c879;
     --warn-border: #6b5424;
     --warn-bg: #211a0f;
     --warn-accent: #d99a2b;
     --danger-fg: #ff9aa5;
-    --danger-border: #5a2a30;
     --danger-bg: #211316;
     --danger-accent: #e0566a;
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 8px 24px -8px rgba(0, 0, 0, 0.6);
-    --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.4), 0 24px 48px -16px rgba(0, 0, 0, 0.7);
   }
 }
 `;

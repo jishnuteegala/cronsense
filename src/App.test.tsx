@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { App, DST_NOTE, formatLocal, formatUtc } from "./App";
+import { App } from "./App";
+import { DST_NOTE, formatLocal, formatUtc } from "./format";
 
 afterEach(() => {
   cleanup();
@@ -110,7 +111,7 @@ describe("App", () => {
 
   it("flags name tokens in ranges as provisional", () => {
     render(<App initialExpression="0 9 * * MON-FRI" />);
-    expect(screen.getByText(/awaits GHA-validator arbitration/)).toBeTruthy();
+    expect(screen.getByText(/no validator verdict/)).toBeTruthy();
   });
 
   it("shows the empirically confirmed DOM/DOW warning", () => {
@@ -289,6 +290,16 @@ describe("App", () => {
     expect((screen.getByLabelText("Cron expression") as HTMLInputElement).value).toBe("");
     expect(screen.queryByRole("table")).toBeNull();
     expect(screen.queryByText(/shortest interval/)).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("shows no error state for an empty field", () => {
+    render(<App initialExpression="" />);
+    const input = screen.getByLabelText("Cron expression");
+    expect(input.getAttribute("aria-invalid")).toBe("false");
+    expect(input.getAttribute("aria-describedby")).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.queryByText(/expression is empty/)).toBeNull();
   });
 
   it("surfaces the engine's verbatim sourced quote in the warning display", () => {

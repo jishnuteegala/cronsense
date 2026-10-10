@@ -6,11 +6,13 @@ export interface WorkflowCron {
   value: string;
   summary: string;
   duplicateOf: number | null;
+  position: number;
 }
 
 export interface UnparseableWorkflowCron {
   raw: string;
   reason: string;
+  position: number;
 }
 
 export type WorkflowScanEntry =
@@ -61,6 +63,7 @@ export function scanWorkflow(input: string): WorkflowScan {
       const cron = {
         raw: rawValue(entry),
         reason: "Schedule entry has no cron key.",
+        position: index + 1,
       };
       unparseable.push(cron);
       entries.push({ kind: "unparseable", cron });
@@ -71,6 +74,7 @@ export function scanWorkflow(input: string): WorkflowScan {
       const cron = {
         raw: rawValue(value),
         reason: "Cron value must be a literal string.",
+        position: index + 1,
       };
       unparseable.push(cron);
       entries.push({ kind: "unparseable", cron });
@@ -80,6 +84,7 @@ export function scanWorkflow(input: string): WorkflowScan {
       const cron = {
         raw: value,
         reason: "Can't evaluate `${{ }}` expressions.",
+        position: index + 1,
       };
       unparseable.push(cron);
       entries.push({ kind: "unparseable", cron });
@@ -90,6 +95,7 @@ export function scanWorkflow(input: string): WorkflowScan {
       const cron = {
         raw: value,
         reason: "Invalid GitHub Actions cron expression.",
+        position: index + 1,
       };
       unparseable.push(cron);
       entries.push({ kind: "unparseable", cron });
@@ -101,6 +107,7 @@ export function scanWorkflow(input: string): WorkflowScan {
       value,
       summary: translate(parsed.ast).sentence,
       duplicateOf,
+      position: index + 1,
     };
     crons.push(cron);
     entries.push({ kind: "cron", cron });

@@ -1,6 +1,10 @@
 # cronsense
 
+[![CI](https://github.com/jishnuteegala/cronsense/actions/workflows/ci.yml/badge.svg)](https://github.com/jishnuteegala/cronsense/actions/workflows/ci.yml)
+
 The cron checker that tells you when your GitHub Actions workflow will _actually_ fire.
+
+Live at **[cronsense.jishnuteegala.com](https://cronsense.jishnuteegala.com)**.
 
 ## Why didn't my scheduled workflow run?
 
@@ -23,26 +27,27 @@ Paste a cron expression, or a GitHub Actions workflow YAML file to extract its `
 
 ## Gotcha pages
 
-Every caveat has a pre-rendered, static, JavaScript-free page at a stable URL, one per warning. These are the citable pages an agent or crawler can fetch to get a complete, sourced explanation:
+Every caveat has a pre-rendered, static, JavaScript-free page at a stable URL, one per warning, indexed at `/gotchas/` and also available as Markdown at `/gotchas/<slug>.md`. These are the citable pages an agent or crawler can fetch to get a complete, sourced explanation:
 
-- `/gotchas/dom-dow-or-semantics` - day-of-month and day-of-week combine with OR (empirically confirmed)
-- `/gotchas/uneven-step-reset` - uneven `*/N` steps reset at the field boundary
-- `/gotchas/never-fires` - this expression will never fire
-- `/gotchas/sub-minimum-interval` - firing more often than every 5 minutes
-- `/gotchas/high-load-delay-drop` - scheduled runs can be delayed or dropped under high load
-- `/gotchas/inactivity-pause` - in a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days
+- `/gotchas/dom-dow-or-semantics/` - day-of-month and day-of-week combine with OR (empirically confirmed)
+- `/gotchas/uneven-step-reset/` - uneven `*/N` steps reset at the field boundary
+- `/gotchas/never-fires/` - this expression will never fire
+- `/gotchas/sub-minimum-interval/` - firing more often than every 5 minutes
+- `/gotchas/high-load-delay-drop/` - scheduled runs can be delayed or dropped under high load
+- `/gotchas/inactivity-pause/` - in a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days
 
 Each page carries the exact sourced quote, a dated verification stamp, the primary-source link, and the github/docs file paths. The `~15 minutes` delay figure is community lore and appears nowhere here.
 
 ## Agent usage
 
-Everything runs client-side from a static bundle; no accounts, no analytics, no third-party requests. An `llms.txt` at the repository root and served at `/llms.txt` describes the tool, the six gotcha pages, and the URL scheme. The cron engine lives in `src/cron/` (`parse.ts`, `firings.ts`, `translate.ts`) with the parser's typed AST as the single source of truth; the caveats live as typed data in `src/cron/warnings.ts`, which is the single source for both the warning engine and the gotcha pages.
+Everything runs client-side from a static bundle; no accounts, no analytics, no third-party requests. An `llms.txt` at the repository root and served at `/llms.txt` describes the tool, the six gotcha pages, and the URL scheme. The cron engine lives in `src/cron/` (`parse.ts`, `firings.ts`, `translate.ts`, `warning-engine.ts`, `analyze.ts`) with the parser's typed AST as the single source of truth and `analyze.ts` composing the verdict the UI renders; the caveats live as typed data in `src/cron/warnings.ts`, which is the single source for both the warning engine and the gotcha pages.
 
 ## Development
 
 ```
 pnpm install
-pnpm run check
+pnpm dev         # serves the app, the gotcha pages, and /llms.txt locally
+pnpm run check   # lint, format, typecheck, and tests
 ```
 
 ## Self-hosting
@@ -59,7 +64,7 @@ sha256sum --check --ignore-missing SHA256SUMS
 mkdir -p dist && tar -xzf "cronsense-$VERSION.tar.gz" -C dist
 ```
 
-The app is a static site with real static routes (`/design-system/`, `/gotchas/`, and `/llms.txt`), so any static file server works without rewrite rules.
+The app is a static site with real static routes (`/design-system/`, `/gotchas/`, `/gotchas/<slug>.md`, and `/llms.txt`), so any static file server works without rewrite rules.
 
 ### 2. Pick a host
 

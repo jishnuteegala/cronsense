@@ -24,6 +24,8 @@ jobs:
         test -f dist/design-system/index.html
         test -f dist/llms.txt
         test -f dist/_headers
+        test -f dist/gotchas/index.html
+        test -f dist/gotchas/dom-dow-or-semantics.md
         test -f dist/gotchas/dom-dow-or-semantics/index.html
         test -f dist/gotchas/uneven-step-reset/index.html
         test -f dist/gotchas/never-fires/index.html

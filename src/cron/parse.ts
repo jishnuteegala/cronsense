@@ -105,7 +105,7 @@ function parseStep(token: string, spec: FieldSpec): number | string {
 }
 
 function nameOperatorNote(token: string, spec: FieldSpec): string {
-  return `"${token}" uses a name token in a range or step in ${spec.field}; GitHub documents name tokens only as plain field values, so this interpretation is provisional and awaits GHA-validator arbitration`;
+  return `"${token}" uses a name token in a range or step in ${spec.field}. GitHub documents name tokens only as plain field values, and the acceptance probe returned no validator verdict, so this interpretation is provisional`;
 }
 
 function parseTerm(token: string, spec: FieldSpec, notes: string[]): FieldTerm | string {
@@ -179,15 +179,19 @@ function isLwSyntaxAtom(atom: string, spec: FieldSpec): boolean {
 function parseField(raw: string, spec: FieldSpec, notes: string[]): FieldAst | string {
   const unsupportedToken = raw.match(/[#?]/);
   if (unsupportedToken) {
-    return `"${unsupportedToken[0]}" in ${spec.field} is not part of GitHub Actions cron syntax (presumed rejected; pending GHA-validator confirmation)`;
+    const suffix =
+      unsupportedToken[0] === "#"
+        ? "(rejection confirmed empirically on 2026-07-24)"
+        : "(presumed rejected; pending GHA-validator confirmation)";
+    return `"${unsupportedToken[0]}" in ${spec.field} is not part of GitHub Actions cron syntax ${suffix}`;
   }
   const lwAtom = raw.split(/[,/-]/).find((atom) => isLwSyntaxAtom(atom, spec));
   if (lwAtom !== undefined) {
-    return `"${lwAtom}" in ${spec.field} uses L/W tokens that are not part of GitHub Actions cron syntax (presumed rejected; pending GHA-validator confirmation)`;
+    return `"${lwAtom}" in ${spec.field} uses L/W tokens that are not part of GitHub Actions cron syntax (rejection confirmed empirically on 2026-07-24)`;
   }
   const tokens = raw.split(",");
   if (tokens.length > 1 && tokens.some((token) => token.startsWith("*"))) {
-    return `"${raw}" mixes "*" with a value list in ${spec.field}; this form is undocumented for GitHub Actions cron (presumed rejected; pending GHA-validator confirmation)`;
+    return `"${raw}" mixes "*" with a value list in ${spec.field}. This form is undocumented for GitHub Actions cron (presumed rejected; pending GHA-validator confirmation)`;
   }
   const terms: FieldTerm[] = [];
   for (const token of tokens) {
@@ -206,15 +210,17 @@ export function parseCron(input: string): ParseResult {
   const lower = trimmed.toLowerCase();
   const shortcut = SHORTCUTS.find((s) => lower === s);
   if (shortcut) {
+    const confirmed =
+      shortcut === "@hourly" ? `; ${shortcut} rejection confirmed empirically on 2026-07-24` : "";
     return {
       ok: false,
-      error: `GitHub Actions does not support the non-standard syntax ${shortcut} (documented: @yearly, @monthly, @weekly, @daily, @hourly, and @reboot are unsupported)`,
+      error: `GitHub Actions does not support the non-standard syntax ${shortcut} (documented: @yearly, @monthly, @weekly, @daily, @hourly, and @reboot are unsupported${confirmed})`,
     };
   }
   if (trimmed.startsWith("@")) {
     return {
       ok: false,
-      error: `unknown shortcut "${trimmed}"; GitHub Actions does not support @-shortcuts`,
+      error: `unknown shortcut "${trimmed}". GitHub Actions does not support @-shortcuts`,
     };
   }
   const fields = trimmed.split(/\s+/);
@@ -222,7 +228,7 @@ export function parseCron(input: string): ParseResult {
     return {
       ok: false,
       error:
-        "six fields found; GitHub Actions cron has exactly five fields and no seconds field (presumed rejected; pending GHA-validator confirmation)",
+        "six fields found. GitHub Actions cron has exactly five fields and no seconds field (rejection confirmed empirically on 2026-07-24)",
     };
   }
   if (fields.length !== 5) {
@@ -257,4 +263,16 @@ export function isRestricted(field: FieldAst): boolean {
 
 export function hasWildcardOrigin(field: FieldAst): boolean {
   return field.terms.some((term) => term.kind === "wildcard");
+}
+
+export type DayCombination = "union" | "intersection" | "single" | "unrestricted";
+
+export function dayCombination(ast: CronAst): DayCombination {
+  const domRestricted = isRestricted(ast.dayOfMonth);
+  const dowRestricted = isRestricted(ast.dayOfWeek);
+  if (!domRestricted && !dowRestricted) return "unrestricted";
+  if (domRestricted !== dowRestricted) return "single";
+  return hasWildcardOrigin(ast.dayOfMonth) || hasWildcardOrigin(ast.dayOfWeek)
+    ? "intersection"
+    : "union";
 }

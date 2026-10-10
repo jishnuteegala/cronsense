@@ -3,7 +3,7 @@ import { WARNINGS } from "../cron/warnings";
 export function renderLlmsTxt(): string {
   const pages = WARNINGS.map(
     (warning) =>
-      `- [/gotchas/${warning.gotcha.slug}](/gotchas/${warning.gotcha.slug}): ${warning.gotcha.title.replaceAll("`", "")}`,
+      `- [/gotchas/${warning.gotcha.slug}/](/gotchas/${warning.gotcha.slug}/): ${warning.gotcha.title.replaceAll("`", "")}`,
   ).join("\n");
 
   return `# Cronsense
@@ -24,7 +24,8 @@ does not lint workflows.
 ## URL scheme
 
 - \`/\`: the interactive tool. Expression permalinks use the URL hash: \`/#<encoded-expression>\`.
-- \`/gotchas/<slug>\`: pre-rendered, static, JavaScript-free explanation pages, one per caveat. These are the stable citable URLs for agents and crawlers.
+- \`/gotchas/\`: index of the gotcha pages.
+- \`/gotchas/<slug>/\`: pre-rendered, static, JavaScript-free explanation pages, one per caveat. These are the stable citable URLs for agents and crawlers. A Markdown variant of each page lives at \`/gotchas/<slug>.md\`.
 - \`/llms.txt\`: this file.
 
 ## Gotcha pages
