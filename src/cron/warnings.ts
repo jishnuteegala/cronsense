@@ -7,7 +7,7 @@ export type WarningId =
   | "inactivity-pause";
 
 export type WarningPredicate =
-  | { kind: "both-restricted"; fields: readonly ["dayOfMonth", "dayOfWeek"] }
+  | { kind: "day-union" }
   | { kind: "uneven-step" }
   | { kind: "never-fires" }
   | { kind: "sub-minimum-interval" }
@@ -46,7 +46,7 @@ const VERIFIED_ON = "2026-07-24";
 export const WARNINGS: readonly WarningDefinition[] = [
   {
     id: "dom-dow-or-semantics",
-    predicate: { kind: "both-restricted", fields: ["dayOfMonth", "dayOfWeek"] },
+    predicate: { kind: "day-union" },
     messageKind: "static",
     message:
       "GitHub does not document this combination. Cronsense verification empirically confirmed OR behaviour on 2026-07-27: a Monday outside the restricted day-of-month range fired, consistent with the POSIX crontab specification linked by the docs.",

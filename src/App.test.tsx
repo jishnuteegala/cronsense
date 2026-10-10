@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { App, DST_NOTE, formatLocal, formatUtc } from "./App";
+import { App } from "./App";
+import { DST_NOTE, formatLocal, formatUtc } from "./format";
 
 afterEach(() => {
   cleanup();

@@ -40,7 +40,7 @@ Each page carries the exact sourced quote, a dated verification stamp, the prima
 
 ## Agent usage
 
-Everything runs client-side from a static bundle; no accounts, no analytics, no third-party requests. An `llms.txt` at the repository root and served at `/llms.txt` describes the tool, the six gotcha pages, and the URL scheme. The cron engine lives in `src/cron/` (`parse.ts`, `firings.ts`, `translate.ts`) with the parser's typed AST as the single source of truth; the caveats live as typed data in `src/cron/warnings.ts`, which is the single source for both the warning engine and the gotcha pages.
+Everything runs client-side from a static bundle; no accounts, no analytics, no third-party requests. An `llms.txt` at the repository root and served at `/llms.txt` describes the tool, the six gotcha pages, and the URL scheme. The cron engine lives in `src/cron/` (`parse.ts`, `firings.ts`, `translate.ts`, `warning-engine.ts`, `analyze.ts`) with the parser's typed AST as the single source of truth and `analyze.ts` composing the verdict the UI renders; the caveats live as typed data in `src/cron/warnings.ts`, which is the single source for both the warning engine and the gotcha pages.
 
 ## Development
 

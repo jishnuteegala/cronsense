@@ -264,3 +264,15 @@ export function isRestricted(field: FieldAst): boolean {
 export function hasWildcardOrigin(field: FieldAst): boolean {
   return field.terms.some((term) => term.kind === "wildcard");
 }
+
+export type DayCombination = "union" | "intersection" | "single" | "unrestricted";
+
+export function dayCombination(ast: CronAst): DayCombination {
+  const domRestricted = isRestricted(ast.dayOfMonth);
+  const dowRestricted = isRestricted(ast.dayOfWeek);
+  if (!domRestricted && !dowRestricted) return "unrestricted";
+  if (domRestricted !== dowRestricted) return "single";
+  return hasWildcardOrigin(ast.dayOfMonth) || hasWildcardOrigin(ast.dayOfWeek)
+    ? "intersection"
+    : "union";
+}

@@ -1,49 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { neverFiresReason, nextFirings } from "./cron/firings";
+import { Results } from "./Results";
+import { analyze } from "./cron/analyze";
 import { parseCron } from "./cron/parse";
-import { translate } from "./cron/translate";
-import { CONTEXTUAL_NOTES, evaluateWarnings } from "./cron/warning-engine";
-import { VERIFICATION_URL } from "./cron/warnings";
+import { CONTEXTUAL_NOTES } from "./cron/warning-engine";
 import { expressionHash, isToolPage, parseHash } from "./hash";
 import { scanWorkflow } from "./workflow-scan";
-
-export const DST_NOTE =
-  "scheduled times are computed in UTC; local times shift when your timezone changes for DST";
-
-export function formatUtc(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const year = String(date.getUTCFullYear()).padStart(4, "0");
-  return `${year}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())} UTC`;
-}
-
-export function formatLocal(date: Date, timeZone?: string, locale?: string): string {
-  return date.toLocaleString(locale, {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZoneName: "short",
-    timeZone,
-  });
-}
-
-export function formatRelative(from: Date, to: Date): string {
-  const minutes = Math.round((to.getTime() - from.getTime()) / 60000);
-  if (minutes <= 0) return "now";
-  const units: [number, string][] = [
-    [60 * 24, "day"],
-    [60, "hour"],
-    [1, "minute"],
-  ];
-  for (const [size, name] of units) {
-    if (minutes >= size) {
-      const value = Math.floor(minutes / size);
-      return `in ${value} ${name}${value === 1 ? "" : "s"}`;
-    }
-  }
-  return "in 1 minute";
-}
 
 function focusWarning(warningId: string) {
   const element = document.getElementById(warningId);
@@ -70,7 +31,6 @@ export function App({
   const [now, setNow] = useState(() => new Date());
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const currentInput = useRef(input);
-  currentInput.current = input;
   const previousInput = useRef(input);
   const hashNavigation = useRef<string | null>(null);
   useEffect(() => {
@@ -98,12 +58,15 @@ export function App({
       const rawHash = window.location.hash;
       const value = rawHash.startsWith("#") ? rawHash.slice(1) : rawHash;
       if (value === "") {
+        hashNavigation.current = null;
+        currentInput.current = "";
         setInput("");
         return;
       }
       const state = parseHash(rawHash);
       if (!state) return;
       hashNavigation.current = state.expression === currentInput.current ? null : rawHash;
+      currentInput.current = state.expression;
       setInput(state.expression);
       if (state.warningId) setPendingWarningId(state.warningId);
     };
@@ -113,18 +76,10 @@ export function App({
   const scan = useMemo(() => scanWorkflow(input), [input]);
   const result = useMemo(() => parseCron(input), [input]);
   const nowMinute = Math.floor(now.getTime() / 60000);
-  const output = useMemo(() => {
-    if (!result.ok) return null;
-    const never = neverFiresReason(result.ast);
-    const warnings = evaluateWarnings(result.ast);
-    return {
-      translation: translate(result.ast),
-      firings: never ? [] : nextFirings(result.ast, new Date(nowMinute * 60000), 10),
-      never,
-      warnings,
-      provisionalNotes: result.provisionalNotes,
-    };
-  }, [result, nowMinute]);
+  const output = useMemo(
+    () => (result.ok ? analyze(result, new Date(nowMinute * 60000)) : null),
+    [result, nowMinute],
+  );
 
   useEffect(() => {
     if (!pendingWarningId) return;
@@ -163,10 +118,12 @@ export function App({
       (scan.kind === "cron" && !result.ok));
 
   const updateInput = (value: string) => {
+    currentInput.current = value;
     setInput(value);
   };
 
   const selectCron = (value: string) => {
+    currentInput.current = value;
     setInput(value);
     if (onToolPage) window.location.hash = expressionHash(value);
   };
@@ -233,169 +190,16 @@ export function App({
             </div>
           ))}
         </aside>
-        <section className="results" id="results" tabIndex={-1} aria-label="Results">
-          {scan.kind === "error" && (
-            <p className="error" id="cron-expression-error" role="alert">
-              Unable to parse workflow YAML: {scan.error}
-            </p>
-          )}
-          {scan.kind === "none" && (
-            <p className="error" id="cron-expression-error" role="alert">
-              This workflow has no <code>on.schedule</code> triggers.
-            </p>
-          )}
-          {scan.kind === "schedule-not-list" && (
-            <p className="error" id="cron-expression-error" role="alert">
-              This workflow&apos;s <code>on.schedule</code> is not a list.
-            </p>
-          )}
-          {(scan.kind === "scan" ||
-            scan.kind === "error" ||
-            scan.kind === "none" ||
-            scan.kind === "schedule-not-list") && (
-            <p className="subnote">
-              Extracts <code>on.schedule</code> crons; does not lint workflows.
-            </p>
-          )}
-          {scan.kind === "scan" && (
-            <>
-              <p className="scan-summary">
-                {scan.crons.length} parsed, {scan.unparseable.length} unparseable
-              </p>
-              <ul className="scan-cards" aria-label="Workflow schedule crons" role={"list"}>
-                {scan.entries.map((entry, index) =>
-                  entry.kind === "cron" ? (
-                    <li key={`${entry.cron.value}-${index}`}>
-                      <button className="scan-card" onClick={() => selectCron(entry.cron.value)}>
-                        <code>{entry.cron.value}</code>
-                        <span>{entry.cron.summary}</span>
-                        {entry.cron.duplicateOf && (
-                          <small>duplicate of #{entry.cron.duplicateOf}</small>
-                        )}
-                      </button>
-                    </li>
-                  ) : (
-                    <li key={`${entry.cron.raw}-${index}`}>
-                      <article className="scan-card unparseable">
-                        <strong>Can't evaluate</strong>
-                        <code>{entry.cron.raw}</code>
-                        <span>{entry.cron.reason}</span>
-                      </article>
-                    </li>
-                  ),
-                )}
-              </ul>
-            </>
-          )}
-          {scan.kind === "cron" && !result.ok && !inputIsEmpty && (
-            <p className="error" id="cron-expression-error" role="alert">
-              {result.error}
-            </p>
-          )}
-          {scan.kind === "cron" && result.ok && output && (
-            <>
-              <p className="summary">{output.translation.sentence}</p>
-              <p className="subnote">{output.translation.timezoneNote}</p>
-              {output.provisionalNotes.map((note) => (
-                <p className="subnote provisional" key={note}>
-                  {note}
-                </p>
-              ))}
-              {output.warnings.map((warning) => (
-                <article
-                  className={[
-                    "warning",
-                    warning.rank === "diagnostic" && "diagnostic",
-                    warning.emphasised && "emphasised",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  id={warning.id}
-                  key={warning.id}
-                  tabIndex={-1}
-                  role={warning.rank === "diagnostic" ? "alert" : undefined}
-                >
-                  {warning.quotes.map((quote) => (
-                    <blockquote className="quote" key={quote} cite={warning.sourceUrl}>
-                      {quote}
-                    </blockquote>
-                  ))}
-                  {warning.message}{" "}
-                  <span className="meta">
-                    {warning.provenance === "empirical" ? (
-                      <>
-                        (empirically confirmed via{" "}
-                        <a href={VERIFICATION_URL}>cronsense-verification</a> on{" "}
-                        {warning.verifiedOn})
-                      </>
-                    ) : (
-                      <>
-                        (verified against <a href={warning.sourceUrl}>GitHub docs</a> on{" "}
-                        {warning.verifiedOn})
-                      </>
-                    )}
-                  </span>
-                </article>
-              ))}
-              {!output.never &&
-                output.firings[0] &&
-                (() => {
-                  const next = output.firings[0];
-                  const relative = formatRelative(new Date(nowMinute * 60000), next);
-                  return (
-                    <p className="next-firing">
-                      <span className="next-label">Next firing</span>
-                      <span className="next-time">{formatUtc(next)}</span>
-                      <span className="next-rel" key={relative}>
-                        {relative}
-                      </span>
-                    </p>
-                  );
-                })()}
-              {!output.never && (
-                <>
-                  <h2>
-                    {output.firings.length < 10
-                      ? `Next ${output.firings.length} firing${output.firings.length === 1 ? "" : "s"}`
-                      : "Next 10 firings"}
-                  </h2>
-                  {output.firings.length < 10 && (
-                    <p className="subnote">
-                      Only {output.firings.length} firing{output.firings.length === 1 ? "" : "s"}{" "}
-                      can be shown: later occurrences fall beyond the maximum date JavaScript can
-                      represent.
-                    </p>
-                  )}
-                  <table className="firings">
-                    <thead>
-                      <tr>
-                        <th>UTC</th>
-                        <th>
-                          Your local time
-                          <span className="col-note">{DST_NOTE}</span>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {output.firings.map((firing, index) => (
-                        <tr className={index === 0 ? "is-next" : undefined} key={firing.getTime()}>
-                          <td>
-                            {formatUtc(firing)}
-                            {index === 0 && <span className="next-chip">next</span>}
-                          </td>
-                          <td>{formatLocal(firing, timeZone, locale)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </>
-              )}
-            </>
-          )}
-        </section>
-        {(scan.kind !== "cron" || !result.ok || !output || output.never !== null) && (
-          <p className="subnote">Note: {DST_NOTE}.</p>
-        )}
+        <Results
+          scan={scan}
+          result={result}
+          output={output}
+          inputIsEmpty={inputIsEmpty}
+          nowMinute={nowMinute}
+          timeZone={timeZone}
+          locale={locale}
+          onSelectCron={selectCron}
+        />
       </main>
       <footer className="page site-footer">
         <span>&copy; {new Date().getFullYear()} Jishnu Teegala</span>
