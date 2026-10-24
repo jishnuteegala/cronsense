@@ -12,7 +12,7 @@ The user pastes a GitHub Actions workflow YAML document; the tool extracts every
 ## How to get to it (user POV)
 
 - Open `/`, paste a workflow file into the `Cron expression` field (the `or workflow YAML` hint next to the label names this entry point).
-- Open `/` + `#<urlencoded yaml>` as a manually-constructed link to the same state (the app never writes YAML to the hash itself).
+- Open `/` + `#<urlencoded yaml>` as a manually-constructed link to the same state (the app only skips hashing multi-line YAML input; single-line YAML is still mirrored).
 
 ## Driving it with playwright/curl
 

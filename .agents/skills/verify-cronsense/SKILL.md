@@ -8,7 +8,7 @@ description: Verify cronsense's web UI and static routes end to end - launch the
 Cronsense is a static SPA (React + Vite) plus emitted static routes (`/gotchas/`, `/gotchas/<slug>/`, `/gotchas/<slug>.md`, `/design-system/`, `/llms.txt`).
 There is no backend, no auth, no persisted state (the app does seed `*/15 9-17 * * MON-FRI` as the default expression).
 All user input is a single textarea; an expression's value is mirrored into the URL hash (`#<urlencoded expression>`), so every expression state is reachable by URL alone.
-Multi-line workflow YAML input is not written to the hash (`onInput` only mirrors values containing a newline; single-line YAML is still hashed), but a manually-encoded YAML hash always loads.
+Multi-line workflow YAML input is not written to the hash (`onInput` skips mirroring any newline-containing workflow value, so single-line YAML is still hashed), but a manually-encoded YAML hash always loads.
 
 The feature map lives in `features/` - read it before driving.
 

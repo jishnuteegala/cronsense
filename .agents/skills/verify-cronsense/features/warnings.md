@@ -12,7 +12,7 @@ Provisional syntax notes live as `<li>` items inside a collapsed `N notes` discl
 
 ## How to get to it (user POV)
 
-- Enter a triggering expression on `/` or load its permalink; warning cards render inside `#results` after the firing table (the element between input and results is the contextual note, not the cards).
+- Enter a triggering expression on `/` or load its permalink; warning cards render inside `#results` after the firing table (directly after the translation in the `never-fires` state, which renders no table - the element between input and results is the contextual note, not the cards).
 
 ## Driving it with playwright/curl
 
@@ -33,7 +33,7 @@ Preconditions:
 
 ## Gotchas
 
-- Docs-verified cards stamp `verified against GitHub docs on 2026-07-24` inside the collapsed `docs quote` disclosure (the always-visible `.warning-meta` reads `verified 2026-07-24 · GitHub docs`); the `dom-dow-or-semantics` card stamps `empirically confirmed via cronsense-verification on 2026-07-27`.
+- Docs-verified cards stamp `verified against GitHub docs on 2026-07-24` inside the collapsed `docs quote` disclosure (the always-visible `.warning-meta` reads `verified 2026-07-24 · GitHub docs`); the `dom-dow-or-semantics` card stamps `empirically confirmed via cronsense-verification on 2026-07-27` in the same hidden spot - open `docs quote` before asserting either stamp.
   Provisional text must contain the word `provisional` - do not accept a warning that mixes the two registers.
 - Warning cards have no `details` link; only the contextual note does.
   Screenshotting only proves the link renders, `curl` proves it resolves.
