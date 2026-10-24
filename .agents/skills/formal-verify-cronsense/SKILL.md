@@ -35,7 +35,7 @@ Not covered, on purpose: `parseCron` syntax edge cases (the corpus only exercise
 
 ## Reading a failure
 
-Failures print `expr @from: got [...] want [...]` - ISO timestamps line up 1:1. If the oracle's list is the schedule the expression actually describes (check it by hand - the oracle block is ~90 lines of straightforward code), `firings.ts` regressed. If the oracle is wrong, the `fieldMatches`/`dayMatchesSpec` spec block misstates the documented semantics - fix the check, not the code.
+Failures print `expr @from: got [...] want [...]` - ISO timestamps line up 1:1. If the oracle's list is the schedule the expression actually describes (check it by hand - the oracle scan block is ~50 lines of straightforward code), `firings.ts` regressed. If the oracle is wrong, the `fieldMatches`/`dayMatchesSpec` spec block misstates the documented semantics - fix the check, not the code.
 
 ## Updating the verification
 
