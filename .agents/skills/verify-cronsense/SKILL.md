@@ -8,7 +8,7 @@ description: Verify cronsense's web UI and static routes end to end - launch the
 Cronsense is a static SPA (React + Vite) plus emitted static routes (`/gotchas/`, `/gotchas/<slug>/`, `/gotchas/<slug>.md`, `/design-system/`, `/llms.txt`).
 There is no backend, no auth, no persisted state (the app does seed `*/15 9-17 * * MON-FRI` as the default expression).
 All user input is a single textarea; an expression's value is mirrored into the URL hash (`#<urlencoded expression>`), so every expression state is reachable by URL alone.
-Workflow YAML input is never written to the hash (scan results are not shareable by URL), but a manually-encoded YAML hash still loads.
+Multi-line workflow YAML input is not written to the hash (`onInput` skips mirroring any newline-containing workflow value, so single-line YAML is still hashed), but a manually-encoded YAML hash always loads.
 
 The feature map lives in `features/` - read it before driving.
 
@@ -61,7 +61,17 @@ pnpm dlx playwright@1.64.0 screenshot \
 Useful flags: `--color-scheme dark`, `--viewport-size 390,844` (mobile), `--full-page`, `--wait-for-selector <css>`.
 The next-firing relative time animates for 0.4s on value change - always pass `--wait-for-timeout 800` or the text captures mid-fade.
 
-For interactions a URL cannot express (typing, focus order, skip link), write a one-off spec into the run's evidence dir and run `pnpm dlx -p @playwright/test@1.64.0 playwright test <spec> --browser chromium`.
+For interactions a URL cannot express (typing, focus order, skip link), write a one-off spec into the run's evidence dir and run it with a local runner - `pnpm dlx` cannot resolve the spec's `@playwright/test` import (`-p` is not a `dlx` flag on pnpm 10, and `--package` still leaves the import unresolvable).
+In the evidence dir:
+
+```bash
+printf '{"name":"verify-run","private":true,"type":"module"}' > package.json
+pnpm add -D @playwright/test@1.64.0
+pnpm exec playwright install chromium  # no-op if the browser cache is warm
+pnpm exec playwright test verify.spec.ts --browser chromium
+```
+
+Scope the config or run from the evidence dir - running `playwright test` from the repo root also collects the repo's vitest files.
 
 ## Evidence
 
