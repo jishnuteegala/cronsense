@@ -12,7 +12,7 @@ Provisional syntax notes live as `<li>` items inside a collapsed `N notes` discl
 
 ## How to get to it (user POV)
 
-- Enter a triggering expression on `/` or load its permalink; warnings render between the input and the results.
+- Enter a triggering expression on `/` or load its permalink; warning cards render inside `#results` after the firing table (the element between input and results is the contextual note, not the cards).
 
 ## Driving it with playwright/curl
 
@@ -21,7 +21,7 @@ Preconditions:
 - Preview healthy at `http://localhost:<PORT>`; `artifact/verify/<run>` exists.
 
 - **High-load warning.** Load `/#*/5%20*%20*%20*%20*` (every five minutes) and screenshot.
-  A warning card quotes the `schedule` delay/drop docs and shows `verified against GitHub docs on 2026-07-24` with the docs link.
+  The visible stamp is the card's `.warning-meta` line `verified 2026-07-24 · GitHub docs`; the quoted docs and the fuller `verified against GitHub docs on 2026-07-24` text sit inside the collapsed `details.warning-quote` disclosure - open its `docs quote` summary before asserting them.
 - **Sub-minute warning.** Load `/#*%20*%20*%20*%20*` (every minute).
   The sub-minimum-interval card appears.
 - **Provisional note.** Load `/#*/15%209-17%20*%20*%20MON-FRI` and open the `N notes` disclosure (`details.notes summary`) first - it renders collapsed.
@@ -33,7 +33,7 @@ Preconditions:
 
 ## Gotchas
 
-- Docs-verified cards stamp `verified against GitHub docs on 2026-07-24`; the `dom-dow-or-semantics` card stamps `empirically confirmed via cronsense-verification on 2026-07-27`.
+- Docs-verified cards stamp `verified against GitHub docs on 2026-07-24` inside the collapsed `docs quote` disclosure (the always-visible `.warning-meta` reads `verified 2026-07-24 · GitHub docs`); the `dom-dow-or-semantics` card stamps `empirically confirmed via cronsense-verification on 2026-07-27`.
   Provisional text must contain the word `provisional` - do not accept a warning that mixes the two registers.
 - Warning cards have no `details` link; only the contextual note does.
   Screenshotting only proves the link renders, `curl` proves it resolves.

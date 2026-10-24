@@ -23,7 +23,7 @@ Preconditions:
 
 - **Two schedules.** Load `/#<encoded two-schedule yaml>` and screenshot with `--wait-for-timeout 800`.
   Two schedule cards render, each showing the cron expression and its translation (cards have no firing table - clicking one loads that cron's full analysis into the results area).
-- **Duplicate detection.** Load a hash encoding a workflow whose `schedule:` list repeats the same `cron:` twice.
+- **Duplicate detection.** Load `/#on%3A%0A%20%20schedule%3A%0A%20%20%20%20-%20cron%3A%20%270%209%20*%20*%201-5%27%0A%20%20%20%20-%20cron%3A%20%270%209%20*%20*%201-5%27` (the same two-schedule workflow with `0 9 * * 1-5` repeated).
   A duplicate indicator appears on the second and later occurrences; the first stays unmarked.
 - **No schedule.** Load `/#on%3A%0A%20%20push%3A` (decodes to `on:\n  push:`).
   A block states the workflow has no `on.schedule` triggers - it renders with error styling (`role="alert"`), but it is the `none` state, not a YAML failure.
