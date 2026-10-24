@@ -152,6 +152,13 @@ corpus.push(
   "0 0 */15 * MON",
   "59 23 31 12 *",
   "0 9 * * 1-5",
+  "5/10 * * * *",
+  "0 9/4 * * *",
+  "*/1 * * * *",
+  "0,59 0,23 * * *",
+  "0 0 1,15 JAN-JUN *",
+  "0 9 * * MON-FRI/2",
+  "1,10-20/2 * * * *",
 );
 
 const FROMS = [
@@ -171,6 +178,7 @@ const INTERVAL_SUBSET = [
   "0 */6 * * *",
   "0 0 31 2 *",
   "10 10 10 10 *",
+  "0,59 0,23 * * *",
 ];
 
 // --- checks ----------------------------------------------------------------
@@ -178,63 +186,75 @@ const INTERVAL_SUBSET = [
 const iso = (d: Date) => d.toISOString();
 
 describe("formal verify: firings oracle", () => {
-  it("I1-I4 nextFirings equals the independent day-scan oracle on every corpus case", () => {
-    const bad: string[] = [];
-    for (const expr of corpus) {
-      const a = ast(expr);
-      for (const from of FROMS) {
-        const got = nextFirings(a, from, COUNT);
-        const want = oracleFirings(a, from);
-        for (const f of got) {
-          if (f.getTime() <= from.getTime())
-            bad.push(`${expr} @${iso(from)}: firing ${iso(f)} not strictly after from`);
-          if (!satisfies(a, f))
-            bad.push(`${expr} @${iso(from)}: firing ${iso(f)} violates a field`);
+  it(
+    "I1-I4 nextFirings equals the independent day-scan oracle on every corpus case",
+    { timeout: 60000 },
+    () => {
+      const bad: string[] = [];
+      for (const expr of corpus) {
+        const a = ast(expr);
+        for (const from of FROMS) {
+          const got = nextFirings(a, from, COUNT);
+          const want = oracleFirings(a, from);
+          for (const f of got) {
+            if (f.getTime() <= from.getTime())
+              bad.push(`${expr} @${iso(from)}: firing ${iso(f)} not strictly after from`);
+            if (!satisfies(a, f))
+              bad.push(`${expr} @${iso(from)}: firing ${iso(f)} violates a field`);
+          }
+          for (let i = 1; i < got.length; i++) {
+            const [prev, cur] = [got[i - 1], got[i]];
+            if (prev !== undefined && cur !== undefined && cur.getTime() <= prev.getTime())
+              bad.push(`${expr} @${iso(from)}: firings not strictly increasing at ${iso(cur)}`);
+          }
+          if (got.map(iso).join(",") !== want.map(iso).join(","))
+            bad.push(
+              `${expr} @${iso(from)}: got [${got.map(iso).join(", ")}] want [${want.map(iso).join(", ")}]`,
+            );
         }
-        for (let i = 1; i < got.length; i++) {
-          const [prev, cur] = [got[i - 1], got[i]];
-          if (prev !== undefined && cur !== undefined && cur.getTime() <= prev.getTime())
-            bad.push(`${expr} @${iso(from)}: firings not strictly increasing at ${iso(cur)}`);
-        }
-        if (got.map(iso).join(",") !== want.map(iso).join(","))
+      }
+      expect(bad).toEqual([]);
+    },
+  );
+
+  it(
+    "I5 canEverFire/neverFiresReason iff the oracle finds a match in one cycle",
+    { timeout: 60000 },
+    () => {
+      const bad: string[] = [];
+      for (const expr of corpus) {
+        const a = ast(expr);
+        // A match anywhere in the scan window means satisfiable; since the
+        // window starts at a Gregorian-cycle boundary, every satisfiable combo
+        // appears within the first 146097 days.
+        const oracleSatisfiable = oracleFirings(a, new Date(Date.UTC(2000, 0, 1))).length > 0;
+        if (canEverFire(a) !== oracleSatisfiable)
           bad.push(
-            `${expr} @${iso(from)}: got [${got.map(iso).join(", ")}] want [${want.map(iso).join(", ")}]`,
+            `${expr}: canEverFire=${canEverFire(a)} but oracle satisfiable=${oracleSatisfiable}`,
+          );
+        if ((neverFiresReason(a) === null) !== oracleSatisfiable)
+          bad.push(
+            `${expr}: neverFiresReason null=${neverFiresReason(a) === null} but satisfiable=${oracleSatisfiable}`,
           );
       }
-    }
-    expect(bad).toEqual([]);
-  });
+      expect(bad).toEqual([]);
+    },
+  );
 
-  it("I5 canEverFire/neverFiresReason iff the oracle finds a match in one cycle", () => {
-    const bad: string[] = [];
-    for (const expr of corpus) {
-      const a = ast(expr);
-      // A match anywhere in the scan window means satisfiable; since the
-      // window starts at a Gregorian-cycle boundary, every satisfiable combo
-      // appears within the first 146097 days.
-      const oracleSatisfiable = oracleFirings(a, new Date(Date.UTC(2000, 0, 1))).length > 0;
-      if (canEverFire(a) !== oracleSatisfiable)
-        bad.push(
-          `${expr}: canEverFire=${canEverFire(a)} but oracle satisfiable=${oracleSatisfiable}`,
-        );
-      if ((neverFiresReason(a) === null) !== oracleSatisfiable)
-        bad.push(
-          `${expr}: neverFiresReason null=${neverFiresReason(a) === null} but satisfiable=${oracleSatisfiable}`,
-        );
-    }
-    expect(bad).toEqual([]);
-  });
-
-  it("I6 minimumIntervalMinutes equals the oracle cycle gap on the subset", () => {
-    const bad: string[] = [];
-    for (const expr of INTERVAL_SUBSET) {
-      const a = ast(expr);
-      const got = minimumIntervalMinutes(a);
-      const want = oracleMinInterval(a);
-      if (got !== want) bad.push(`${expr}: got ${got} want ${want}`);
-    }
-    expect(bad).toEqual([]);
-  });
+  it(
+    "I6 minimumIntervalMinutes equals the oracle cycle gap on the subset",
+    { timeout: 60000 },
+    () => {
+      const bad: string[] = [];
+      for (const expr of INTERVAL_SUBSET) {
+        const a = ast(expr);
+        const got = minimumIntervalMinutes(a);
+        const want = oracleMinInterval(a);
+        if (got !== want) bad.push(`${expr}: got ${got} want ${want}`);
+      }
+      expect(bad).toEqual([]);
+    },
+  );
 
   it("I7 firesMoreOftenThanEveryFiveMinutes is consistent with minimumIntervalMinutes", () => {
     const bad: string[] = [];
