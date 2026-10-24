@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.1](https://github.com/jishnuteegala/cronsense/compare/v0.1.0...v0.1.1) (2026-10-24)
+
+
+### Features
+
+* first-principles quality pass over surfaces and prose ([#29](https://github.com/jishnuteegala/cronsense/issues/29)) ([3b882d5](https://github.com/jishnuteegala/cronsense/commit/3b882d502c04cdf0980d4296b77551d6ff80869c))
+* record docs, build, and ci commits in changelogs ([#25](https://github.com/jishnuteegala/cronsense/issues/25)) ([898d194](https://github.com/jishnuteegala/cronsense/commit/898d19497b3e055d07cd88361ea3bf9ceb18e6a3))
+
+
+### Documentation
+
+* fix verify-cronsense map drift and playwright runner recipe ([#31](https://github.com/jishnuteegala/cronsense/issues/31)) ([ad7eee9](https://github.com/jishnuteegala/cronsense/commit/ad7eee9857f5bdd4f45c87b924cc58c8e20939ba))
+
 ## 0.1.0 (2026-08-03)
 
 
