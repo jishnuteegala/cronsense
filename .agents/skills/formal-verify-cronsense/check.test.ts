@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FIELD_RANGES, parseCron, type CronAst, type FieldAst } from "../../../src/cron/parse";
+import { parseCron, type CronAst, type FieldAst } from "../../../src/cron/parse";
 import {
   canEverFire,
   firesMoreOftenThanEveryFiveMinutes,
@@ -28,8 +28,18 @@ function ast(input: string): CronAst {
 
 // Direct term membership: v matches a term iff it is a listed value, inside a
 // stepped range, or on a wildcard step grid.
+// Bounds restated locally on purpose: importing FIELD_RANGES would let one
+// wrong edit corrupt the implementation and the oracle identically.
+const FIELD_BOUNDS: Record<FieldAst["field"], { min: number; max: number }> = {
+  minute: { min: 0, max: 59 },
+  hour: { min: 0, max: 23 },
+  dayOfMonth: { min: 1, max: 31 },
+  month: { min: 1, max: 12 },
+  dayOfWeek: { min: 0, max: 6 },
+};
+
 function fieldMatches(field: FieldAst, v: number): boolean {
-  const { min, max } = FIELD_RANGES[field.field];
+  const { min, max } = FIELD_BOUNDS[field.field];
   return field.terms.some((t) => {
     if (t.kind === "wildcard") return v >= min && v <= max && (v - min) % t.step === 0;
     if (t.kind === "value") return v === t.value;
@@ -256,15 +266,19 @@ describe("formal verify: firings oracle", () => {
     },
   );
 
-  it("I7 firesMoreOftenThanEveryFiveMinutes is consistent with minimumIntervalMinutes", () => {
-    const bad: string[] = [];
-    for (const expr of corpus) {
-      const a = ast(expr);
-      const min = minimumIntervalMinutes(a);
-      const want = min !== null && min < 5;
-      if (firesMoreOftenThanEveryFiveMinutes(a) !== want)
-        bad.push(`${expr}: predicate=${firesMoreOftenThanEveryFiveMinutes(a)} but min=${min}`);
-    }
-    expect(bad).toEqual([]);
-  });
+  it(
+    "I7 firesMoreOftenThanEveryFiveMinutes is consistent with minimumIntervalMinutes",
+    { timeout: 60000 },
+    () => {
+      const bad: string[] = [];
+      for (const expr of corpus) {
+        const a = ast(expr);
+        const min = minimumIntervalMinutes(a);
+        const want = min !== null && min < 5;
+        if (firesMoreOftenThanEveryFiveMinutes(a) !== want)
+          bad.push(`${expr}: predicate=${firesMoreOftenThanEveryFiveMinutes(a)} but min=${min}`);
+      }
+      expect(bad).toEqual([]);
+    },
+  );
 });

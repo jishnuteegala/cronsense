@@ -17,7 +17,7 @@ description: "Verify cronsense's firing engine (src/cron/firings.ts) against an 
 pnpm vitest run .agents/skills/formal-verify-cronsense/check.test.ts
 ```
 
-Uses the repo's vitest (required - the src imports are extensionless, so plain `node` cannot resolve them). ~7s wall standalone, longer inside the full suite; exits nonzero with the full mismatch list. `check.test.ts` sits outside `tsconfig.app.json`'s `src`-only include, so repo `tsc` never typechecks it - lint (`oxlint`) and the vitest run are its only gates.
+Uses the repo's vitest (required - the src imports are extensionless, so plain `node` cannot resolve them). ~9s wall standalone, longer inside the full suite; exits nonzero with the full mismatch list. `check.test.ts` sits outside `tsconfig.app.json`'s `src`-only include, so repo `tsc` never typechecks it - lint (`oxlint`), format (`oxfmt --check`, reached via `pnpm check`), and the vitest run are its gates.
 
 ## Coverage record
 
@@ -35,7 +35,7 @@ Not covered, on purpose: `parseCron` syntax edge cases (the corpus only exercise
 
 ## Reading a failure
 
-Failures print `expr @from: got [...] want [...]` - ISO timestamps line up 1:1. If the oracle's list is the schedule the expression actually describes (check it by hand - the oracle block is ~60 lines of straightforward code), `firings.ts` regressed. If the oracle is wrong, the `fieldMatches`/`dayMatchesSpec` spec block misstates the documented semantics - fix the check, not the code.
+Failures print `expr @from: got [...] want [...]` - ISO timestamps line up 1:1. If the oracle's list is the schedule the expression actually describes (check it by hand - the oracle block is ~90 lines of straightforward code), `firings.ts` regressed. If the oracle is wrong, the `fieldMatches`/`dayMatchesSpec` spec block misstates the documented semantics - fix the check, not the code.
 
 ## Updating the verification
 
