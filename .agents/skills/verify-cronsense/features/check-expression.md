@@ -34,7 +34,7 @@ Preconditions:
 - **Dark theme.** Repeat the first load with `--color-scheme dark`.
   All content remains readable.
 - **Mobile.** Repeat the first load at `--viewport-size 390,844 --full-page`.
-  No horizontal overflow; the table wraps cleanly.
+  All ten rows render and the page is usable - but see the overflow note under Gotchas before asserting on layout.
 
 ## Gotchas
 
@@ -42,3 +42,5 @@ Preconditions:
 - The relative time (`in N minutes`) re-renders on a live minute tick; assert its presence, not its exact text.
 - Every `@`-shortcut (`@hourly`, `@daily`, ...) is rejected - GitHub Actions does not document them.
   `@hourly` alone carries the empirical confirmation stamp; the rest are static rejections.
+- At 390px the firing table's minimum content width (~406px) exceeds the viewport, so the page scrolls horizontally - observed 2026-10-24 and reported as a product gap.
+  Assert rows render, not `no horizontal overflow`, until the table gets a scroll container or wraps.

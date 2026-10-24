@@ -4,14 +4,14 @@ The user pastes a GitHub Actions workflow YAML document; the tool extracts every
 
 ## Sub-features
 
-- `scan-cards` renders one card per `cron:` entry, each with its parsed expression and translation.
+- `scan-cards` renders one card per `schedule:` entry, each with its parsed expression and translation; an entry that fails to parse still renders a card with the raw value and the reason.
 - `scan-dup` marks the second and later occurrences of a repeated schedule (the first stays unmarked).
 - `scan-none` reports a workflow with no `schedule:` triggers.
-- `scan-error` reports malformed YAML or an invalid cron inside the file.
+- `scan-error` reports malformed YAML; an invalid `cron:` value inside an otherwise valid file is an unparseable card, not this block.
 
 ## How to get to it (user POV)
 
-- Open `/`, paste a workflow file into the `Cron expression` field (the label hint `or a workflow file` names this entry point).
+- Open `/`, paste a workflow file into the `Cron expression` field (the `or workflow YAML` hint next to the label names this entry point).
 - Open `/` + `#<urlencoded yaml>` as a manually-constructed link to the same state (the app never writes YAML to the hash itself).
 
 ## Driving it with playwright/curl
@@ -34,5 +34,6 @@ Preconditions:
 ## Gotchas
 
 - YAML in the hash must be fully percent-encoded, including newlines (`%0A`) - an unencoded `#` inside a value would truncate the hash at parse time.
-- A workflow document and a cron expression share the same field; detection is automatic.
+- A workflow document and a cron expression share the same field; detection is automatic for multi-line input.
   Do not treat an `on:`-leading document rendering schedule cards as an expression parse.
+- Detection requires a newline in the input: single-line flow-style YAML (`on: {schedule: [...]}`) never reaches the scanner and errors as a cron expression instead.
