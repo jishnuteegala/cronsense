@@ -152,20 +152,20 @@ export function nextFirings(
     from.getUTCMinutes() + 1,
   );
   let limit = horizonLimit(start.getUTCFullYear());
-  const day = utcDate(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
-  const startDay = day.getTime();
-  // Within a month, days are walked by arithmetic from the cursor rather than
-  // by stepping a Date (Date getters and setters dominated this loop). The
-  // cursor starts on the start day, not the 1st of its month, because that
-  // 1st can fall before the minimum representable Date.
-  while (day.getTime() <= limit && results.length < count) {
-    const year = day.getUTCFullYear();
-    const monthIndex = day.getUTCMonth();
+  let year = start.getUTCFullYear();
+  let monthIndex = start.getUTCMonth();
+  let firstDom = start.getUTCDate();
+  let firstTime = utcDate(year, monthIndex, firstDom).getTime();
+  const startDay = firstTime;
+  // Days and months are walked by arithmetic rather than by stepping a Date
+  // (Date getters and setters dominated this loop). The cursor starts on the
+  // start day, not the 1st of its month, because that 1st can fall before the
+  // minimum representable Date.
+  while (firstTime <= limit && results.length < count) {
+    const lastDom = daysInMonth(year, monthIndex);
     if (expanded.months.has(monthIndex + 1)) {
-      const firstDom = day.getUTCDate();
-      const firstTime = day.getTime();
-      const firstDow = day.getUTCDay();
-      const lastDom = daysInMonth(year, monthIndex);
+      // 1970-01-01 (day 0) was a Thursday.
+      const firstDow = (((Math.floor(firstTime / DAY_MS) + 4) % 7) + 7) % 7;
       for (let dom = firstDom; dom <= lastDom; dom += 1) {
         const dayStart = firstTime + (dom - firstDom) * DAY_MS;
         if (dayStart > limit) return results;
@@ -186,7 +186,13 @@ export function nextFirings(
         }
       }
     }
-    day.setUTCMonth(monthIndex + 1, 1);
+    firstTime += (lastDom - firstDom + 1) * DAY_MS;
+    firstDom = 1;
+    monthIndex += 1;
+    if (monthIndex === 12) {
+      monthIndex = 0;
+      year += 1;
+    }
   }
   return results;
 }
