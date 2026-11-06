@@ -151,8 +151,9 @@ export function nextFirings(
     from.getUTCHours(),
     from.getUTCMinutes() + 1,
   );
-  let limit = horizonLimit(start.getUTCFullYear());
   let year = start.getUTCFullYear();
+  let limit = horizonLimit(year);
+  let limitYear = year;
   let monthIndex = start.getUTCMonth();
   let firstDom = start.getUTCDate();
   let firstTime = utcDate(year, monthIndex, firstDom).getTime();
@@ -181,7 +182,10 @@ export function nextFirings(
             if (Number.isNaN(firing.getTime())) return results;
             results.push(firing);
             if (results.length >= count) return results;
-            limit = horizonLimit(year);
+            if (year !== limitYear) {
+              limit = horizonLimit(year);
+              limitYear = year;
+            }
           }
         }
       }
