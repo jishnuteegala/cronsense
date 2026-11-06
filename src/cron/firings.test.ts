@@ -332,6 +332,15 @@ describe("JavaScript Date boundary", () => {
     expect(firings.map((d) => d.getTime())).toEqual([8640000000000000]);
   });
 
+  it("finds firings from the min representable Date, whose month start is unrepresentable", () => {
+    const from = new Date(-8640000000000000);
+    const firings = nextFirings(ast("0 0 * * *"), from, 2);
+    expect(firings.map((d) => d.getTime())).toEqual([
+      -8640000000000000 + 86400000,
+      -8640000000000000 + 2 * 86400000,
+    ]);
+  });
+
   it("returns nothing for an invalid from date", () => {
     expect(nextFirings(ast("* * * * *"), new Date(Number.NaN), 10)).toEqual([]);
   });

@@ -40,9 +40,7 @@ export function expandCron(ast: CronAst): ExpandedCron {
   };
 }
 
-function dayMatches(expanded: ExpandedCron, date: Date): boolean {
-  const dom = date.getUTCDate();
-  const dow = date.getUTCDay();
+function dayMatches(expanded: ExpandedCron, dom: number, dow: number): boolean {
   const domMatch = expanded.daysOfMonth.has(dom);
   const dowMatch = expanded.daysOfWeek.has(dow);
   if (expanded.dayCombination === "union") {
@@ -63,6 +61,8 @@ const MAX_YEARS_PER_FIRING = 400;
 
 // Maximum timestamp representable by a JavaScript Date (ECMA-262: 8.64e15 ms).
 const MAX_DATE_TIME = 8640000000000000;
+
+const DAY_MS = 86400000;
 
 function utcDate(year: number, monthIndex: number, day: number, hour = 0, minute = 0): Date {
   const date = new Date(Date.UTC(2000, monthIndex, day, hour, minute));
@@ -92,6 +92,11 @@ const MONTH_MAX_DAYS = new Map<number, number>([
   [11, 30],
   [12, 31],
 ]);
+
+function daysInMonth(year: number, monthIndex: number): number {
+  const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  return monthIndex === 1 && !leap ? 28 : (MONTH_MAX_DAYS.get(monthIndex + 1) ?? 31);
+}
 
 function domFitsSomeMonth(expanded: ExpandedCron): boolean {
   return [...expanded.months].some((month) => {
@@ -148,37 +153,40 @@ export function nextFirings(
   );
   let limit = horizonLimit(start.getUTCFullYear());
   const day = utcDate(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
-  let isFirstDay = true;
+  const startDay = day.getTime();
+  // Within a month, days are walked by arithmetic from the cursor rather than
+  // by stepping a Date (Date getters and setters dominated this loop). The
+  // cursor starts on the start day, not the 1st of its month, because that
+  // 1st can fall before the minimum representable Date.
   while (day.getTime() <= limit && results.length < count) {
-    const month = day.getUTCMonth() + 1;
-    if (!expanded.months.has(month)) {
-      day.setUTCMonth(day.getUTCMonth() + 1, 1);
-      isFirstDay = false;
-      continue;
-    }
-    if (dayMatches(expanded, day)) {
-      const startHour = isFirstDay ? start.getUTCHours() : 0;
-      const startMinute = isFirstDay ? start.getUTCMinutes() : 0;
-      for (const hour of sortedHours) {
-        if (hour < startHour) continue;
-        for (const minute of sortedMinutes) {
-          if (hour === startHour && isFirstDay && minute < startMinute) continue;
-          const firing = utcDate(
-            day.getUTCFullYear(),
-            day.getUTCMonth(),
-            day.getUTCDate(),
-            hour,
-            minute,
-          );
-          if (Number.isNaN(firing.getTime())) return results;
-          results.push(firing);
-          if (results.length >= count) return results;
-          limit = horizonLimit(day.getUTCFullYear());
+    const year = day.getUTCFullYear();
+    const monthIndex = day.getUTCMonth();
+    if (expanded.months.has(monthIndex + 1)) {
+      const firstDom = day.getUTCDate();
+      const firstTime = day.getTime();
+      const firstDow = day.getUTCDay();
+      const lastDom = daysInMonth(year, monthIndex);
+      for (let dom = firstDom; dom <= lastDom; dom += 1) {
+        const dayStart = firstTime + (dom - firstDom) * DAY_MS;
+        if (dayStart > limit) return results;
+        if (!dayMatches(expanded, dom, (firstDow + dom - firstDom) % 7)) continue;
+        const isFirstDay = dayStart === startDay;
+        const startHour = isFirstDay ? start.getUTCHours() : 0;
+        const startMinute = isFirstDay ? start.getUTCMinutes() : 0;
+        for (const hour of sortedHours) {
+          if (hour < startHour) continue;
+          for (const minute of sortedMinutes) {
+            if (hour === startHour && isFirstDay && minute < startMinute) continue;
+            const firing = utcDate(year, monthIndex, dom, hour, minute);
+            if (Number.isNaN(firing.getTime())) return results;
+            results.push(firing);
+            if (results.length >= count) return results;
+            limit = horizonLimit(year);
+          }
         }
       }
     }
-    day.setUTCDate(day.getUTCDate() + 1);
-    isFirstDay = false;
+    day.setUTCMonth(monthIndex + 1, 1);
   }
   return results;
 }
@@ -219,7 +227,10 @@ export function minimumIntervalMinutes(
   let lastMatch: number | null = null;
   let minDayGap = Infinity;
   for (let i = 0; i < GREGORIAN_CYCLE_DAYS; i += 1) {
-    if (expanded.months.has(day.getUTCMonth() + 1) && dayMatches(expanded, day)) {
+    if (
+      expanded.months.has(day.getUTCMonth() + 1) &&
+      dayMatches(expanded, day.getUTCDate(), day.getUTCDay())
+    ) {
       if (lastMatch !== null) {
         const gap = i - lastMatch;
         if (gap < minDayGap) minDayGap = gap;
