@@ -64,6 +64,8 @@ const MAX_DATE_TIME = 8640000000000000;
 
 const DAY_MS = 86400000;
 
+const EVERY_DAY = Array.from({ length: 31 }, (_, i) => i + 1);
+
 function utcDate(year: number, monthIndex: number, day: number, hour = 0, minute = 0): Date {
   const date = new Date(Date.UTC(2000, monthIndex, day, hour, minute));
   date.setUTCFullYear(year + (date.getUTCFullYear() - 2000));
@@ -144,6 +146,12 @@ export function nextFirings(
   if (!canEverFire(ast, expanded)) return results;
   const sortedMinutes = [...expanded.minutes].sort((a, b) => a - b);
   const sortedHours = [...expanded.hours].sort((a, b) => a - b);
+  // Outside union mode a day matches only if its day-of-month is listed, so
+  // the scan visits just those days.
+  const candidateDays =
+    expanded.dayCombination === "union"
+      ? EVERY_DAY
+      : [...expanded.daysOfMonth].sort((a, b) => a - b);
   const start = utcDate(
     from.getUTCFullYear(),
     from.getUTCMonth(),
@@ -167,7 +175,9 @@ export function nextFirings(
     if (expanded.months.has(monthIndex + 1)) {
       // 1970-01-01 (day 0) was a Thursday.
       const firstDow = (((Math.floor(firstTime / DAY_MS) + 4) % 7) + 7) % 7;
-      for (let dom = firstDom; dom <= lastDom; dom += 1) {
+      for (const dom of candidateDays) {
+        if (dom < firstDom) continue;
+        if (dom > lastDom) break;
         const dayStart = firstTime + (dom - firstDom) * DAY_MS;
         if (dayStart > limit) return results;
         if (!dayMatches(expanded, dom, (firstDow + dom - firstDom) % 7)) continue;
