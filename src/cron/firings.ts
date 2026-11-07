@@ -1,7 +1,7 @@
 import type { CronAst, DayCombination, FieldAst, FieldName } from "./parse";
 import { FIELD_RANGES, dayCombination } from "./parse";
 
-function rangeSet({ min, max }: { min: number; max: number }): ReadonlySet<number> {
+function rangeSet({ min, max }: (typeof FIELD_RANGES)[FieldName]): ReadonlySet<number> {
   return new Set(Array.from({ length: max - min + 1 }, (_, i) => min + i));
 }
 
