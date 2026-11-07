@@ -59,7 +59,7 @@ pnpm dlx playwright@1.64.0 screenshot \
 ```
 
 Useful flags: `--color-scheme dark`, `--viewport-size 390,844` (mobile), `--full-page`, `--wait-for-selector <css>`.
-The next-firing relative time animates for 0.4s on value change - always pass `--wait-for-timeout 800` or the text captures mid-fade.
+Always pass `--wait-for-timeout 800` to every screenshot so dynamic content (next firing, warnings, notes) has rendered before capture - no animation needs waiting out.
 
 For interactions a URL cannot express (typing, focus order, skip link), write a one-off spec into the run's evidence dir and run it with a local runner - `pnpm dlx` cannot resolve the spec's `@playwright/test` import (`-p` is not a `dlx` flag on pnpm 10, and `--package` still leaves the import unresolvable).
 In the evidence dir:

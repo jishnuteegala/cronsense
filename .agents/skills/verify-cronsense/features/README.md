@@ -16,7 +16,7 @@ Read the index before driving the app, then use the matching feature file as the
 - Input state is set through the URL hash `#<urlencoded textarea value>`; a hash URL is the same state a user gets by typing.
   The app only mirrors expressions into the hash - pasted workflow YAML never updates it.
 - Percent-encode `#`, spaces, and newlines in hash values; `*` and `/` may stay literal (the examples keep them literal).
-- Pass `--wait-for-timeout 800` to every screenshot so the next-firing fade finishes.
+- Pass `--wait-for-timeout 800` to every screenshot so dynamic content has rendered; no animation needs waiting out.
 - Assert rendered text with `--wait-for-selector` or by inspecting the screenshot, not by trusting HTTP 200 - `/` and every unknown path return 200 via SPA fallback.
 - Static routes (`/gotchas/*`, `/design-system/`, `/llms.txt`) render without JavaScript; verify them with `curl` body checks, not only screenshots.
 
