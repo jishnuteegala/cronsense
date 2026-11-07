@@ -95,9 +95,18 @@ const MONTH_MAX_DAYS = new Map<number, number>([
   [12, 31],
 ]);
 
+const DAYS_BEFORE_MONTH = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+
+function isLeapYear(year: number): boolean {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+}
+
+function daysBeforeMonth(monthIndex: number, leap: boolean): number {
+  return (DAYS_BEFORE_MONTH[monthIndex] ?? 0) + (leap && monthIndex > 1 ? 1 : 0);
+}
+
 function daysInMonth(year: number, monthIndex: number): number {
-  const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-  return monthIndex === 1 && !leap ? 28 : (MONTH_MAX_DAYS.get(monthIndex + 1) ?? 31);
+  return monthIndex === 1 && !isLeapYear(year) ? 28 : (MONTH_MAX_DAYS.get(monthIndex + 1) ?? 31);
 }
 
 function domFitsSomeMonth(expanded: ExpandedCron): boolean {
@@ -159,28 +168,32 @@ export function nextFirings(
     from.getUTCHours(),
     from.getUTCMinutes() + 1,
   );
-  let year = start.getUTCFullYear();
+  const startYear = start.getUTCFullYear();
+  let year = startYear;
   let limit = horizonLimit(year);
   let limitYear = year;
-  let monthIndex = start.getUTCMonth();
-  let firstDom = start.getUTCDate();
-  let firstTime = utcDate(year, monthIndex, firstDom).getTime();
-  const startDay = firstTime;
-  // Days and months are walked by arithmetic rather than by stepping a Date
-  // (Date getters and setters dominated this loop). The cursor starts on the
-  // start day, not the 1st of its month, because that 1st can fall before the
+  let leap = isLeapYear(year);
+  const startMonth = start.getUTCMonth();
+  const startDom = start.getUTCDate();
+  const startDay = utcDate(year, startMonth, startDom).getTime();
+  // Years, months, and days are walked by arithmetic rather than by stepping a
+  // Date (Date getters and setters dominated this loop). yearStart is never
+  // turned into a Date because 1 January of the start year can fall before the
   // minimum representable Date.
-  while (firstTime <= limit && results.length < count) {
-    const lastDom = daysInMonth(year, monthIndex);
-    if (expanded.months.has(monthIndex + 1)) {
+  let yearStart = startDay - (daysBeforeMonth(startMonth, leap) + startDom - 1) * DAY_MS;
+  while (yearStart <= limit && results.length < count) {
+    for (let monthIndex = year === startYear ? startMonth : 0; monthIndex < 12; monthIndex += 1) {
+      if (!expanded.months.has(monthIndex + 1)) continue;
+      const monthStart = yearStart + daysBeforeMonth(monthIndex, leap) * DAY_MS;
+      const lastDom = daysInMonth(year, monthIndex);
       // 1970-01-01 (day 0) was a Thursday.
-      const firstDow = (((Math.floor(firstTime / DAY_MS) + 4) % 7) + 7) % 7;
+      const firstDow = (((Math.floor(monthStart / DAY_MS) + 4) % 7) + 7) % 7;
       for (const dom of candidateDays) {
-        if (dom < firstDom) continue;
         if (dom > lastDom) break;
-        const dayStart = firstTime + (dom - firstDom) * DAY_MS;
+        const dayStart = monthStart + (dom - 1) * DAY_MS;
+        if (dayStart < startDay) continue;
         if (dayStart > limit) return results;
-        if (!dayMatches(expanded, dom, (firstDow + dom - firstDom) % 7)) continue;
+        if (!dayMatches(expanded, dom, (firstDow + dom - 1) % 7)) continue;
         const isFirstDay = dayStart === startDay;
         const startHour = isFirstDay ? start.getUTCHours() : 0;
         const startMinute = isFirstDay ? start.getUTCMinutes() : 0;
@@ -200,13 +213,9 @@ export function nextFirings(
         }
       }
     }
-    firstTime += (lastDom - firstDom + 1) * DAY_MS;
-    firstDom = 1;
-    monthIndex += 1;
-    if (monthIndex === 12) {
-      monthIndex = 0;
-      year += 1;
-    }
+    yearStart += (leap ? 366 : 365) * DAY_MS;
+    year += 1;
+    leap = isLeapYear(year);
   }
   return results;
 }
