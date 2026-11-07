@@ -204,7 +204,7 @@ export function nextFirings(
         for (const hour of sortedHours) {
           if (hour < startHour) continue;
           for (const minute of sortedMinutes) {
-            if (hour === startHour && isFirstDay && minute < startMinute) continue;
+            if (hour === startHour && minute < startMinute) continue;
             const time = dayStart + (hour * 60 + minute) * MINUTE_MS;
             if (time > MAX_DATE_TIME) return results;
             results.push(new Date(time));
