@@ -1,7 +1,25 @@
-import type { CronAst, DayCombination, FieldAst } from "./parse";
+import type { CronAst, DayCombination, FieldAst, FieldName } from "./parse";
 import { FIELD_RANGES, dayCombination } from "./parse";
 
+function rangeSet({ min, max }: { min: number; max: number }): ReadonlySet<number> {
+  return new Set(Array.from({ length: max - min + 1 }, (_, i) => min + i));
+}
+
+// Copying a Set is several times faster than adding the same values one by
+// one, and a lone "*" is the most common field.
+const FULL_FIELDS: Record<FieldName, ReadonlySet<number>> = {
+  minute: rangeSet(FIELD_RANGES.minute),
+  hour: rangeSet(FIELD_RANGES.hour),
+  dayOfMonth: rangeSet(FIELD_RANGES.dayOfMonth),
+  month: rangeSet(FIELD_RANGES.month),
+  dayOfWeek: rangeSet(FIELD_RANGES.dayOfWeek),
+};
+
 export function expandField(field: FieldAst): Set<number> {
+  const first = field.terms[0];
+  if (field.terms.length === 1 && first?.kind === "wildcard" && first.step === 1) {
+    return new Set(FULL_FIELDS[field.field]);
+  }
   const { min, max } = FIELD_RANGES[field.field];
   const values = new Set<number>();
   for (const term of field.terms) {
