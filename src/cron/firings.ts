@@ -188,7 +188,6 @@ export function nextFirings(
   // minimum representable Date.
   let yearStart = startDay - (daysBeforeMonth(startMonth, leap) + startDom - 1) * DAY_MS;
   let limit = horizonLimit(yearStart);
-  let limitYear = year;
   while (yearStart <= limit && results.length < count) {
     for (let monthIndex = year === startYear ? startMonth : 0; monthIndex < 12; monthIndex += 1) {
       if (!expanded.months.has(monthIndex + 1)) continue;
@@ -213,10 +212,7 @@ export function nextFirings(
             if (Number.isNaN(firing.getTime())) return results;
             results.push(firing);
             if (results.length >= count) return results;
-            if (year !== limitYear) {
-              limit = horizonLimit(yearStart);
-              limitYear = year;
-            }
+            limit = horizonLimit(yearStart);
           }
         }
       }
