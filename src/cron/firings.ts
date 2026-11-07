@@ -57,27 +57,19 @@ function dayMatches(expanded: ExpandedCron, dom: number, dow: number): boolean {
 // expression fires within the window. This covers sparse schedules such as
 // "0 0 */31 2 MON" (Feb 1 on a Monday, gaps of up to 11 years) and leap-day
 // schedules spanning the non-leap century year 2100 (gaps of up to 8 years).
-const MAX_YEARS_PER_FIRING = 400;
+const GREGORIAN_CYCLE_DAYS = 146097;
 
 // Maximum timestamp representable by a JavaScript Date (ECMA-262: 8.64e15 ms).
 const MAX_DATE_TIME = 8640000000000000;
 
+const MINUTE_MS = 60000;
 const DAY_MS = 86400000;
 
 const EVERY_DAY = Array.from({ length: 31 }, (_, i) => i + 1);
 
-function utcDate(year: number, monthIndex: number, day: number, hour = 0, minute = 0): Date {
-  const date = new Date(Date.UTC(2000, monthIndex, day, hour, minute));
-  date.setUTCFullYear(year + (date.getUTCFullYear() - 2000));
-  return date;
-}
-
-// Clamped to the Date range: near the upper representable boundary the
-// 400-year horizon would otherwise overflow to an invalid Date (NaN) and
-// silently disable the search.
-function horizonLimit(year: number): number {
-  const time = utcDate(year + MAX_YEARS_PER_FIRING, 0, 1).getTime();
-  return Number.isNaN(time) ? MAX_DATE_TIME : Math.min(time, MAX_DATE_TIME);
+// Clamped to the Date range so the search stops at the maximum Date.
+function horizonLimit(yearStart: number): number {
+  return Math.min(yearStart + GREGORIAN_CYCLE_DAYS * DAY_MS, MAX_DATE_TIME);
 }
 
 const MONTH_MAX_DAYS = new Map<number, number>([
@@ -151,7 +143,8 @@ export function nextFirings(
 ): Date[] {
   const results: Date[] = [];
   if (!Number.isSafeInteger(count) || count <= 0) return results;
-  if (Number.isNaN(from.getTime())) return results;
+  const fromTime = from.getTime();
+  if (Number.isNaN(fromTime)) return results;
   if (!canEverFire(ast, expanded)) return results;
   const sortedMinutes = [...expanded.minutes].sort((a, b) => a - b);
   const sortedHours = [...expanded.hours].sort((a, b) => a - b);
@@ -161,26 +154,22 @@ export function nextFirings(
     expanded.dayCombination === "union"
       ? EVERY_DAY
       : [...expanded.daysOfMonth].sort((a, b) => a - b);
-  const start = utcDate(
-    from.getUTCFullYear(),
-    from.getUTCMonth(),
-    from.getUTCDate(),
-    from.getUTCHours(),
-    from.getUTCMinutes() + 1,
-  );
+  const startTime = Math.floor(fromTime / MINUTE_MS) * MINUTE_MS + MINUTE_MS;
+  if (startTime > MAX_DATE_TIME) return results;
+  const start = new Date(startTime);
   const startYear = start.getUTCFullYear();
   let year = startYear;
-  let limit = horizonLimit(year);
-  let limitYear = year;
   let leap = isLeapYear(year);
   const startMonth = start.getUTCMonth();
   const startDom = start.getUTCDate();
-  const startDay = utcDate(year, startMonth, startDom).getTime();
+  const startDay = Math.floor(startTime / DAY_MS) * DAY_MS;
   // Years, months, and days are walked by arithmetic rather than by stepping a
   // Date (Date getters and setters dominated this loop). yearStart is never
   // turned into a Date because 1 January of the start year can fall before the
   // minimum representable Date.
   let yearStart = startDay - (daysBeforeMonth(startMonth, leap) + startDom - 1) * DAY_MS;
+  let limit = horizonLimit(yearStart);
+  let limitYear = year;
   while (yearStart <= limit && results.length < count) {
     for (let monthIndex = year === startYear ? startMonth : 0; monthIndex < 12; monthIndex += 1) {
       if (!expanded.months.has(monthIndex + 1)) continue;
@@ -206,7 +195,7 @@ export function nextFirings(
             results.push(firing);
             if (results.length >= count) return results;
             if (year !== limitYear) {
-              limit = horizonLimit(year);
+              limit = horizonLimit(yearStart);
               limitYear = year;
             }
           }
@@ -219,8 +208,6 @@ export function nextFirings(
   }
   return results;
 }
-
-const GREGORIAN_CYCLE_DAYS = 146097;
 
 function sortedDayTimes(expanded: ExpandedCron): number[] {
   const times: number[] = [];
