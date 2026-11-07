@@ -326,6 +326,11 @@ describe("JavaScript Date boundary", () => {
     expect(firings).toEqual([]);
   });
 
+  it("returns nothing from the max representable Date", () => {
+    const firings = nextFirings(ast("* * * * *"), new Date(8640000000000000), 1);
+    expect(firings).toEqual([]);
+  });
+
   it("includes a firing at exactly the max representable Date", () => {
     const from = new Date(8640000000000000 - 60000);
     const firings = nextFirings(ast("* * * * *"), from, 1);
