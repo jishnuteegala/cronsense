@@ -85,7 +85,6 @@ const DAY_MS = 86400000;
 
 const EVERY_DAY = Array.from({ length: 31 }, (_, i) => i + 1);
 
-// Clamped to the Date range so the search stops at the maximum Date.
 function horizonLimit(yearStart: number): number {
   return Math.min(yearStart + GREGORIAN_CYCLE_DAYS * DAY_MS, MAX_DATE_TIME);
 }
@@ -182,10 +181,8 @@ export function nextFirings(
   const startMonth = start.getUTCMonth();
   const startDom = start.getUTCDate();
   const startDay = Math.floor(startTime / DAY_MS) * DAY_MS;
-  // Years, months, and days are walked by arithmetic rather than by stepping a
-  // Date (Date getters and setters dominated this loop). yearStart is never
-  // turned into a Date because 1 January of the start year can fall before the
-  // minimum representable Date.
+  // yearStart stays a number because 1 January of the start year can fall
+  // before the minimum representable Date.
   let yearStart = startDay - (daysBeforeMonth(startMonth, leap) + startDom - 1) * DAY_MS;
   let limit = horizonLimit(yearStart);
   while (yearStart <= limit && results.length < count) {
