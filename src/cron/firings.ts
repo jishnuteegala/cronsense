@@ -115,8 +115,8 @@ function daysBeforeMonth(monthIndex: number, leap: boolean): number {
   return (DAYS_BEFORE_MONTH[monthIndex] ?? 0) + (leap && monthIndex > 1 ? 1 : 0);
 }
 
-function daysInMonth(year: number, monthIndex: number): number {
-  return monthIndex === 1 && !isLeapYear(year) ? 28 : (MONTH_MAX_DAYS.get(monthIndex + 1) ?? 31);
+function daysInMonth(monthIndex: number, leap: boolean): number {
+  return monthIndex === 1 && !leap ? 28 : (MONTH_MAX_DAYS.get(monthIndex + 1) ?? 31);
 }
 
 function domFitsSomeMonth(expanded: ExpandedCron): boolean {
@@ -192,7 +192,7 @@ export function nextFirings(
     for (let monthIndex = year === startYear ? startMonth : 0; monthIndex < 12; monthIndex += 1) {
       if (!expanded.months.has(monthIndex + 1)) continue;
       const monthStart = yearStart + daysBeforeMonth(monthIndex, leap) * DAY_MS;
-      const lastDom = daysInMonth(year, monthIndex);
+      const lastDom = daysInMonth(monthIndex, leap);
       // 1970-01-01 (day 0) was a Thursday.
       const firstDow = (((Math.floor(monthStart / DAY_MS) + 4) % 7) + 7) % 7;
       for (const dom of candidateDays) {
