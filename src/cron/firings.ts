@@ -208,7 +208,7 @@ export function nextFirings(
           if (hour < startHour) continue;
           for (const minute of sortedMinutes) {
             if (hour === startHour && isFirstDay && minute < startMinute) continue;
-            const firing = new Date(dayStart + (hour * 60 + minute) * 60000);
+            const firing = new Date(dayStart + (hour * 60 + minute) * MINUTE_MS);
             if (Number.isNaN(firing.getTime())) return results;
             results.push(firing);
             if (results.length >= count) return results;
