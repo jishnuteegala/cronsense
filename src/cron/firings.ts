@@ -167,9 +167,10 @@ export function nextFirings(
   const sortedMinutes = [...expanded.minutes].sort((a, b) => a - b);
   const sortedHours = [...expanded.hours].sort((a, b) => a - b);
   // Outside union mode a day matches only if its day-of-month is listed, so
-  // the scan visits just those days.
+  // the scan visits just those days. Parsed values are in range, so 31 of them
+  // are exactly EVERY_DAY.
   const candidateDays =
-    expanded.dayCombination === "union"
+    expanded.dayCombination === "union" || expanded.daysOfMonth.size === EVERY_DAY.length
       ? EVERY_DAY
       : [...expanded.daysOfMonth].sort((a, b) => a - b);
   const startTime = Math.floor(fromTime / MINUTE_MS) * MINUTE_MS + MINUTE_MS;
