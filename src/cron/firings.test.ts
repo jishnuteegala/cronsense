@@ -333,11 +333,11 @@ describe("JavaScript Date boundary", () => {
 
   it("includes a firing at exactly the max representable Date", () => {
     const from = new Date(8640000000000000 - 60000);
-    const firings = nextFirings(ast("* * * * *"), from, 1);
+    const firings = nextFirings(ast("* * * * *"), from, 3);
     expect(firings.map((d) => d.getTime())).toEqual([8640000000000000]);
   });
 
-  it("finds firings from the min representable Date, whose month start is unrepresentable", () => {
+  it("finds firings from the min representable Date", () => {
     const from = new Date(-8640000000000000);
     const firings = nextFirings(ast("0 0 * * *"), from, 2);
     expect(firings.map((d) => d.getTime())).toEqual([
