@@ -7,7 +7,7 @@ The input is mirrored into the URL hash, so every check is shareable as a link; 
 - `link-expr` loading `/#<encoded expression>` populates the field and results.
 - `link-warn` loading `/#<encoded expression>#<slug>` focuses the matching warning card.
 - `link-legacy` the legacy `e=` prefix (`#e=<encoded>`) still loads.
-- `link-write` typing an expression updates the hash without a reload (workflow input is never mirrored).
+- `link-write` typing an expression updates the hash without a reload in the `encodeURIComponent` form (`#0%200%20*%20*%20*` - `/` is written as `%2F`); input that scans as workflow content is never mirrored (see `scan-workflow.md`).
 
 ## How to get to it (user POV)
 
@@ -32,6 +32,7 @@ Preconditions:
 
 ## Gotchas
 
-- The second `#` segment is a warning slug from `WARNINGS` (e.g. `sub-minimum-interval`, `high-load-delay-drop`), not arbitrary text - a wrong slug just does not focus anything.
+- The second `#` segment is looked up with `document.getElementById` unvalidated - a warning slug from `WARNINGS` (e.g. `sub-minimum-interval`, `high-load-delay-drop`) focuses its card, but a slug colliding with a page element id (`main-content`, `cron-expression`, `results`) focuses or scrolls that element instead. Only a slug matching no element is a no-op.
   `inactivity-pause` is a valid slug that also focuses nothing: it renders as the contextual `<aside>` note, which has no `id` to target.
+- A hash that fails `decodeURIComponent` (e.g. `#%zz`) is silently ignored on load - the default expression renders. A live `hashchange` to a bare `#` clears the field instead.
 - Hash behavior is gated to `/` and `/index.html`; do not expect it on `/gotchas/` or `/design-system/`.

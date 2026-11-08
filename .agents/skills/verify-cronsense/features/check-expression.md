@@ -30,7 +30,7 @@ Preconditions:
 - **Parse error.** Load `/#%40hourly`.
   An error block states the rejection (`@hourly` carries the empirical stamp `confirmed empirically on 2026-07-24`).
 - **Invalid field.** Load `/#60%20*%20*%20*%20*`.
-  An error block explains minute 60 is out of range.
+  An error block reads `minute value 60 is out of range (0-59)` and the field gets a red border (`aria-invalid`).
 - **Dark theme.** Repeat the first load with `--color-scheme dark`.
   All content remains readable.
 - **Mobile.** Repeat the first load at `--viewport-size 390,844 --full-page`.

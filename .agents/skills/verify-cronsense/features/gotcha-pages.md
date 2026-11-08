@@ -24,12 +24,13 @@ Preconditions:
 
 - **Index.** `curl -sf http://localhost:<PORT>/gotchas/` contains all six slugs as links; screenshot renders the list.
 - **Detail.** `curl -sf http://localhost:<PORT>/gotchas/never-fires/` contains the docs quote and `Verified against GitHub docs`; a canonical `<link>` uses the absolute `https://cronsense.jishnuteegala.com/gotchas/never-fires/` URL.
-- **Markdown.** `curl -sI http://localhost:<PORT>/gotchas/never-fires.md` returns `content-type: text/markdown` and the body has `# ` heading plus the source link.
+- **Markdown.** `curl -sI http://localhost:<PORT>/gotchas/never-fires.md` returns `content-type: text/markdown` (a substring check - the host may append a charset); `curl -s` on the same URL returns a body starting with a `# ` heading and containing the `Primary source:` URL. Do not assert on the `-sI` response body - HEAD responses carry headers only.
 - **No-JS.** Serve HTML statically: `curl` body checks above are the no-JS proof - nothing on these pages requires script.
 - **Theme.** Screenshot a detail page with `--color-scheme dark`; contrast holds.
 - **Proof.** Screenshots + curl outputs saved under `artifact/verify/<run>/`.
 
 ## Gotchas
 
-- Unknown paths return 200 with the SPA fallback (single-page-application handling) - a 200 on a random URL does not prove a gotcha route exists; assert on body content.
+- Unknown paths return 200 with the SPA fallback (single-page-application handling) - a 200 on a random URL does not prove a gotcha route exists; assert on body content. An unknown `.md` slug (e.g. `/gotchas/nope.md`) also 200s as `text/html` - the `content-type` is what distinguishes a real Markdown variant.
+- The verified-on stamp is provenance-dependent: `Verified against GitHub docs on <date>` for docs-provenance pages, `Empirically confirmed via cronsense-verification on 2026-07-27` for `dom-dow-or-semantics`. Pin the page to the stamp form when asserting.
 - Canonical links are absolute; a relative canonical is a defect, not a variant.
