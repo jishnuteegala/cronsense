@@ -24,7 +24,7 @@ Preconditions:
 
 - **Index.** `curl -sf http://localhost:<PORT>/gotchas/` contains all six slugs as links; screenshot renders the list.
 - **Detail.** `curl -sf http://localhost:<PORT>/gotchas/never-fires/` contains the docs quote and `Verified against GitHub docs`; a canonical `<link>` uses the absolute `https://cronsense.jishnuteegala.com/gotchas/never-fires/` URL.
-- **Markdown.** `curl -sI http://localhost:<PORT>/gotchas/never-fires.md` returns `content-type: text/markdown` (a substring check - the host may append a charset); `curl -s` on the same URL returns a body starting with a `# ` heading and containing the `Primary source:` link. Do not assert on the `-sI` response body - HEAD responses carry headers only.
+- **Markdown.** `curl -sI http://localhost:<PORT>/gotchas/never-fires.md` returns `content-type: text/markdown` (a substring check - the host may append a charset); `curl -s` on the same URL returns a body starting with a `# ` heading and containing the `Primary source:` URL. Do not assert on the `-sI` response body - HEAD responses carry headers only.
 - **No-JS.** Serve HTML statically: `curl` body checks above are the no-JS proof - nothing on these pages requires script.
 - **Theme.** Screenshot a detail page with `--color-scheme dark`; contrast holds.
 - **Proof.** Screenshots + curl outputs saved under `artifact/verify/<run>/`.
