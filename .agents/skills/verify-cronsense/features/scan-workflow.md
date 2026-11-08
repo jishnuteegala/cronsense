@@ -41,4 +41,4 @@ Preconditions:
   Do not treat an `on:`-leading document rendering schedule cards as an expression parse.
 - Detection requires a newline in the input: single-line flow-style YAML (`on: {schedule: [...]}`) never reaches the scanner and errors as a cron expression instead.
 - Only the first YAML document is scanned - `---`-separated later documents are ignored.
-- Unparseable entries keep their raw value (non-string raws render JSON-stringified, e.g. `{"name":"missing cron"}`) plus a fixed reason; the four reasons are `Schedule entry has no cron key.`, `Cron value must be a literal string.`, `Can't evaluate` + a `${{ }}` + `expressions.`, and `Invalid GitHub Actions cron expression.`
+- Unparseable entries keep their raw value (non-string raws render JSON-stringified, e.g. `{"name":"missing cron"}`) plus a fixed reason; the four reasons are `Schedule entry has no cron key.`, `Cron value must be a literal string.`, a `Can't evaluate ` + `${{ }}` + ` expressions.` concatenation (literal spacing), and `Invalid GitHub Actions cron expression.`
