@@ -18,7 +18,6 @@ jobs:
     uses: jishnuteegala/.github/.github/workflows/app-ci.yml@v1
     with:
       post-check: |
-        pnpm run build
         pnpm run check:privacy
         test -f dist/index.html
         test -f dist/design-system/index.html
