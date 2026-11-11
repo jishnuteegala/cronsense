@@ -170,6 +170,11 @@ describe("leap years", () => {
     expect(iso(firings)).toEqual(["2104-02-29T00:00Z", "2108-02-29T00:00Z"]);
   });
 
+  it("fires on Feb 29 in the 400-year leap year 2400", () => {
+    const firings = nextFirings(ast("0 0 29 2 *"), new Date(Date.UTC(2399, 2, 1)), 2);
+    expect(iso(firings)).toEqual(["2400-02-29T00:00Z", "2404-02-29T00:00Z"]);
+  });
+
   it("returns 10 leap-day firings across the 8-year gap around 2100", () => {
     const firings = nextFirings(ast("0 0 29 2 *"), new Date(Date.UTC(2095, 2, 1)), 10);
     expect(iso(firings)).toEqual([
