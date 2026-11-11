@@ -1,7 +1,25 @@
-import type { CronAst, DayCombination, FieldAst } from "./parse";
+import type { CronAst, DayCombination, FieldAst, FieldName } from "./parse";
 import { FIELD_RANGES, dayCombination } from "./parse";
 
+function rangeSet({ min, max }: (typeof FIELD_RANGES)[FieldName]): ReadonlySet<number> {
+  return new Set(Array.from({ length: max - min + 1 }, (_, i) => min + i));
+}
+
+// Copying a Set is several times faster than adding the same values one by
+// one, and a lone "*" is the most common field.
+const FULL_FIELDS: Record<FieldName, ReadonlySet<number>> = {
+  minute: rangeSet(FIELD_RANGES.minute),
+  hour: rangeSet(FIELD_RANGES.hour),
+  dayOfMonth: rangeSet(FIELD_RANGES.dayOfMonth),
+  month: rangeSet(FIELD_RANGES.month),
+  dayOfWeek: rangeSet(FIELD_RANGES.dayOfWeek),
+};
+
 export function expandField(field: FieldAst): Set<number> {
+  const first = field.terms[0];
+  if (field.terms.length === 1 && first?.kind === "wildcard" && first.step === 1) {
+    return new Set(FULL_FIELDS[field.field]);
+  }
   const { min, max } = FIELD_RANGES[field.field];
   const values = new Set<number>();
   for (const term of field.terms) {
@@ -40,9 +58,7 @@ export function expandCron(ast: CronAst): ExpandedCron {
   };
 }
 
-function dayMatches(expanded: ExpandedCron, date: Date): boolean {
-  const dom = date.getUTCDate();
-  const dow = date.getUTCDay();
+function dayMatches(expanded: ExpandedCron, dom: number, dow: number): boolean {
   const domMatch = expanded.daysOfMonth.has(dom);
   const dowMatch = expanded.daysOfWeek.has(dow);
   if (expanded.dayCombination === "union") {
@@ -50,6 +66,16 @@ function dayMatches(expanded: ExpandedCron, date: Date): boolean {
   }
   return domMatch && dowMatch;
 }
+
+const GREGORIAN_CYCLE_DAYS = 146097;
+
+// Maximum timestamp representable by a JavaScript Date (ECMA-262: 8.64e15 ms).
+const MAX_DATE_TIME = 8640000000000000;
+
+const MINUTE_MS = 60000;
+const DAY_MS = 86400000;
+
+const EVERY_DAY = Array.from({ length: 31 }, (_, i) => i + 1);
 
 // The Gregorian calendar repeats exactly every 400 years (146097 days, which is
 // divisible by 7), so any satisfiable (month, day-of-month, day-of-week) pattern
@@ -59,23 +85,8 @@ function dayMatches(expanded: ExpandedCron, date: Date): boolean {
 // expression fires within the window. This covers sparse schedules such as
 // "0 0 */31 2 MON" (Feb 1 on a Monday, gaps of up to 11 years) and leap-day
 // schedules spanning the non-leap century year 2100 (gaps of up to 8 years).
-const MAX_YEARS_PER_FIRING = 400;
-
-// Maximum timestamp representable by a JavaScript Date (ECMA-262: 8.64e15 ms).
-const MAX_DATE_TIME = 8640000000000000;
-
-function utcDate(year: number, monthIndex: number, day: number, hour = 0, minute = 0): Date {
-  const date = new Date(Date.UTC(2000, monthIndex, day, hour, minute));
-  date.setUTCFullYear(year + (date.getUTCFullYear() - 2000));
-  return date;
-}
-
-// Clamped to the Date range: near the upper representable boundary the
-// 400-year horizon would otherwise overflow to an invalid Date (NaN) and
-// silently disable the search.
-function horizonLimit(year: number): number {
-  const time = utcDate(year + MAX_YEARS_PER_FIRING, 0, 1).getTime();
-  return Number.isNaN(time) ? MAX_DATE_TIME : Math.min(time, MAX_DATE_TIME);
+function horizonLimit(yearStart: number): number {
+  return Math.min(yearStart + GREGORIAN_CYCLE_DAYS * DAY_MS, MAX_DATE_TIME);
 }
 
 const MONTH_MAX_DAYS = new Map<number, number>([
@@ -92,6 +103,20 @@ const MONTH_MAX_DAYS = new Map<number, number>([
   [11, 30],
   [12, 31],
 ]);
+
+const DAYS_BEFORE_MONTH = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+
+function isLeapYear(year: number): boolean {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+}
+
+function daysBeforeMonth(monthIndex: number, leap: boolean): number {
+  return (DAYS_BEFORE_MONTH[monthIndex] ?? 0) + (leap && monthIndex > 1 ? 1 : 0);
+}
+
+function daysInMonth(monthIndex: number, leap: boolean): number {
+  return monthIndex === 1 && !leap ? 28 : (MONTH_MAX_DAYS.get(monthIndex + 1) ?? 31);
+}
 
 function domFitsSomeMonth(expanded: ExpandedCron): boolean {
   return [...expanded.months].some((month) => {
@@ -135,55 +160,66 @@ export function nextFirings(
 ): Date[] {
   const results: Date[] = [];
   if (!Number.isSafeInteger(count) || count <= 0) return results;
-  if (Number.isNaN(from.getTime())) return results;
+  const fromTime = from.getTime();
+  if (Number.isNaN(fromTime)) return results;
   if (!canEverFire(ast, expanded)) return results;
   const sortedMinutes = [...expanded.minutes].sort((a, b) => a - b);
   const sortedHours = [...expanded.hours].sort((a, b) => a - b);
-  const start = utcDate(
-    from.getUTCFullYear(),
-    from.getUTCMonth(),
-    from.getUTCDate(),
-    from.getUTCHours(),
-    from.getUTCMinutes() + 1,
-  );
-  let limit = horizonLimit(start.getUTCFullYear());
-  const day = utcDate(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
-  let isFirstDay = true;
-  while (day.getTime() <= limit && results.length < count) {
-    const month = day.getUTCMonth() + 1;
-    if (!expanded.months.has(month)) {
-      day.setUTCMonth(day.getUTCMonth() + 1, 1);
-      isFirstDay = false;
-      continue;
-    }
-    if (dayMatches(expanded, day)) {
-      const startHour = isFirstDay ? start.getUTCHours() : 0;
-      const startMinute = isFirstDay ? start.getUTCMinutes() : 0;
-      for (const hour of sortedHours) {
-        if (hour < startHour) continue;
-        for (const minute of sortedMinutes) {
-          if (hour === startHour && isFirstDay && minute < startMinute) continue;
-          const firing = utcDate(
-            day.getUTCFullYear(),
-            day.getUTCMonth(),
-            day.getUTCDate(),
-            hour,
-            minute,
-          );
-          if (Number.isNaN(firing.getTime())) return results;
-          results.push(firing);
-          if (results.length >= count) return results;
-          limit = horizonLimit(day.getUTCFullYear());
+  // Outside union mode a day matches only if its day-of-month is listed, so
+  // the scan visits just those days. Parsed values are in range, so 31 of them
+  // are exactly EVERY_DAY.
+  const candidateDays =
+    expanded.dayCombination === "union" || expanded.daysOfMonth.size === EVERY_DAY.length
+      ? EVERY_DAY
+      : [...expanded.daysOfMonth].sort((a, b) => a - b);
+  const startTime = Math.floor(fromTime / MINUTE_MS) * MINUTE_MS + MINUTE_MS;
+  if (startTime > MAX_DATE_TIME) return results;
+  const start = new Date(startTime);
+  const startYear = start.getUTCFullYear();
+  let year = startYear;
+  let leap = isLeapYear(year);
+  const startMonth = start.getUTCMonth();
+  const startDom = start.getUTCDate();
+  const startDay = Math.floor(startTime / DAY_MS) * DAY_MS;
+  // yearStart stays a number because 1 January of the start year can fall
+  // before the minimum representable Date.
+  let yearStart = startDay - (daysBeforeMonth(startMonth, leap) + startDom - 1) * DAY_MS;
+  let limit = horizonLimit(yearStart);
+  while (yearStart <= limit && results.length < count) {
+    for (let monthIndex = year === startYear ? startMonth : 0; monthIndex < 12; monthIndex += 1) {
+      if (!expanded.months.has(monthIndex + 1)) continue;
+      const monthStart = yearStart + daysBeforeMonth(monthIndex, leap) * DAY_MS;
+      const lastDom = daysInMonth(monthIndex, leap);
+      // 1970-01-01 (day 0) was a Thursday.
+      const firstDow = (((Math.floor(monthStart / DAY_MS) + 4) % 7) + 7) % 7;
+      for (const dom of candidateDays) {
+        if (dom > lastDom) break;
+        const dayStart = monthStart + (dom - 1) * DAY_MS;
+        if (dayStart < startDay) continue;
+        if (dayStart > limit) return results;
+        if (!dayMatches(expanded, dom, (firstDow + dom - 1) % 7)) continue;
+        const isFirstDay = dayStart === startDay;
+        const startHour = isFirstDay ? start.getUTCHours() : 0;
+        const startMinute = isFirstDay ? start.getUTCMinutes() : 0;
+        for (const hour of sortedHours) {
+          if (hour < startHour) continue;
+          for (const minute of sortedMinutes) {
+            if (hour === startHour && minute < startMinute) continue;
+            const time = dayStart + (hour * 60 + minute) * MINUTE_MS;
+            if (time > MAX_DATE_TIME) return results;
+            results.push(new Date(time));
+            if (results.length >= count) return results;
+            limit = horizonLimit(yearStart);
+          }
         }
       }
     }
-    day.setUTCDate(day.getUTCDate() + 1);
-    isFirstDay = false;
+    yearStart += (leap ? 366 : 365) * DAY_MS;
+    year += 1;
+    leap = isLeapYear(year);
   }
   return results;
 }
-
-const GREGORIAN_CYCLE_DAYS = 146097;
 
 function sortedDayTimes(expanded: ExpandedCron): number[] {
   const times: number[] = [];
@@ -219,7 +255,10 @@ export function minimumIntervalMinutes(
   let lastMatch: number | null = null;
   let minDayGap = Infinity;
   for (let i = 0; i < GREGORIAN_CYCLE_DAYS; i += 1) {
-    if (expanded.months.has(day.getUTCMonth() + 1) && dayMatches(expanded, day)) {
+    if (
+      expanded.months.has(day.getUTCMonth() + 1) &&
+      dayMatches(expanded, day.getUTCDate(), day.getUTCDay())
+    ) {
       if (lastMatch !== null) {
         const gap = i - lastMatch;
         if (gap < minDayGap) minDayGap = gap;

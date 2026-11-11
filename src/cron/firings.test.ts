@@ -170,6 +170,11 @@ describe("leap years", () => {
     expect(iso(firings)).toEqual(["2104-02-29T00:00Z", "2108-02-29T00:00Z"]);
   });
 
+  it("fires on Feb 29 in the 400-year leap year 2400", () => {
+    const firings = nextFirings(ast("0 0 29 2 *"), new Date(Date.UTC(2399, 2, 1)), 2);
+    expect(iso(firings)).toEqual(["2400-02-29T00:00Z", "2404-02-29T00:00Z"]);
+  });
+
   it("returns 10 leap-day firings across the 8-year gap around 2100", () => {
     const firings = nextFirings(ast("0 0 29 2 *"), new Date(Date.UTC(2095, 2, 1)), 10);
     expect(iso(firings)).toEqual([
@@ -326,10 +331,24 @@ describe("JavaScript Date boundary", () => {
     expect(firings).toEqual([]);
   });
 
+  it("returns nothing from the max representable Date", () => {
+    const firings = nextFirings(ast("* * * * *"), new Date(8640000000000000), 1);
+    expect(firings).toEqual([]);
+  });
+
   it("includes a firing at exactly the max representable Date", () => {
     const from = new Date(8640000000000000 - 60000);
-    const firings = nextFirings(ast("* * * * *"), from, 1);
+    const firings = nextFirings(ast("* * * * *"), from, 3);
     expect(firings.map((d) => d.getTime())).toEqual([8640000000000000]);
+  });
+
+  it("finds firings from the min representable Date", () => {
+    const from = new Date(-8640000000000000);
+    const firings = nextFirings(ast("0 0 * * *"), from, 2);
+    expect(firings.map((d) => d.getTime())).toEqual([
+      -8640000000000000 + 86400000,
+      -8640000000000000 + 2 * 86400000,
+    ]);
   });
 
   it("returns nothing for an invalid from date", () => {
