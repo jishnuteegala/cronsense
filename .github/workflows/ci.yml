@@ -15,8 +15,9 @@ concurrency:
 
 jobs:
   check:
-    uses: jishnuteegala/.github/.github/workflows/app-ci.yml@v1
+    uses: jishnuteegala/.github/.github/workflows/app-ci.yml@6429dae13b4a560a15f49948c21bb1cd2fdf6eaf # v1 (origin/main)
     with:
+      os: '["ubuntu-latest", "ubuntu-24.04"]'
       post-check: |
         pnpm run check:privacy
         test -f dist/index.html
