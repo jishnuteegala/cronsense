@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   check:
-    uses: jishnuteegala/.github/.github/workflows/app-ci.yml@6429dae13b4a560a15f49948c21bb1cd2fdf6eaf # v1 (origin/main)
+    uses: jishnuteegala/.github/.github/workflows/app-ci.yml@48a42b5ea11632f5379654139a12d0225cc4122b # ci/app-ci-linux-gate head
     with:
       os: '["ubuntu-latest", "ubuntu-24.04"]'
       post-check: |
