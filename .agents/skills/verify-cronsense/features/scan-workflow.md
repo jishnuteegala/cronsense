@@ -4,9 +4,9 @@ The user pastes a GitHub Actions workflow YAML document; the tool extracts every
 
 ## Sub-features
 
-- `scan-cards` renders one card per `schedule:` entry under a `N parsed, N unparseable` summary line, each card with its parsed expression and translation; an entry that fails to parse still renders a card with the raw value and the reason. The list ends with `Extracts on.schedule crons; does not lint workflows.` Clicking a card's cron button loads that cron's full analysis into `#results` and writes its cron permalink to the hash.
-- `scan-dup` marks the second and later occurrences of a repeated schedule with the literal text `duplicate of #N`, where N is the first occurrence's 1-based position counting unparseable entries too; matching is exact raw-string equality and unparseable entries are never flagged.
-- `scan-none` reports a workflow with no `schedule:` triggers (also fires for a YAML map with no `on` key at all - the message still names `on.schedule`).
+- `scan-cards` renders one card per `schedule:` entry under a `N parsed, N unparseable` summary line (`ul[aria-label="Workflow schedule crons"]` of `li.scan-card` items), each card with its parsed expression and translation; an entry that fails to parse still renders a card with the raw value and the reason. The list ends with `Extracts on.schedule crons; does not lint workflows.`, but `#results` does not end there - a collapsed `1 note` disclosure holding the DST note follows every scan and alert state. Clicking a card's cron button loads that cron's full analysis into `#results` and writes its cron permalink to the hash.
+- `scan-dup` marks the second and later occurrences of a repeated schedule with the literal text `duplicate of #N` in a `span.dup`, where N is the first occurrence's 1-based position counting unparseable entries too; matching is exact raw-string equality and unparseable entries are never flagged.
+- `scan-none` reports `this workflow has no on.schedule triggers` (also fires for a YAML map with no `on` key at all - the message still names `on.schedule`).
 - `scan-notlist` reports `on.schedule` present but not a list (`on.schedule is present but not a list; expected a list of cron entries`); `schedule: null` or a scalar hits the same state.
 - `scan-error` reports malformed YAML (`Unable to parse workflow YAML: <msg>`); an invalid `cron:` value inside an otherwise valid file is an unparseable card, not this block. All three alert states share `role="alert"` styling and `id="cron-expression-error"`.
 
