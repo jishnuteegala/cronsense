@@ -6,12 +6,12 @@ The input is mirrored into the URL hash, so every check is shareable as a link; 
 
 - `link-expr` loading `/#<encoded expression>` populates the field and results.
 - `link-warn` loading `/#<encoded expression>#<slug>` focuses the matching warning card.
-- `link-legacy` the legacy `e=` prefix (`#e=<encoded>`) still loads.
+- `link-legacy` the legacy `e=` prefix (`#e=<encoded>`) still loads, including the compound form `#e=<encoded>#<slug>`.
 - `link-write` typing an expression updates the hash without a reload in the `encodeURIComponent` form (`#0%200%20*%20*%20*` - `/` is written as `%2F`); input that scans as workflow content is never mirrored (see `scan-workflow.md`).
 
 ## How to get to it (user POV)
 
-- Copy the URL after typing an expression; share it.
+- Copy the URL after typing an expression; share it. The UI only ever writes the single-segment `#<expr>` form - a two-segment warning-anchor link is always constructed by hand.
 - Follow a `details`-adjacent warning anchor from a shared link.
 
 ## Driving it with playwright/curl

@@ -12,7 +12,7 @@ Six static, JavaScript-free deep-dive pages (one per documented GitHub Actions c
 
 ## How to get to it (user POV)
 
-- Follow the `details` link on the contextual note in the app (leads to `/gotchas/inactivity-pause/`).
+- Follow the `details` link on the contextual note in the app (leads to `/gotchas/inactivity-pause/`); the note only renders once the input is non-empty.
 - Open `/gotchas/` or a `/gotchas/<slug>/` URL directly.
 - Request `/gotchas/<slug>.md` (agent-facing variant).
 
@@ -32,5 +32,5 @@ Preconditions:
 ## Gotchas
 
 - Unknown paths return 200 with the SPA fallback (single-page-application handling) - a 200 on a random URL does not prove a gotcha route exists; assert on body content. An unknown `.md` slug (e.g. `/gotchas/nope.md`) also 200s as `text/html` - the `content-type` is what distinguishes a real Markdown variant.
-- The verified-on stamp is provenance-dependent: `Verified against GitHub docs on <date>` for docs-provenance pages, `Empirically confirmed via cronsense-verification on 2026-07-27` for `dom-dow-or-semantics`. Pin the page to the stamp form when asserting.
+- The verified-on stamp is provenance-dependent: `Verified against GitHub docs on <date>` for docs-provenance pages, `Empirically confirmed via cronsense-verification on 2026-07-27` for `dom-dow-or-semantics`. Pin the page to the stamp form when asserting; in the raw HTML and Markdown bodies `cronsense-verification` is a link, so grep `Empirically confirmed via` and the date separately rather than the full literal.
 - Canonical links are absolute; a relative canonical is a defect, not a variant.

@@ -6,9 +6,9 @@ The user pastes or links a five-field cron expression and gets a plain-English t
 
 - `expr-translate` renders the expression as a sentence in the summary block.
 - `expr-next` shows the next UTC firing plus a relative time ("in N minutes").
-- `expr-table` lists ten firings with UTC and local columns; the soonest row is marked.
-- `expr-never` shows the never-fires state for unsatisfiable expressions like `0 0 30 2 *` (February 30).
-- `expr-error` shows an error block for invalid syntax such as `60 * * * *` or `@hourly`.
+- `expr-table` lists up to ten firings with UTC and local columns; the soonest row is marked, and a short list ends with a `.truncated` note.
+- `expr-never` shows the never-fires state for unsatisfiable expressions like `0 0 30 2 *` (February 30); the always-predicate `high-load-delay-drop` card still renders alongside it, so do not assert a single card.
+- `expr-error` shows an error block for invalid syntax such as `60 * * * *` or `@hourly`; error and scan-alert states also render a collapsed `1 note` disclosure holding the DST note alone (empty input renders no disclosure).
 - `expr-empty` is unreachable on fresh load (the app seeds a default expression); an in-page navigation to an empty `#` does clear the input, so verify via a spec or the unit test.
 
 ## How to get to it (user POV)

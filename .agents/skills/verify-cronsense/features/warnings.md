@@ -1,7 +1,7 @@
 # Warning cards
 
-Expressions that hit documented GitHub Actions caveats render warning cards: an exact quote from the docs inside a collapsed `docs quote` disclosure, a dated verification stamp inside the same disclosure, and an always-visible `.warning-meta` line (`verified <date> · GitHub docs`).
-Provisional syntax notes live as `<li>` items inside a collapsed `N notes` disclosure (`1 note` when singular) under the results, mixed with the timezone note (present only when the expression analyzes) and a DST note (present whenever no firing table renders - invalid input leaves `1 note` holding the DST note alone); each provisional note is labeled `provisional` in text.
+Expressions that hit documented GitHub Actions caveats render warning cards: one or more exact quotes from the docs inside a collapsed `docs quote` disclosure, a dated verification stamp inside the same disclosure, and an always-visible `.warning-meta` line (`verified <date> · GitHub docs`).
+Provisional syntax notes live as `<li>` items inside a collapsed `N notes` disclosure (`1 note` when singular) under the results, mixed with the timezone note (present only when the expression analyzes) and a DST note (the only note whenever no analysis renders - invalid input and every workflow-scan state each leave `1 note` holding the DST note alone; empty input renders no disclosure at all); each provisional note is labeled `provisional` in text.
 
 ## Sub-features
 
