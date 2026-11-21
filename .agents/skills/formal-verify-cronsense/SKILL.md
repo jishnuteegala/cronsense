@@ -29,7 +29,7 @@ Uses the repo's vitest (required - the src imports are extensionless, so plain `
 | `src/cron/firings.ts` | `firesMoreOftenThanEveryFiveMinutes`                  | consistency with `minimumIntervalMinutes`                                                                                 |
 | `src/cron/parse.ts`   | `dayCombination`, `isRestricted`, `hasWildcardOrigin` | via the day-semantics cases above                                                                                         |
 
-**Sync commit:** `2045be1` (committed 2026-11-11; verified in sync on 2026-11-14). Move this forward only after re-running the check and confirming the oracle describes the code at the new commit.
+**Sync commit:** `ca35e3e` (committed 2026-11-14; verified in sync on 2026-11-21). Move this forward only after re-running the check and confirming the oracle describes the code at the new commit.
 
 Not covered, on purpose: `parseCron` syntax edge cases (the corpus only exercises it as the input front door), `analyze.ts`/`warnings.ts`/`translate.ts`, and all rendering. DST does not exist in this domain - GitHub Actions cron is UTC-only.
 
